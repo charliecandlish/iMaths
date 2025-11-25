@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Decimal Dojo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #ecfeff 0%, #f0fdfa 50%, #f0fdf4 100%); overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #0891b2; border-color: #a5f3fc; }
+
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-focus { top: 0; height: 100%; background: linear-gradient(135deg, #ecfeff 0%, #f0fdfa 50%, #f0fdf4 100%); }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #0891b2; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header { top: 0; height: 110px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 8px 0 10px; }
+        .instr-header h1 { font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem; }
+        .instr-header p { font-size: 0.95rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        @media (max-width: 640px) {
+            .instr-header { height: 95px; padding-top: 5px; }
+            .instr-header h1 { font-size: 0.75rem; margin-bottom: 0.1rem; }
+            .instr-header p { font-size: 0.85rem; -webkit-line-clamp: 2; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #game-board { transition: opacity 0.8s, transform 0.8s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        /* Common UI Elements */
+        .check-btn {
+            background: linear-gradient(135deg, #0891b2, #0e7490);
+            color: white;
+            padding: 14px 32px;
+            border-radius: 16px;
+            font-weight: 800;
+            font-size: 1rem;
+            box-shadow: 0 8px 20px rgba(8, 145, 178, 0.3);
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .check-btn:hover { transform: scale(1.05); box-shadow: 0 12px 28px rgba(8, 145, 178, 0.4); }
+        .check-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* ----- ADDITION/SUBTRACTION WORKSPACE ----- */
+        .workspace-container {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(8, 145, 178, 0.1);
+            border: 3px solid #cffafe;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .number-bank {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            min-height: 70px;
+        }
+
+        .draggable-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 8px 16px;
+            background: white;
+            color: #0e7490;
+            border: 2px solid #0e7490;
+            border-radius: 12px;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 4px 0 #0e7490;
+            transition: transform 0.1s;
+        }
+        .draggable-number:active { transform: translateY(4px); box-shadow: 0 0 0 #0e7490; cursor: grabbing; }
+        .draggable-number.placed { opacity: 0.4; pointer-events: none; border-style: dashed; box-shadow: none; transform: none; }
+
+        .column-grid {
+            display: grid;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            gap: 4px;
+            justify-content: center;
+        }
+        
+        .col-cell {
+            width: 44px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .drop-zone {
+            background: #f0fdfa;
+            border: 2px dashed #99f6e4;
+            color: #cbd5e1;
+        }
+        .drop-zone.filled {
+            background: white;
+            border: 2px solid #0e7490;
+            color: #0e7490;
+        }
+        .drop-zone.decimal {
+            border: none;
+            background: transparent;
+            color: #0891b2;
+            font-weight: 900;
+        }
+        
+        .answer-input {
+            width: 100%;
+            height: 100%;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            text-align: center;
+            font-family: inherit;
+            font-size: inherit;
+            color: #0e7490;
+            background: #fff;
+        }
+        .answer-input:focus { outline: none; border-color: #0891b2; background: #ecfeff; }
+        
+        /* ----- MULTIPLICATION AREA MODEL ----- */
+        .grid-method-container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-col;
+            gap: 16px;
+        }
+        
+        .conversion-step {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: white;
+            padding: 12px;
+            border-radius: 16px;
+            border: 2px solid #e2e8f0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+        }
+        
+        .area-model {
+            display: grid;
+            gap: 4px;
+            background: #0891b2;
+            padding: 4px;
+            border-radius: 12px;
+        }
+        
+        .area-cell {
+            background: #ecfeff;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        
+        .area-header { background: #cffafe; color: #0e7490; }
+        .area-corner { background: #0891b2; color: white; }
+        .area-input {
+            width: 90%;
+            height: 80%;
+            border: 2px solid #bae6fd;
+            border-radius: 8px;
+            text-align: center;
+            font-family: inherit;
+            font-size: inherit;
+            color: #0369a1;
+        }
+        .area-input:focus { outline: none; border-color: #0ea5e9; background: white; }
+
+        /* ----- DIVISION FRACTION METHOD ----- */
+        .fraction-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0e7490;
+        }
+        
+        .fraction-display {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 10px;
+        }
+        .frac-top { border-bottom: 3px solid #0e7490; padding-bottom: 4px; width: 100%; text-align: center; }
+        .frac-bottom { padding-top: 4px; width: 100%; text-align: center; }
+        
+        .step-arrow { color: #94a3b8; font-size: 1.2rem; }
+        
+        .frac-input {
+            width: 80px;
+            text-align: center;
+            border: 2px solid #bae6fd;
+            border-radius: 8px;
+            padding: 4px;
+            font-family: inherit;
+            font-size: inherit;
+            color: #0369a1;
+        }
+        .frac-input:focus { outline: none; border-color: #0284c7; background: #f0f9ff; }
+
+        /* Other */
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        #toast.success { background: #22c55e; box-shadow: 0 10px 25px rgba(34, 197, 94, 0.4); }
+        
+        .progress-dot { cursor: pointer; transition: all 0.2s; }
+        .progress-dot:hover { transform: scale(1.2); }
+        .hidden { display: none !important; }
+
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .shake { animation: shake 0.3s ease; }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-gradient-to-br from-cyan-50 to-teal-50 flex flex-col items-center justify-center text-center z-50">
+        <div class="text-6xl mb-4">🥋</div>
+        <h1 class="text-4xl md:text-6xl font-black text-cyan-600 mb-4">Decimal Master!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You've mastered the Dojo.</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-cyan-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="toast">Check your answer!</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[100px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full">
+        
+        <!-- Lesson Content -->
+        <div id="lesson-view" class="hidden w-full max-w-2xl flex flex-col items-center gap-6 flex-1 justify-center min-h-0">
+             <div class="bg-white p-6 md:p-10 rounded-3xl shadow-sm border-2 border-cyan-100 text-center w-full">
+                <div id="lesson-visual" class="text-5xl mb-4">🔢</div>
+                <div id="lesson-content" class="text-lg md:text-xl text-slate-700 leading-relaxed font-medium"></div>
+             </div>
+             <button onclick="nextStep()" class="check-btn">Continue</button>
+        </div>
+
+        <!-- ADD/SUB WORKSPACE -->
+        <div id="workspace-view" class="hidden w-full flex flex-col items-center gap-4 flex-1 justify-start min-h-0 pt-2">
+            <div class="workspace-container">
+                <div class="number-bank" id="number-bank"></div>
+                <div class="column-grid" id="column-grid"></div>
+                <div class="h-0.5 bg-slate-800 w-full my-2 rounded"></div>
+                <div class="column-grid" id="answer-grid"></div>
+            </div>
+            <div class="flex gap-2">
+                 <button onclick="resetWorkspace()" class="bg-slate-100 text-slate-500 px-6 py-3 rounded-xl font-bold hover:bg-slate-200">Reset</button>
+                 <button id="workspace-check" class="check-btn">Check Answer</button>
+            </div>
+        </div>
+
+        <!-- MULTIPLICATION GRID VIEW -->
+        <div id="multiplication-view" class="hidden w-full flex flex-col items-center gap-4 flex-1 justify-start min-h-0 pt-2">
+            <div class="conversion-step">
+                <span id="mul-step-1"></span>
+            </div>
+            <div class="grid-method-container">
+                <div id="area-model" class="area-model"></div>
+            </div>
+            <div class="conversion-step hidden" id="mul-final-step">
+                <span id="mul-step-final"></span>
+                <input type="text" id="mul-final-input" class="frac-input w-24" placeholder="?">
+            </div>
+            <button id="mul-check" class="check-btn">Check Grid</button>
+        </div>
+
+        <!-- DIVISION FRACTION VIEW -->
+        <div id="division-view" class="hidden w-full flex flex-col items-center gap-6 flex-1 justify-start min-h-0 pt-8">
+            <div class="fraction-container">
+                <!-- Initial Fraction -->
+                <div class="fraction-display" id="div-frac-1"></div>
+                
+                <span class="step-arrow">× <span id="div-multiplier">10</span></span>
+                
+                <!-- Whole Number Fraction Input -->
+                <div class="fraction-display">
+                    <div class="frac-top"><input type="text" id="div-whole-top" class="frac-input" placeholder="?"></div>
+                    <div class="frac-bottom"><input type="text" id="div-whole-bottom" class="frac-input" placeholder="?"></div>
+                </div>
+                
+                <span class="step-arrow">=</span>
+                
+                <!-- Final Answer Input -->
+                <input type="text" id="div-final-ans" class="frac-input w-24" style="font-size: 2rem;" placeholder="?">
+            </div>
+            <button id="div-check" class="check-btn">Check Answer</button>
+        </div>
+
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, maxStep: 0, audioCtx: null, mulPhase: 0 };
+        const STEPS = [
+            {
+                type: 'learn',
+                title: "Decimal Dojo",
+                content: "Welcome to the Dojo!<br><br>Here we solve decimals using <b>powerful methods</b>:<br><br>1. <b>Column Workspace</b> for + and −<br>2. <b>Grid Method</b> for ×<br>3. <b>Fraction Method</b> for ÷",
+                coach: "No calculators here - just smart methods!"
+            },
+            // ADDITION
+            {
+                mode: 'add',
+                title: "Addition Workspace",
+                desc: "Drag numbers to line up decimal points.",
+                num1: "2.5",
+                num2: "1.3",
+                op: "+",
+                answer: 3.8,
+                coach: "Use the grid like a whiteboard. Line up the dots!"
+            },
+            {
+                mode: 'add',
+                title: "Align the Decimals",
+                desc: "Calculate: <b>4.25 + 3.6</b>",
+                num1: "4.25",
+                num2: "3.6",
+                op: "+",
+                answer: 7.85,
+                coach: "You can add a '0' placeholder to 3.6 if it helps!"
+            },
+            {
+                mode: 'add',
+                title: "Carrying Over",
+                desc: "Calculate: <b>15.8 + 7.4</b>",
+                num1: "15.8",
+                num2: "7.4",
+                op: "+",
+                answer: 23.2,
+                coach: "8 + 4 = 12, so carry the 1."
+            },
+            
+            // SUBTRACTION
+            {
+                mode: 'sub',
+                title: "Subtraction Workspace",
+                desc: "Calculate: <b>5.7 − 2.3</b>",
+                num1: "5.7",
+                num2: "2.3",
+                op: "−",
+                answer: 3.4,
+                coach: "Line them up and subtract column by column."
+            },
+            {
+                mode: 'sub',
+                title: "Borrowing",
+                desc: "Calculate: <b>6.2 − 3.8</b>",
+                num1: "6.2",
+                num2: "3.8",
+                op: "−",
+                answer: 2.4,
+                coach: "2 is smaller than 8, so borrow from the 6."
+            },
+
+            // MULTIPLICATION (GRID METHOD)
+            {
+                type: 'learn',
+                title: "Decimal Multiplication",
+                content: "To multiply decimals, we make them whole numbers first!<br><br><b>0.3 × 0.4</b><br>1. ×10 both: <b>3 × 4 = 12</b><br>2. We multiplied by 10 twice (100 total).<br>3. Divide answer by 100: <b>0.12</b>",
+                coach: "Ignore decimals -> Multiply -> Put decimals back!"
+            },
+            {
+                mode: 'mul',
+                title: "Grid Method",
+                desc: "Calculate: <b>0.4 × 0.3</b>",
+                num1: 0.4,
+                num2: 0.3,
+                whole1: 4,
+                whole2: 3,
+                scale: 100, // 10*10
+                grid: { rows: [4], cols: [3] },
+                answer: 0.12,
+                coach: "4 × 3 = 12. Then divide by 100."
+            },
+            {
+                mode: 'mul',
+                title: "Larger Grid",
+                desc: "Calculate: <b>2.5 × 0.4</b>",
+                num1: 2.5,
+                num2: 0.4,
+                whole1: 25,
+                whole2: 4,
+                scale: 100,
+                grid: { rows: [20, 5], cols: [4] }, // 25 split into 20, 5. 4 is just 4.
+                answer: 1.0,
+                coach: "Split 25 into 20 and 5. Multiply both by 4."
+            },
+
+            // DIVISION (FRACTION METHOD)
+            {
+                type: 'learn',
+                title: "Decimal Division",
+                content: "Best way to divide decimals? <b>Make them fractions!</b><br><br><b>1.2 ÷ 0.4</b><br>1. Write as fraction: 1.2 / 0.4<br>2. Multiply top & bottom by 10: <b>12 / 4</b><br>3. Simplify: <b>3</b>",
+                coach: "No long division needed! Just simplify the fraction."
+            },
+            {
+                mode: 'div',
+                title: "Fraction Method",
+                desc: "Calculate: <b>2.4 ÷ 0.6</b>",
+                top: 2.4,
+                bot: 0.6,
+                mult: 10,
+                wTop: 24,
+                wBot: 6,
+                answer: 4,
+                coach: "Multiply both by 10 to get whole numbers."
+            },
+            {
+                mode: 'div',
+                title: "Smaller Divisor",
+                desc: "Calculate: <b>3.6 ÷ 0.12</b>",
+                top: 3.6,
+                bot: 0.12,
+                mult: 100,
+                wTop: 360,
+                wBot: 12,
+                answer: 30,
+                coach: "Multiply by 100 to clear 0.12 to 12."
+            }
+        ];
+
+        // --- Audio & Init ---
+        function initAudio() { if (!STATE.audioCtx) STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) {
+            if (!STATE.audioCtx) return;
+            const ctx = STATE.audioCtx;
+            const t = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            if (type === 'pop') { osc.frequency.setValueAtTime(600, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); osc.start(t); osc.stop(t+0.1); }
+            else if (type === 'success') { osc.frequency.setValueAtTime(440, t); osc.frequency.exponentialRampToValueAtTime(880, t+0.2); gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); osc.start(t); osc.stop(t+0.5); }
+            else { osc.type = 'triangle'; osc.frequency.setValueAtTime(150, t); gain.gain.linearRampToValueAtTime(0, t+0.2); osc.start(t); osc.stop(t+0.2); }
+        }
+
+        const container = document.getElementById('instruction-container');
+        const board = document.getElementById('game-board');
+        const titleEl = document.getElementById('level-title');
+        const descEl = document.getElementById('level-desc');
+        const dotsContainer = document.getElementById('progress-dots');
+        const toast = document.getElementById('toast');
+
+        const views = {
+            learn: document.getElementById('lesson-view'),
+            add: document.getElementById('workspace-view'),
+            sub: document.getElementById('workspace-view'),
+            mul: document.getElementById('multiplication-view'),
+            div: document.getElementById('division-view')
+        };
+
+        function initLevel() {
+            renderStep();
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        function renderStep() {
+            const step = STEPS[STATE.step];
+            STATE.maxStep = Math.max(STATE.maxStep || 0, STATE.step);
+            STATE.mulPhase = 0; // Reset mul phase
+
+            // UI Update
+            container.className = "instruction-container instr-focus";
+            titleEl.textContent = step.title;
+            Object.values(views).forEach(v => v.classList.add('hidden'));
+            
+            // Progress Dots
+            dotsContainer.innerHTML = STEPS.map((_, i) => {
+                const accessible = i <= STATE.maxStep;
+                const current = i === STATE.step;
+                let bg = current ? 'bg-cyan-500 scale-125' : (i < STATE.step ? 'bg-cyan-300' : 'bg-slate-200');
+                return `<div onclick="${accessible ? `jumpToStep(${i})` : ''}" class="progress-dot w-2 h-2 rounded-full transition-all ${bg} ${accessible ? 'cursor-pointer' : ''}"></div>`
+            }).join('');
+
+            if (step.type === 'learn') {
+                views.learn.classList.remove('hidden');
+                document.getElementById('lesson-content').innerHTML = step.content;
+                descEl.innerHTML = "";
+            } else {
+                descEl.innerHTML = step.desc;
+                const mode = step.mode;
+                views[mode].classList.remove('hidden');
+                
+                if (mode === 'add' || mode === 'sub') initWorkspace(step);
+                if (mode === 'mul') initMultiplication(step);
+                if (mode === 'div') initDivision(step);
+            }
+
+            // Transitions
+            board.className = "board-hidden flex-1 flex flex-col pt-[100px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full";
+            setTimeout(() => {
+                container.className = "instruction-container instr-header";
+                board.className = "board-visible flex-1 flex flex-col pt-[100px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full";
+            }, 2000);
+
+            if (window.LessonCoach) LessonCoach.set(step.coach, { accent: '#0891b2', badge: 'Decimal Sensei' });
+        }
+
+        // ==========================================
+        // ADDITION / SUBTRACTION LOGIC
+        // ==========================================
+        let draggedItem = null;
+        
+        function initWorkspace(step) {
+            const bank = document.getElementById('number-bank');
+            const grid = document.getElementById('column-grid');
+            const ansGrid = document.getElementById('answer-grid');
+            
+            // Setup draggable numbers
+            bank.innerHTML = '';
+            [step.num1, step.num2].forEach((n, i) => {
+                const el = document.createElement('div');
+                el.className = 'draggable-number';
+                el.textContent = n;
+                el.draggable = true;
+                el.dataset.val = n;
+                el.id = `drag-${i}`;
+                
+                el.addEventListener('dragstart', e => {
+                    draggedItem = el;
+                    el.classList.add('opacity-50');
+                    e.dataTransfer.setData('text/plain', n);
+                });
+                el.addEventListener('dragend', () => {
+                    el.classList.remove('opacity-50');
+                    draggedItem = null;
+                });
+                
+                // Touch events
+                el.addEventListener('touchstart', handleTouchStart, {passive: false});
+                el.addEventListener('touchmove', handleTouchMove, {passive: false});
+                el.addEventListener('touchend', handleTouchEnd);
+                
+                bank.appendChild(el);
+            });
+
+            // Setup Grid (6 columns wide for flexibility)
+            const COLS = 6;
+            const ROWS = 2;
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = `repeat(${COLS}, 44px)`;
+            
+            for(let r=0; r<ROWS; r++) {
+                for(let c=0; c<COLS; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'col-cell drop-zone';
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+                    
+                    cell.addEventListener('dragover', e => { e.preventDefault(); cell.style.background = '#ccfbf1'; });
+                    cell.addEventListener('dragleave', () => { cell.style.background = ''; });
+                    cell.addEventListener('drop', e => handleDrop(e, cell));
+                    
+                    grid.appendChild(cell);
+                }
+            }
+
+            // Answer Grid
+            ansGrid.innerHTML = '';
+            ansGrid.style.gridTemplateColumns = `repeat(${COLS}, 44px)`;
+            for(let c=0; c<COLS; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'col-cell';
+                const input = document.createElement('input');
+                input.className = 'answer-input';
+                input.maxLength = 1;
+                // Auto-tab logic
+                input.oninput = (e) => {
+                    if(e.target.value === '.') return; // Allow . but don't tab
+                    if(e.target.value) {
+                        const prev = ansGrid.children[c-1]?.querySelector('input');
+                        if(prev) prev.focus();
+                    }
+                };
+                input.onkeydown = (e) => {
+                   if(e.key === "ArrowLeft") ansGrid.children[c-1]?.querySelector('input')?.focus();
+                   if(e.key === "ArrowRight") ansGrid.children[c+1]?.querySelector('input')?.focus();
+                };
+                cell.appendChild(input);
+                ansGrid.appendChild(cell);
+            }
+
+            // Operator display
+            const opDisplay = document.createElement('div');
+            opDisplay.style.position = 'absolute';
+            opDisplay.style.left = '10px';
+            opDisplay.style.top = '50%';
+            opDisplay.style.fontSize = '2rem';
+            opDisplay.style.fontWeight = 'bold';
+            opDisplay.style.color = '#64748b';
+            opDisplay.textContent = step.op;
+            grid.parentElement.style.position = 'relative';
+            grid.parentElement.appendChild(opDisplay);
+            
+            // Bind Check
+            document.getElementById('workspace-check').onclick = () => checkWorkspace(step);
+        }
+
+        // Touch Logic adapted for grid
+        let touchClone = null;
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const target = e.target;
+            draggedItem = target;
+            touchClone = target.cloneNode(true);
+            touchClone.style.position = 'fixed';
+            touchClone.style.zIndex = 999;
+            touchClone.style.width = target.offsetWidth + 'px';
+            document.body.appendChild(touchClone);
+            updateTouch(e.touches[0]);
+        }
+        function handleTouchMove(e) {
+            e.preventDefault();
+            if(touchClone) updateTouch(e.touches[0]);
+        }
+        function updateTouch(t) {
+            touchClone.style.left = (t.clientX - 20) + 'px';
+            touchClone.style.top = (t.clientY - 20) + 'px';
+        }
+        function handleTouchEnd(e) {
+            if(touchClone) touchClone.remove();
+            const t = e.changedTouches[0];
+            const el = document.elementFromPoint(t.clientX, t.clientY);
+            if(el && el.classList.contains('drop-zone')) {
+                handleDrop(null, el);
+            }
+            draggedItem = null;
+        }
+
+        function handleDrop(e, cell) {
+            if(e) e.preventDefault();
+            cell.style.background = '';
+            
+            if(!draggedItem) return;
+            const val = draggedItem.dataset.val;
+            const row = parseInt(cell.dataset.r);
+            const col = parseInt(cell.dataset.c);
+            const grid = document.getElementById('column-grid');
+
+            // Align logic: We place the number so the decimal (or end) lands at the target cell
+            // This is "smart placement"
+            const chars = val.split('');
+            const dotIndex = chars.indexOf('.');
+            
+            // Find where to start drawing characters so the dot lands on 'col'
+            // If no dot, last char lands on 'col'
+            let startCol;
+            if(dotIndex !== -1) {
+                startCol = col - dotIndex;
+            } else {
+                startCol = col - (chars.length - 1);
+            }
+
+            // Render characters
+            chars.forEach((char, i) => {
+                const targetC = startCol + i;
+                if(targetC >= 0 && targetC < 6) {
+                    // Find cell at row, targetC
+                    const targetCell = grid.children[row * 6 + targetC];
+                    targetCell.textContent = char;
+                    targetCell.classList.add('filled');
+                    if(char === '.') targetCell.classList.add('decimal');
+                }
+            });
+            
+            playSound('pop');
+            draggedItem.classList.add('placed');
+        }
+
+        function resetWorkspace() {
+            const step = STEPS[STATE.step];
+            initWorkspace(step);
+        }
+
+        function checkWorkspace(step) {
+            // Harvest answer
+            const ansInputs = document.querySelectorAll('.answer-input');
+            let userStr = "";
+            ansInputs.forEach(inp => userStr += inp.value);
+            const userVal = parseFloat(userStr);
+            
+            // Validate
+            if(Math.abs(userVal - step.answer) < 0.001) {
+                playSound('success');
+                showToast('Correct!', true);
+                setTimeout(nextStep, 1500);
+            } else {
+                playSound('error');
+                showToast('Check your math!');
+                document.getElementById('answer-grid').classList.add('shake');
+                setTimeout(()=>document.getElementById('answer-grid').classList.remove('shake'), 300);
+            }
+        }
+
+        // ==========================================
+        // MULTIPLICATION LOGIC (GRID METHOD)
+        // ==========================================
+        function initMultiplication(step) {
+            // Phase 1: Conversion
+            document.getElementById('mul-step-1').innerHTML = 
+                `${step.num1} × ${step.num2} &nbsp;→&nbsp; <b>${step.whole1} × ${step.whole2}</b>`;
+            
+            // Setup Grid
+            const gridEl = document.getElementById('area-model');
+            const rows = step.grid.rows;
+            const cols = step.grid.cols;
+            
+            // Configure CSS Grid
+            // +1 for headers
+            gridEl.style.gridTemplateColumns = `60px repeat(${cols.length}, 1fr)`;
+            
+            let html = '<div class="area-cell area-corner">×</div>';
+            // Headers (Cols)
+            cols.forEach(c => html += `<div class="area-cell area-header">${c}</div>`);
+            
+            // Rows
+            rows.forEach((r, rIdx) => {
+                html += `<div class="area-cell area-header">${r}</div>`; // Row Header
+                cols.forEach((c, cIdx) => {
+                    html += `<div class="area-cell"><input class="area-input" data-expected="${r*c}" type="number"></div>`;
+                });
+            });
+            
+            gridEl.innerHTML = html;
+            
+            // Buttons state
+            document.getElementById('mul-check').textContent = "Check Grid";
+            document.getElementById('mul-check').onclick = () => checkGrid(step);
+            document.getElementById('mul-final-step').classList.add('hidden');
+        }
+
+        function checkGrid(step) {
+            if(STATE.mulPhase === 0) {
+                // Check grid cells
+                const inputs = document.querySelectorAll('.area-input');
+                let allCorrect = true;
+                inputs.forEach(inp => {
+                    if(parseInt(inp.value) !== parseInt(inp.dataset.expected)) {
+                        inp.style.backgroundColor = '#fee2e2';
+                        allCorrect = false;
+                    } else {
+                        inp.style.backgroundColor = '#dcfce7';
+                        inp.disabled = true;
+                    }
+                });
+                
+                if(allCorrect) {
+                    playSound('success');
+                    STATE.mulPhase = 1;
+                    document.getElementById('mul-final-step').classList.remove('hidden');
+                    
+                    // Calculate total
+                    const totalWhole = step.whole1 * step.whole2;
+                    document.getElementById('mul-step-final').innerHTML = 
+                        `Total: ${totalWhole} ÷ ${step.scale} = `;
+                    
+                    document.getElementById('mul-check').textContent = "Check Answer";
+                    document.getElementById('mul-final-input').focus();
+                } else {
+                    playSound('error');
+                    showToast("Check the grid values!");
+                }
+            } else {
+                // Check final answer
+                const val = parseFloat(document.getElementById('mul-final-input').value);
+                if(Math.abs(val - step.answer) < 0.001) {
+                    playSound('success');
+                    showToast('Perfect!', true);
+                    setTimeout(nextStep, 1500);
+                } else {
+                    playSound('error');
+                    showToast("Try dividing by " + step.scale);
+                }
+            }
+        }
+
+        // ==========================================
+        // DIVISION LOGIC (FRACTION METHOD)
+        // ==========================================
+        function initDivision(step) {
+            // Setup visual fraction
+            document.getElementById('div-frac-1').innerHTML = 
+                `<div class="frac-top">${step.top}</div><div class="frac-bottom">${step.bot}</div>`;
+            
+            document.getElementById('div-multiplier').textContent = step.mult;
+            
+            document.getElementById('div-whole-top').value = '';
+            document.getElementById('div-whole-bottom').value = '';
+            document.getElementById('div-final-ans').value = '';
+            
+            document.getElementById('div-check').onclick = () => checkDivision(step);
+        }
+
+        function checkDivision(step) {
+            const wTop = parseFloat(document.getElementById('div-whole-top').value);
+            const wBot = parseFloat(document.getElementById('div-whole-bottom').value);
+            const final = parseFloat(document.getElementById('div-final-ans').value);
+            
+            let correct = true;
+            
+            // Check whole numbers
+            if(wTop !== step.wTop) { document.getElementById('div-whole-top').style.borderColor = 'red'; correct = false; }
+            else document.getElementById('div-whole-top').style.borderColor = '#22c55e';
+            
+            if(wBot !== step.wBot) { document.getElementById('div-whole-bottom').style.borderColor = 'red'; correct = false; }
+            else document.getElementById('div-whole-bottom').style.borderColor = '#22c55e';
+            
+            // Check final if intermediates are good
+            if(correct) {
+                if(Math.abs(final - step.answer) < 0.001) {
+                    playSound('success');
+                    showToast("Fraction Master!", true);
+                    setTimeout(nextStep, 1500);
+                    return;
+                } else {
+                    // Maybe they just got the whole numbers right but not final?
+                    playSound('pop'); // Soft success
+                    showToast("Whole numbers correct! Now simplify.");
+                }
+            } else {
+                playSound('error');
+                showToast("Check your multiplication!");
+            }
+        }
+
+        // --- Navigation ---
+        function jumpToStep(i) {
+            if (i > STATE.maxStep) return;
+            STATE.step = i;
+            renderStep();
+        }
+
+        function nextStep() {
+            STATE.step++;
+            if (STATE.step >= STEPS.length) {
+                document.getElementById('final-screen').classList.remove('hidden');
+                playSound('success');
+            } else {
+                renderStep();
+            }
+        }
+
+        function showToast(msg, isSuccess=false) {
+            toast.textContent = msg;
+            toast.className = isSuccess ? 'active success' : 'active';
+            setTimeout(() => toast.className = '', 2000);
+        }
+
+        function completeLesson() {
+            if (window.Course) Course.completeLesson('num_decimal');
+            else window.location.href = '../index.html';
+        }
+
+        window.jumpToStep = jumpToStep;
+        window.nextStep = nextStep;
+        window.completeLesson = completeLesson;
+        window.resetWorkspace = resetWorkspace;
+
+        initLevel();
+    </script>
+</body>
+</html>

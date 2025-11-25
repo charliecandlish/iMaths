@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scaling Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: none;
+            overflow: hidden;
+            background-color: #f8fafc;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Exit Button */
+        #exit-btn {
+            position: absolute; top: 20px; left: 20px; z-index: 100;
+            width: 40px; height: 40px; border-radius: 50%;
+            background: white; border: 2px solid #e2e8f0;
+            color: #94a3b8; font-weight: 800; display: flex;
+            align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s;
+            text-decoration: none;
+        }
+        #exit-btn:hover { background: #f1f5f9; color: #ef4444; border-color: #fca5a5; }
+
+        /* Instruction Header */
+        .instruction-container {
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            position: absolute; width: 100%; padding: 0 20px; z-index: 60;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transform-origin: top center;
+        }
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #10b981; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.6rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        
+        .instr-header {
+            top: 0; height: 140px;
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+            border-bottom: 1px solid #e2e8f0;
+            padding-top: 12px; padding-bottom: 12px;
+        }
+        .instr-header h1 { font-size: 1rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; opacity: 1; }
+        .instr-header p { font-size: 1.2rem; color: #475569; max-width: 900px; text-align: center; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        .word-reveal { opacity: 0.1; filter: blur(4px); transition: opacity 0.3s ease, filter 0.3s ease; }
+        .word-reveal.visible { opacity: 1; filter: blur(0); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Game Board */
+        #game-board { transition: opacity 0.8s ease 0.2s, transform 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.2s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        /* The Lab (Cage) */
+        #lab-area {
+            background: white;
+            border-radius: 32px;
+            border: 4px solid #e2e8f0;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+            width: 100%; max-width: 800px;
+            min-height: 300px;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Building Visual */
+        .building {
+            width: 120px; background: linear-gradient(to bottom, #34d399, #059669);
+            border-radius: 12px 12px 0 0; transition: height 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+        }
+        .building::after {
+            content: ''; position: absolute; bottom: 10px; left: 10px; right: 10px; top: 10px;
+            background-image: radial-gradient(white 15%, transparent 16%);
+            background-size: 20px 20px; opacity: 0.3;
+        }
+
+        /* Controls */
+        .calc-input {
+            width: 140px; height: 70px; text-align: center;
+            border: 3px solid #e2e8f0; border-radius: 16px;
+            font-weight: 800; font-size: 2rem; outline: none; color: #334155;
+            transition: all 0.2s;
+        }
+        .calc-input:focus { border-color: #10b981; transform: scale(1.05); background: #ecfdf5; }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; height: 12px; border-radius: 6px; background: #e2e8f0; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 32px; height: 32px; border-radius: 50%; background: #10b981; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s; border: 4px solid white; }
+        input[type=range]::-webkit-slider-thumb:active { transform: scale(1.2); }
+
+        /* Modals */
+        #reflection-modal {
+            display: none; position: absolute; bottom: 0; left: 0; width: 100%;
+            height: auto; min-height: 45%;
+            background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(12px);
+            border-top: 4px solid #10b981; border-radius: 24px 24px 0 0;
+            padding: 32px 20px 50px 20px;
+            transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15);
+            flex-direction: column; align-items: center; gap: 20px;
+        }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+
+        body.reflection-active .instruction-container { transform: translateY(-10px) scale(0.9); opacity: 0.5; pointer-events: none; }
+        body.reflection-active #game-board { transform: translateY(-100px) scale(0.9); opacity: 0.8; pointer-events: none; }
+        
+        .btn-choice { flex: 1; min-width: 200px; padding: 1rem; background: white; border: 2px solid #e2e8f0; border-radius: 12px; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1.1rem; }
+        .btn-choice:hover { border-color: #34d399; background-color: #ecfdf5; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+        
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; text-align: center; width: max-content; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        .wiggle { animation: wiggle 0.4s ease-in-out; }
+        @keyframes wiggle { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        
+        #final-screen { display: none; position: absolute; inset: 0; background: white; z-index: 100; flex-direction: column; align-items: center; justify-content: center; text-align: center; animation: fadeIn 0.5s ease; }
+        #final-screen.active { display: flex; }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen">
+        <h1 class="text-4xl md:text-6xl font-extrabold text-emerald-500 mb-4">Scaling Mastered!</h1>
+        <p class="text-lg md:text-2xl text-slate-600 max-w-md mx-auto px-4">You can now scale anything up or down.</p>
+        <div class="flex gap-4 mt-12">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition-transform">Replay</button>
+            <button onclick="completeLesson()" class="bg-emerald-500 text-white px-10 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition-transform shadow-xl">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Reasoning Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+
+    <div id="toast">Incorrect. Logic reset.</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[150px] pb-4 px-4 h-full relative justify-center items-center gap-6">
+        
+        <div id="lab-area" class="shrink-0">
+            <!-- Dynamic Visual Area -->
+            <div id="visual-area" class="flex-1 flex flex-col items-center justify-center gap-8 p-8 min-h-[300px]">
+                <!-- Content Injected JS -->
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div id="controls" class="w-full flex flex-col items-center gap-6 shrink-0">
+            
+            <!-- Slider Controls -->
+            <div id="slider-controls" class="hidden w-full max-w-lg px-4 flex flex-col items-center gap-4">
+                <div class="w-full flex justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <span>Min</span>
+                    <span>Height</span>
+                    <span>Max</span>
+                </div>
+                <input type="range" id="scale-slider" min="50" max="200" value="100" step="10" class="w-full">
+                <div class="bg-white px-6 py-2 rounded-full shadow-sm border border-slate-200 text-lg font-bold text-slate-500">
+                    Current: <span id="height-val" class="text-emerald-600 font-black text-2xl">100</span>m
+                </div>
+            </div>
+
+            <!-- Input Controls -->
+            <div id="input-controls" class="hidden flex items-center gap-4">
+                <input type="number" id="user-input" class="calc-input" placeholder="?">
+                <button id="btn-check" class="bg-emerald-500 text-white px-8 py-4 rounded-2xl font-bold text-xl shadow-lg hover:scale-105 transition-transform">Check</button>
+            </div>
+
+            <!-- Choice Controls -->
+            <div id="choice-controls" class="hidden flex flex-wrap justify-center gap-3 w-full max-w-2xl"></div>
+
+            <button id="btn-next" class="hidden bg-slate-900 text-white px-12 py-4 rounded-full font-bold text-xl shadow-2xl transform hover:scale-105 hover:bg-slate-800 flex items-center gap-3 animate-bounce">
+                Continue <span class="text-2xl">→</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script>
+        const STATE = { step: 0, isComplete: false, audioCtx: null };
+        
+        const LEVELS = [
+            { 
+                title: "Visual Scaling", 
+                desc: "Scale Factor <b>1.5x</b>. <br>The original building is <b>100m</b> tall. Use the slider to set the new height.", 
+                type: "slider", 
+                base: 100, 
+                factor: 1.5, 
+                target: 150, 
+                reflection: { q: "Scale Factor 1.5 means...", options: [{text: "Multiply the original size by 1.5", correct: true}, {text: "Add 1.5 to the size", correct: false}, {text: "Divide by 1.5", correct: false}] } 
+            },
+            {
+                title: "Misconception Check",
+                desc: "A building is 10m tall. I want it <b>twice as big</b>. What calculation do I do?",
+                type: "choice",
+                options: ["10 × 2", "10 + 2", "10 ÷ 2"],
+                correct: 0,
+                reflection: { q: "Scaling is always about...", options: [{text: "Multiplying", correct: true}, {text: "Adding", correct: false}] }
+            },
+            { 
+                title: "Map Reading", 
+                desc: "Scale <b>1 : 500</b>. <br>The map line is <b>5cm</b> long. <br>How long is the real road in cm?", 
+                type: "input", 
+                target: 2500, 
+                calcDisplay: "5 × 500",
+                unit: "cm",
+                reflection: { q: "The real road is bigger than the map. So we...", options: [{text: "Multiply by the scale (500)", correct: true}, {text: "Divide by 500", correct: false}] } 
+            },
+            { 
+                title: "Unit Conversion", 
+                desc: "We found the road is <b>2500cm</b>. <br>Convert this to meters. (Hint: 100cm = 1m).", 
+                type: "input", 
+                target: 25, 
+                calcDisplay: "2500 ÷ 100",
+                unit: "m",
+                reflection: { q: "To go from cm to m (small unit to big unit), we...", options: [{text: "Divide by 100", correct: true}, {text: "Multiply by 100", correct: false}] } 
+            },
+            { 
+                title: "Model Making", 
+                desc: "Real car is <b>400cm</b> long. Model Scale is <b>1:20</b>. <br>How long is the model in cm?", 
+                type: "input", 
+                target: 20, 
+                calcDisplay: "400 ÷ 20",
+                unit: "cm",
+                reflection: { q: "The model is smaller than real life. So we...", options: [{text: "Divide by the scale (20)", correct: true}, {text: "Multiply by 20", correct: false}] } 
+            }
+        ];
+
+        function initAudio() { if (!STATE.audioCtx) STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) {
+            if (!STATE.audioCtx) return;
+            const ctx = STATE.audioCtx; const t = ctx.currentTime;
+            const osc = ctx.createOscillator(); const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            if (type === 'pop') { osc.frequency.setValueAtTime(600, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1); osc.start(t); osc.stop(t + 0.1); }
+            else if (type === 'success') { osc.frequency.setValueAtTime(440, t); osc.frequency.exponentialRampToValueAtTime(880, t + 0.2); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5); osc.start(t); osc.stop(t + 0.5); }
+            else { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); gain.gain.linearRampToValueAtTime(0, t + 0.2); osc.start(t); osc.stop(t + 0.2); }
+        }
+
+        const els = {
+            visual: document.getElementById('visual-area'),
+            sliderControls: document.getElementById('slider-controls'),
+            inputControls: document.getElementById('input-controls'),
+            choiceControls: document.getElementById('choice-controls'),
+            slider: document.getElementById('scale-slider'),
+            heightVal: document.getElementById('height-val'),
+            userInput: document.getElementById('user-input'),
+            btnCheck: document.getElementById('btn-check'),
+            cage: document.getElementById('lab-area'),
+            title: document.getElementById('level-title'),
+            desc: document.getElementById('level-desc'),
+            instrContainer: document.getElementById('instruction-container'),
+            gameBoard: document.getElementById('game-board'),
+            btnNext: document.getElementById('btn-next'),
+            finalScreen: document.getElementById('final-screen'),
+            reflectionModal: document.getElementById('reflection-modal'),
+            reflQuestion: document.getElementById('refl-question'),
+            reflOptions: document.getElementById('refl-options'),
+            toast: document.getElementById('toast')
+        };
+
+        // Text Animation
+        async function animateSequence(titleHtml, descHtml) {
+            els.instrContainer.className = 'instruction-container instr-focus';
+            els.gameBoard.className = 'board-hidden flex-1 flex flex-col pt-[150px] pb-4 px-4 h-full relative justify-center items-center gap-6';
+            els.title.innerHTML = titleHtml;
+            els.desc.innerHTML = descHtml;
+
+            const wrapWords = (node) => {
+                if (node.nodeType === 3) {
+                    const text = node.nodeValue;
+                    if (!text.trim()) return;
+                    const words = text.split(/(\s+)/);
+                    const fragment = document.createDocumentFragment();
+                    words.forEach(word => {
+                        if (word.trim().length > 0) {
+                            const span = document.createElement('span');
+                            span.className = 'word-reveal';
+                            span.textContent = word;
+                            fragment.appendChild(span);
+                        } else fragment.appendChild(document.createTextNode(word));
+                    });
+                    node.parentNode.replaceChild(fragment, node);
+                } else if (node.nodeType === 1) Array.from(node.childNodes).forEach(wrapWords);
+            };
+            
+            wrapWords(els.desc);
+            await new Promise(r => setTimeout(r, 600));
+
+            const words = els.desc.querySelectorAll('.word-reveal');
+            initAudio();
+            for (let i = 0; i < words.length; i++) {
+                const isShort = words[i].textContent.length <= 3;
+                const delay = isShort ? 10 : 30;
+                words[i].classList.add('visible');
+                await new Promise(r => setTimeout(r, delay));
+            }
+
+            await new Promise(r => setTimeout(r, 800));
+            els.instrContainer.classList.remove('instr-focus');
+            els.instrContainer.classList.add('instr-header');
+            els.gameBoard.classList.remove('board-hidden');
+            els.gameBoard.classList.add('board-visible');
+        }
+
+        function loadLevel(idx) {
+            STATE.step = idx; STATE.isComplete = false;
+            const level = LEVELS[idx];
+            
+            els.btnNext.classList.add('hidden');
+            els.sliderControls.classList.add('hidden');
+            els.inputControls.classList.add('hidden');
+            els.choiceControls.classList.add('hidden');
+            els.visual.innerHTML = '';
+
+            if (level.type === 'slider') {
+                els.sliderControls.classList.remove('hidden');
+                els.slider.value = level.base;
+                els.heightVal.textContent = level.base;
+                
+                // Create Building
+                const b = document.createElement('div');
+                b.className = 'building';
+                b.style.height = level.base + 'px';
+                els.visual.appendChild(b);
+                
+                els.slider.oninput = (e) => {
+                    b.style.height = e.target.value + 'px';
+                    els.heightVal.textContent = e.target.value;
+                    if (parseInt(e.target.value) === level.target) {
+                        setTimeout(handleSuccess, 500);
+                    }
+                };
+            } else if (level.type === 'choice') {
+                els.choiceControls.classList.remove('hidden');
+                els.choiceControls.innerHTML = '';
+                level.options.forEach((opt, i) => {
+                    const b = document.createElement('button');
+                    b.className = "btn-choice";
+                    b.textContent = opt;
+                    b.onclick = () => handleChoice(i);
+                    els.choiceControls.appendChild(b);
+                });
+            } else {
+                els.inputControls.classList.remove('hidden');
+                els.userInput.value = '';
+                
+                if (level.calcDisplay) {
+                    const [a, op, b] = level.calcDisplay.split(' ');
+                    els.visual.innerHTML = `
+                        <div class="flex items-center gap-6 text-5xl font-black text-slate-700 bg-slate-50 p-8 rounded-3xl border-2 border-slate-100">
+                            <span class="text-emerald-500">${a}</span>
+                            <span class="text-slate-300">${op}</span>
+                            <span class="text-slate-800">${b}</span>
+                            <span class="text-slate-300">=</span>
+                            <span class="text-emerald-600">?</span>
+                        </div>
+                    `;
+                } else {
+                    els.visual.innerHTML = `<div class="text-8xl font-black text-emerald-500 mb-4">?</div>`;
+                }
+
+                els.btnCheck.onclick = () => {
+                    if (parseInt(els.userInput.value) === level.target) {
+                        handleSuccess();
+                    } else {
+                        playSound('error');
+                        els.userInput.classList.add('wiggle', 'border-red-400', 'bg-red-50');
+                        setTimeout(() => els.userInput.classList.remove('wiggle', 'border-red-400', 'bg-red-50'), 500);
+                    }
+                };
+            }
+
+            updateDots();
+            const titleHtml = `<span class="text-emerald-500 text-sm block mb-1 uppercase tracking-widest font-bold">Project ${idx + 1}</span>${level.title}`;
+            animateSequence(titleHtml, level.desc);
+        }
+
+        function handleChoice(idx) {
+            const step = LEVELS[STATE.step];
+            if (idx === step.correct) {
+                const btns = els.choiceControls.querySelectorAll('button');
+                btns[idx].classList.add('selected');
+                handleSuccess();
+            } else {
+                playSound('error');
+                const btns = els.choiceControls.querySelectorAll('button');
+                btns[idx].classList.add('wrong', 'wiggle');
+                setTimeout(() => resetLevel(), 1000);
+            }
+        }
+
+        function handleSuccess() {
+            if (STATE.isComplete) return;
+            playSound('success');
+            const step = LEVELS[STATE.step];
+            if (step.reflection) triggerReflection(step.reflection);
+            else completeLevel();
+        }
+
+        function triggerReflection(refl) {
+            els.reflQuestion.textContent = refl.q;
+            els.reflOptions.innerHTML = '';
+            const shuffled = [...refl.options].sort(() => Math.random() - 0.5);
+            
+            shuffled.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "btn-choice";
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    if (opt.correct) {
+                        btn.classList.add('selected');
+                        setTimeout(() => { els.reflectionModal.classList.remove('active'); completeLevel(); }, 600);
+                    } else {
+                        playSound('error');
+                        btn.classList.add('wrong', 'wiggle');
+                        setTimeout(() => {
+                            els.reflectionModal.classList.remove('active');
+                            document.body.classList.remove('reflection-active');
+                            resetLevel();
+                        }, 1000);
+                    }
+                };
+                els.reflOptions.appendChild(btn);
+            });
+            
+            document.body.classList.add('reflection-active');
+            els.reflectionModal.classList.add('active');
+        }
+
+        function resetLevel() {
+            els.toast.classList.add('active');
+            setTimeout(() => els.toast.classList.remove('active'), 2000);
+            loadLevel(STATE.step);
+        }
+
+        function completeLevel() {
+            STATE.isComplete = true;
+            document.body.classList.remove('reflection-active');
+            els.sliderControls.classList.add('hidden');
+            els.inputControls.classList.add('hidden');
+            els.choiceControls.classList.add('hidden');
+            els.btnNext.classList.remove('hidden');
+        }
+
+        function completeLesson() {
+            if (window.Course) Course.completeLesson('rp_scale');
+            else window.location.href = '../index.html';
+        }
+
+        els.btnNext.onclick = () => {
+            if (STATE.step < LEVELS.length - 1) loadLevel(STATE.step + 1);
+            else { playSound('success'); els.finalScreen.classList.add('active'); }
+        };
+
+        function updateDots() {
+            const dotContainer = document.getElementById('progress-dots');
+            dotContainer.innerHTML = LEVELS.map((_, i) => 
+                `<div class="w-3 h-3 rounded-full transition-colors ${i === STATE.step ? 'bg-emerald-500 scale-125' : i < STATE.step ? 'bg-emerald-300' : 'bg-slate-300'}"></div>`
+            ).join('');
+        }
+
+        loadLevel(0);
+    </script>
+</body>
+</html>

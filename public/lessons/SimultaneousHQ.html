@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simultaneous HQ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #475569; border-color: #94a3b8; }
+
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #334155; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header { top: 0; height: 130px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 10px 0 12px; }
+        .instr-header h1 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+        .instr-header p { font-size: 1rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        @media (max-width: 640px) {
+            .instr-header { height: 110px; padding-top: 5px; }
+            .instr-header h1 { font-size: 0.8rem; margin-bottom: 0.1rem; }
+            .instr-header p { font-size: 0.9rem; -webkit-line-clamp: 2; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #game-board { transition: opacity 0.8s, transform 0.8s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #334155; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+        
+        body.reflection-active .instruction-container { opacity: 0; pointer-events: none; }
+        body.reflection-active #game-board { transform: translateY(-20vh) scale(0.8); transform-origin: center top; z-index: 40; }
+        body.reflection-active #controls { opacity: 0; pointer-events: none; }
+
+        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
+        .btn-choice:hover { border-color: #94a3b8; background-color: #f8fafc; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+        /* Simultaneous HQ Specifics */
+        .eq-stack { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-bottom: 30px; }
+        .equation-card {
+            background: white; border: 2px solid #e2e8f0; padding: 15px 30px; border-radius: 12px;
+            font-size: 1.5rem; font-weight: 900; color: #1e293b; width: 100%; max-width: 350px; text-align: center;
+            position: relative;
+        }
+        .equation-card::before {
+            content: attr(data-label); position: absolute; left: -40px; top: 50%; transform: translateY(-50%);
+            font-size: 0.8rem; font-weight: 700; color: #94a3b8;
+        }
+        
+        .result-line { width: 100%; max-width: 350px; height: 4px; background: #cbd5e1; margin: 10px 0; border-radius: 2px; }
+        
+        .elimination-display {
+            font-size: 2rem; font-weight: 900; color: #0f172a; opacity: 0; transform: translateY(10px); transition: all 0.5s;
+        }
+        .elimination-display.visible { opacity: 1; transform: translateY(0); }
+
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center text-center z-50">
+        <h1 class="text-4xl md:text-6xl font-black text-slate-700 mb-4">Mission Clear!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You eliminated the variables.</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-slate-700 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Tactical Debrief</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+    
+    <div id="toast">Incorrect strategy.</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full">
+        <div class="w-full max-w-4xl flex flex-col items-center gap-8 flex-1 justify-center min-h-0">
+            
+            <div class="eq-stack" id="eq-stack">
+                <!-- Injected -->
+            </div>
+
+            <div class="elimination-display" id="elim-result">
+                <!-- Result -->
+            </div>
+
+            <div id="action-buttons" class="flex gap-4 w-full max-w-md justify-center">
+                <!-- Add / Subtract buttons -->
+            </div>
+
+        </div>
+
+        <div id="controls" class="w-full flex flex-col items-center gap-4 mb-8 max-w-md shrink-0 min-h-[60px] justify-end pb-safe">
+        </div>
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, audioCtx: null };
+        const COACH_ACCENT = '#334155';
+        const COACH_BADGE = 'Special Ops';
+
+        const STEPS = [
+            {
+                title: "Target Acquisition",
+                desc: "We have two equations. Look at the <b>y</b> terms.<br>Eq 1: 2x + y = 10<br>Eq 2: x - y = 2",
+                eq1: "2x + y = 10",
+                eq2: "x - y = 2",
+                type: "op",
+                options: ["Add (+)", "Subtract (-)"],
+                correct: 0,
+                coach: "+y and -y are opposites. Adding the equations will eliminate y.",
+                result: "3x = 12",
+                reflection: { q: "If signs are different (+ and -), we...", options: [{text: "ADD the equations", correct: true}, {text: "SUBTRACT the equations", correct: false}] }
+            },
+            {
+                title: "Same Signs",
+                desc: "Eq 1: 3x + 2y = 16<br>Eq 2: x + 2y = 10<br>Look at the 2y terms.",
+                eq1: "3x + 2y = 16",
+                eq2: "x + 2y = 10",
+                type: "op",
+                options: ["Add (+)", "Subtract (-)"],
+                correct: 1,
+                coach: "+2y and +2y are the same. Subtracting them (2y - 2y) makes zero.",
+                result: "2x = 6",
+                reflection: { q: "Same Signs...", options: [{text: "Subtract", correct: true}, {text: "Add", correct: false}] }
+            },
+            {
+                title: "Solve for X",
+                desc: "We found <b>2x = 6</b>. What is x?",
+                eq1: "3x + 2y = 16",
+                eq2: "x + 2y = 10",
+                result: "2x = 6",
+                type: "solve",
+                options: ["x = 3", "x = 2", "x = 4"],
+                correct: 0,
+                coach: "Divide by 2. x = 3.",
+                reflection: { q: "After finding x, what do we do?", options: [{text: "Substitute back to find y", correct: true}, {text: "Stop", correct: false}] }
+            },
+            {
+                title: "Final Value",
+                desc: "If x = 3, use <b>x + 2y = 10</b> to find y.",
+                eq1: "x = 3",
+                eq2: "3 + 2y = 10",
+                type: "solve",
+                options: ["y = 3.5", "y = 7", "y = 3.5"], // Wait, 2y=7 -> y=3.5. Let's use easier numbers.
+                // Let's fix the step logic. 3 + 2y = 10 -> 2y = 7. y = 3.5.
+                // Re-write options
+                options: ["y = 3.5", "y = 4", "y = 2"],
+                correct: 0,
+                coach: "Subtract 3 from 10 to get 2y = 7. Divide by 2.",
+                reflection: { q: "Simultaneous equations give us...", options: [{text: "Coordinates where lines cross", correct: true}, {text: "Parallel lines", correct: false}] }
+            }
+        ];
+
+        // --- Audio System ---
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) { 
+            if (!STATE.audioCtx) return; 
+            const ctx = STATE.audioCtx; 
+            const t = ctx.currentTime; 
+            const osc = ctx.createOscillator(); 
+            const gain = ctx.createGain(); 
+            osc.connect(gain); 
+            gain.connect(ctx.destination); 
+            if (type === 'pop') { 
+                osc.frequency.setValueAtTime(600, t); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); 
+                osc.start(t); osc.stop(t+0.1); 
+            } else if (type === 'success') { 
+                osc.frequency.setValueAtTime(440, t); 
+                osc.frequency.exponentialRampToValueAtTime(880, t+0.2); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); 
+                osc.start(t); osc.stop(t+0.5); 
+            } else { 
+                osc.type = 'triangle'; 
+                osc.frequency.setValueAtTime(150, t); 
+                gain.gain.linearRampToValueAtTime(0, t+0.2); 
+                osc.start(t); osc.stop(t+0.2); 
+            } 
+        }
+
+        // --- Core Logic ---
+        const container = document.getElementById('instruction-container');
+        const board = document.getElementById('game-board');
+        const titleEl = document.getElementById('level-title');
+        const descEl = document.getElementById('level-desc');
+        const dotsContainer = document.getElementById('progress-dots');
+        const toast = document.getElementById('toast');
+        const reflectionModal = document.getElementById('reflection-modal');
+        
+        const eqStack = document.getElementById('eq-stack');
+        const elimResult = document.getElementById('elim-result');
+        const actionButtons = document.getElementById('action-buttons');
+
+        function initLevel() {
+            dotsContainer.innerHTML = STEPS.map((_, i) => `<div class="w-2 h-2 rounded-full transition-colors ${i === 0 ? 'bg-slate-500' : 'bg-slate-200'}"></div>`).join('');
+            renderStep();
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        function renderStep() {
+            const step = STEPS[STATE.step];
+            
+            container.className = "instruction-container instr-focus";
+            titleEl.textContent = step.title;
+            descEl.innerHTML = step.desc;
+            board.className = "board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+            
+            // Setup Visuals
+            eqStack.innerHTML = '';
+            if (step.eq1) {
+                const c1 = document.createElement('div');
+                c1.className = 'equation-card';
+                c1.textContent = step.eq1;
+                c1.dataset.label = "Eq 1";
+                eqStack.appendChild(c1);
+            }
+            if (step.eq2) {
+                const c2 = document.createElement('div');
+                c2.className = 'equation-card';
+                c2.textContent = step.eq2;
+                c2.dataset.label = "Eq 2";
+                eqStack.appendChild(c2);
+            }
+            
+            if (step.type === 'op') {
+                const line = document.createElement('div');
+                line.className = 'result-line';
+                eqStack.appendChild(line);
+            }
+
+            elimResult.className = 'elimination-display';
+            elimResult.textContent = step.result || "";
+
+            // Setup Buttons
+            actionButtons.innerHTML = '';
+            step.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(idx === step.correct, btn);
+                actionButtons.appendChild(btn);
+            });
+
+            // Update Dots
+            Array.from(dotsContainer.children).forEach((dot, i) => {
+                dot.className = `w-2 h-2 rounded-full transition-colors ${i <= STATE.step ? 'bg-slate-500' : 'bg-slate-200'}`;
+            });
+
+            if (window.LessonCoach) {
+                LessonCoach.set(step.coach, { accent: COACH_ACCENT, badge: COACH_BADGE });
+            }
+
+            // Auto-transition
+            setTimeout(() => {
+                container.className = "instruction-container instr-header";
+                board.className = "board-visible flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+            }, 2500);
+        }
+
+        function checkAnswer(isCorrect, btn) {
+            if (isCorrect) {
+                btn.classList.add('selected');
+                playSound('success');
+                
+                const step = STEPS[STATE.step];
+                if (step.type === 'op') {
+                    elimResult.classList.add('visible');
+                    setTimeout(showReflection, 1500);
+                } else {
+                    setTimeout(showReflection, 1000);
+                }
+            } else {
+                btn.classList.add('wrong');
+                playSound('error');
+                showToast("Mission Failed. Retry.");
+                btn.classList.add('wiggle');
+            }
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 2000);
+        }
+
+        function showReflection() {
+            const step = STEPS[STATE.step];
+            if (!step.reflection) {
+                nextStep();
+                return;
+            }
+
+            document.body.classList.add('reflection-active');
+            reflectionModal.classList.add('active');
+            
+            const qEl = document.getElementById('refl-question');
+            const optEl = document.getElementById('refl-options');
+            
+            qEl.textContent = step.reflection.q;
+            optEl.innerHTML = '';
+            
+            step.reflection.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    if (opt.correct) {
+                        btn.classList.add('selected');
+                        playSound('success');
+                        setTimeout(() => {
+                            reflectionModal.classList.remove('active');
+                            document.body.classList.remove('reflection-active');
+                            nextStep();
+                        }, 1000);
+                    } else {
+                        btn.classList.add('wrong');
+                        playSound('error');
+                        btn.classList.add('wiggle');
+                    }
+                };
+                optEl.appendChild(btn);
+            });
+        }
+
+        function nextStep() {
+            STATE.step++;
+            if (STATE.step >= STEPS.length) {
+                document.getElementById('final-screen').classList.remove('hidden');
+                document.getElementById('final-screen').classList.add('flex');
+                playSound('success');
+            } else {
+                renderStep();
+            }
+        }
+
+        function completeLesson() {
+            if (window.Course) {
+                Course.completeLesson('alg_simul');
+            } else {
+                window.location.href = '../index.html';
+            }
+        }
+
+        initLevel();
+
+    </script>
+</body>
+</html>

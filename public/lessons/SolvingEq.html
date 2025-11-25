@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Solving Equations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: manipulation;
+            overflow: hidden;
+            background-color: #f8fafc;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Exit Button */
+        #exit-btn {
+            position: absolute; top: 20px; left: 20px; z-index: 100;
+            width: 40px; height: 40px; border-radius: 50%;
+            background: white; border: 2px solid #e2e8f0;
+            color: #94a3b8; font-weight: 800; display: flex;
+            align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s;
+            text-decoration: none;
+        }
+        #exit-btn:hover { background: #f1f5f9; color: #ef4444; border-color: #fca5a5; }
+
+        /* Instruction Header */
+        .instruction-container {
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            position: absolute; width: 100%; padding: 0 20px; z-index: 60;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transform-origin: top center;
+        }
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #2563eb; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.5rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        
+        .instr-header {
+            top: 0; height: 115px;
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+            border-bottom: 1px solid #e2e8f0;
+            padding-top: 10px; padding-bottom: 12px;
+        }
+        .instr-header h1 { font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem; opacity: 1; }
+        .instr-header p { font-size: 0.95rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        .word-reveal { opacity: 0.1; filter: blur(4px); transition: opacity 0.3s ease, filter 0.3s ease; }
+        .word-reveal.visible { opacity: 1; filter: blur(0); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #reflection-modal {
+            display: none; position: absolute; bottom: 0; left: 0; width: 100%;
+            height: auto; min-height: 45%;
+            background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(12px);
+            border-top: 4px solid #3b82f6; border-radius: 24px 24px 0 0;
+            padding: 32px 20px 50px 20px;
+            transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15);
+            flex-direction: column; align-items: center; gap: 20px;
+        }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+
+        /* Reflection Active State */
+        body.reflection-active .instruction-container {
+            transform: translateY(-10px) scale(0.85);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        body.reflection-active #game-board {
+            transform: translateY(-50px) scale(0.9);
+            opacity: 0.5;
+            z-index: 40;
+        }
+        body.reflection-active #controls {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .wiggle { animation: wiggle 0.4s ease-in-out; }
+        @keyframes wiggle { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        
+        .btn-choice {
+            flex: 1; min-width: 140px; padding: 1rem;
+            background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem;
+            text-align: center; font-weight: 700; color: #475569;
+            transition: all 0.2s; font-size: 1.1rem;
+        }
+        .btn-choice:hover { border-color: #60a5fa; background-color: #eff6ff; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+        #toast {
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+            background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px;
+            font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+            text-align: center; width: max-content; max-width: 90%;
+        }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        #final-screen {
+            display: none; position: absolute; inset: 0; background: white; z-index: 100;
+            flex-direction: column; align-items: center; justify-content: center; text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+        #final-screen.active { display: flex; }
+
+        #game-board { transition: opacity 0.8s ease 0.2s, transform 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.2s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        /* Visual Styles */
+        .fruit-icon { font-size: 3rem; display: inline-block; margin: 0.2rem; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .balance-scale { position: relative; width: 300px; height: 10px; background: #475569; margin: 50px auto; border-radius: 5px; }
+        .scale-pan { position: absolute; top: -40px; width: 80px; height: 40px; border-bottom: 4px solid #475569; border-left: 4px solid #475569; border-right: 4px solid #475569; border-radius: 0 0 20px 20px; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 5px; flex-wrap: wrap; }
+        .pan-left { left: 0; } .pan-right { right: 0; }
+        .scale-base { position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 40px solid #475569; }
+        .block-x { width: 30px; height: 30px; background: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; margin: 1px; }
+        .block-1 { width: 20px; height: 20px; background: #e2e8f0; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 10px; border-radius: 50%; margin: 1px; }
+        .area-model { display: flex; border: 2px solid #3b82f6; border-radius: 8px; overflow: hidden; }
+        .area-part { padding: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; color: #1e40af; }
+        .area-label-top { text-align: center; font-weight: bold; color: #64748b; margin-bottom: 4px; }
+        .area-label-side { display: flex; align-items: center; font-weight: bold; color: #64748b; margin-right: 8px; }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen">
+        <h1 class="text-4xl md:text-6xl font-extrabold text-blue-600 mb-4">Module Complete!</h1>
+        <p class="text-lg md:text-2xl text-slate-600 max-w-md mx-auto px-4">You have mastered this topic.</p>
+        <div class="flex gap-4 mt-12">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition-transform">Play Again</button>
+            <button onclick="completeLesson()" class="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition-transform shadow-xl">Next Module</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Reasoning Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+
+    <div id="toast">Incorrect. Logic reset.</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4 mb-8"></p>
+        <button id="start-level-btn" class="hidden bg-white text-blue-600 px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition-transform animate-bounce">Start Level</button>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[125px] md:pt-[155px] pb-4 px-4 h-full relative justify-center items-center">
+        <div id="visual-stage" class="w-full flex justify-center items-center mb-8 min-h-[150px]"></div>
+        <div id="content-area" class="w-full max-w-2xl flex items-center justify-center mb-8"></div>
+
+        <div id="controls" class="w-full flex flex-col items-center gap-4 md:gap-6 min-h-[100px] md:min-h-[140px] mt-4 shrink-0">
+            <div id="choice-controls" class="hidden flex gap-3 md:gap-4 flex-wrap justify-center w-full px-2 md:px-4 max-w-3xl"></div>
+            <button id="btn-next" class="hidden bg-slate-900 text-white px-8 py-3 md:px-12 md:py-4 rounded-full font-bold text-lg md:text-xl shadow-2xl transform hover:scale-105 hover:bg-slate-800 flex items-center gap-3 animate-bounce">
+                Continue <span class="text-xl md:text-2xl">→</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, isComplete: false, audioCtx: null, currentStep: null };
+        const COACH_ACCENT = '#2563eb';
+        const COACH_BADGE = 'Algebra Coach';
+
+        const STEPS = [
+            {"title": "The Balance", "desc": "Imagine an equation is a balance scale.<br><br>The equals sign means both sides weigh <b>exactly the same</b>.<br><br>To keep it balanced, whatever you do to one side, you MUST do to the other.", "type": "info", "visual": {"type": "scale", "left": ["x", "1", "1"], "right": ["1", "1", "1", "1", "1"]}, "infoHtml": "x + 2 = 5", "coach": "Whatever you do to one side of an equation, copy it on the other to keep the balance."},
+            {"title": "Find X", "desc": "We want to find the weight of <b>x</b>.<br><br>On the left, we have x and two 1s.<br>If we remove the two 1s from the left, we must remove two 1s from the right to stay balanced.", "type": "choice", "visual": {"type": "scale", "left": ["x"], "right": ["1", "1", "1"]}, "question": "So x = ?", "options": ["2", "3", "5"], "correct": 1, "coach": "Remove equal amounts from both sides until only x is left on one side."},
+            {"title": "Inverse Operations", "desc": "We use <b>Inverse Operations</b> (opposites) to get x alone.<br><br>To get rid of <b>+ 4</b>, we do the opposite: <b>subtract 4</b> from BOTH sides.", "type": "choice", "question": "x + 4 = 10", "options": ["x = 14", "x = 6", "x = 40"], "correct": 1, "coach": "Use the opposite operation to cancel terms next to x."},
+            {"title": "Subtraction Balance", "desc": "What is the opposite of minus?<br><br>If x has 3 subtracted from it (x - 3), we must <b>add 3</b> to both sides to cancel it out.", "type": "choice", "question": "x - 3 = 7", "options": ["x = 4", "x = 10", "x = 21"], "correct": 1, "coach": "Undo subtraction by adding the same amount to both sides."},
+            {"title": "Multiplication", "desc": "<b>2x</b> means 2 multiplied by x.<br><br>The opposite of multiplying by 2 is <b>dividing by 2</b>.<br><br>Divide both sides by 2.", "type": "choice", "visual": {"type": "scale", "left": ["x", "x"], "right": ["1", "1", "1", "1", "1", "1"]}, "question": "2x = 6, so x = ?", "options": ["3", "12", "4"], "correct": 0, "coach": "When x is multiplied, divide both sides by the same number to free it."},
+            {"title": "Two Step", "desc": "Sometimes we have two things to remove.<br><br>Step 1: Remove the + or - number first.<br>Step 2: Divide by the number in front of x.", "type": "choice", "question": "2x + 1 = 11", "options": ["x = 5", "x = 6", "x = 10"], "correct": 0, "coach": "Strip away the constant first (minus 1), then divide by 2 to finish isolating x."}
+        ];
+
+        function initAudio() {
+            if (!STATE.audioCtx) {
+                STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume();
+        }
+
+        function playSound(type) {
+            if (!STATE.audioCtx) return;
+            const ctx = STATE.audioCtx;
+            const t = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            if (type === 'pop') {
+                osc.frequency.setValueAtTime(600, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                osc.start(t); osc.stop(t + 0.1);
+            } else if (type === 'success') {
+                osc.frequency.setValueAtTime(440, t);
+                osc.frequency.exponentialRampToValueAtTime(880, t + 0.2);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                osc.start(t); osc.stop(t + 0.5);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, t);
+                gain.gain.linearRampToValueAtTime(0, t + 0.2);
+                osc.start(t); osc.stop(t + 0.2);
+            }
+        }
+
+        const els = {
+            visual: document.getElementById('visual-stage'),
+            content: document.getElementById('content-area'),
+            instrContainer: document.getElementById('instruction-container'),
+            gameBoard: document.getElementById('game-board'),
+            title: document.getElementById('level-title'),
+            desc: document.getElementById('level-desc'),
+            startBtn: document.getElementById('start-level-btn'),
+            choiceControls: document.getElementById('choice-controls'),
+            btnNext: document.getElementById('btn-next'),
+            finalScreen: document.getElementById('final-screen'),
+            reflectionModal: document.getElementById('reflection-modal'),
+            reflQuestion: document.getElementById('refl-question'),
+            reflOptions: document.getElementById('refl-options'),
+            toast: document.getElementById('toast')
+        };
+
+        async function animateSequence(titleHtml, descHtml) {
+            els.instrContainer.className = 'instruction-container instr-focus';
+            els.gameBoard.className = 'board-hidden flex-1 flex flex-col pt-[125px] md:pt-[155px] pb-4 px-4 h-full relative justify-center items-center';
+            els.title.innerHTML = titleHtml;
+            els.desc.innerHTML = descHtml;
+            els.startBtn.classList.add('hidden'); // Hide initially
+            
+            // Word-by-word reveal like ratios
+            const words = descHtml.replace(/<[^>]*>/g, ' ').split(' ').filter(w => w);
+            els.desc.innerHTML = words.map(w => `<span class="opacity-0 transition-opacity duration-300 inline-block mr-1">${w}</span>`).join('');
+            
+            await new Promise(r => setTimeout(r, 500));
+            
+            const spans = els.desc.querySelectorAll('span');
+            initAudio();
+            for(let i=0; i<spans.length; i++) { 
+                spans[i].classList.remove('opacity-0');
+                await new Promise(r => setTimeout(r, 50)); 
+            }
+            
+            // Show Button instead of auto-transition
+            els.startBtn.classList.remove('hidden');
+            
+            return new Promise(resolve => {
+                els.startBtn.onclick = () => {
+                    els.startBtn.classList.add('hidden');
+                    els.instrContainer.classList.remove('instr-focus');
+                    els.instrContainer.classList.add('instr-header');
+                    els.gameBoard.classList.remove('board-hidden');
+                    els.gameBoard.classList.add('board-visible');
+                    resolve();
+                };
+            });
+        }
+
+        function updateCoach(step) {
+            if (window.LessonCoach && typeof LessonCoach.set === 'function') {
+                LessonCoach.set(step.coach || "Whatever you do to one side, mirror on the other. That’s the solve strategy.", {
+                    accent: COACH_ACCENT,
+                    badge: COACH_BADGE
+                });
+            }
+        }
+
+        function renderVisual(data) {
+            if(data.type === 'fruits') {
+                els.visual.innerHTML = `<div class="flex gap-4 text-4xl justify-center flex-wrap">${data.items.map(i => `<div class="fruit-icon">${i}</div>`).join('')}</div>`;
+            } else if (data.type === 'scale') {
+                const leftContent = data.left.map(x => x==='x' ? '<div class="block-x">x</div>' : '<div class="block-1">1</div>').join('');
+                const rightContent = data.right.map(x => x==='x' ? '<div class="block-x">x</div>' : '<div class="block-1">1</div>').join('');
+                els.visual.innerHTML = `
+                    <div class="balance-scale">
+                        <div class="scale-pan pan-left">${leftContent}</div>
+                        <div class="scale-pan pan-right">${rightContent}</div>
+                        <div class="scale-base"></div>
+                    </div>
+                `;
+            } else if (data.type === 'area') {
+                els.visual.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="area-label-side">${data.h}</div>
+                        <div>
+                            <div class="area-label-top flex justify-around w-full"><span>${data.w1}</span><span>${data.w2}</span></div>
+                            <div class="area-model">
+                                <div class="area-part bg-blue-100" style="width: 100px">${data.p1}</div>
+                                <div class="area-part bg-green-100" style="width: 100px">${data.p2}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function loadLevel(idx) {
+            STATE.step = idx; STATE.isComplete = false;
+            const step = STEPS[idx];
+            STATE.currentStep = step;
+            els.btnNext.classList.add('hidden');
+            els.choiceControls.classList.add('hidden');
+            els.visual.innerHTML = '';
+            els.content.innerHTML = '';
+
+            if (step.type === 'info') setupInfo(step);
+            else if (step.type === 'choice') setupChoice(step);
+
+            updateDots();
+            const titleHtml = `<span class="text-blue-600 text-lg block mb-1 uppercase tracking-widest">Level ${idx + 1}</span>${step.title}`;
+            animateSequence(titleHtml, step.desc);
+            updateCoach(step);
+        }
+
+        function setupInfo(step) {
+            if(step.visual) renderVisual(step.visual);
+            els.content.innerHTML = step.infoHtml ? `<div class="bg-white rounded-3xl border border-slate-100 shadow-xl p-6 md:p-10 max-w-2xl text-center space-y-4 text-2xl font-bold text-slate-700">${step.infoHtml}</div>` : '';
+            els.choiceControls.classList.remove('hidden');
+            els.choiceControls.innerHTML = '';
+            const btn = document.createElement('button');
+            btn.className = "bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-slate-800";
+            btn.textContent = "I get it!";
+            btn.onclick = () => handleSuccess();
+            els.choiceControls.appendChild(btn);
+        }
+
+        function setupChoice(step) {
+            if(step.visual) renderVisual(step.visual);
+            els.choiceControls.classList.remove('hidden');
+            els.choiceControls.innerHTML = '';
+            els.content.innerHTML = step.question ? `<div class="bg-white rounded-3xl border border-slate-100 p-8 text-4xl font-black text-slate-800 shadow-lg text-center">${step.question}</div>` : '';
+            step.options.forEach((opt, i) => {
+                const b = document.createElement('button');
+                b.className = "btn-choice";
+                b.innerHTML = opt;
+                b.onclick = () => handleChoice(i);
+                els.choiceControls.appendChild(b);
+            });
+        }
+
+        function handleChoice(idx) {
+            const step = STATE.currentStep;
+            if (idx === step.correct) handleSuccess();
+            else {
+                playSound('error');
+                const btns = els.choiceControls.querySelectorAll('button');
+                btns[idx].classList.add('wiggle', 'wrong');
+                setTimeout(() => btns[idx].classList.remove('wiggle', 'wrong'), 500);
+            }
+        }
+
+        function handleSuccess() {
+            if (STATE.isComplete) return;
+            playSound('pop');
+            const step = STATE.currentStep;
+            if (step.reflection) triggerReflection(step.reflection);
+            else completeLevel();
+        }
+
+        function triggerReflection(refl) {
+            els.reflQuestion.textContent = refl.q;
+            els.reflOptions.innerHTML = '';
+            const shuffled = [...refl.options].sort(() => Math.random() - 0.5);
+            shuffled.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "btn-choice";
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    if (opt.correct) {
+                        btn.classList.add('selected');
+                        setTimeout(() => { els.reflectionModal.classList.remove('active'); completeLevel(); }, 600);
+                    } else {
+                        playSound('error');
+                        btn.classList.add('wrong', 'wiggle');
+                        setTimeout(() => {
+                            resetStep();
+                        }, 1000);
+                    }
+                };
+                els.reflOptions.appendChild(btn);
+            });
+            document.body.classList.add('reflection-active');
+            els.reflectionModal.classList.add('active');
+        }
+
+        function resetStep() {
+            els.reflectionModal.classList.remove('active');
+            document.body.classList.remove('reflection-active');
+            els.toast.textContent = "Incorrect. Resetting...";
+            els.toast.classList.add('active');
+            setTimeout(() => els.toast.classList.remove('active'), 2000);
+            loadLevel(STATE.step);
+        }
+
+        function completeLevel() {
+            STATE.isComplete = true;
+            playSound('success');
+            els.reflectionModal.classList.remove('active');
+            document.body.classList.remove('reflection-active');
+            els.choiceControls.classList.add('hidden');
+            els.btnNext.classList.remove('hidden');
+        }
+
+        function completeLesson() {
+            Course.completeLesson('alg_solve');
+        }
+
+        function updateDots() {
+            const dotContainer = document.getElementById('progress-dots');
+            dotContainer.innerHTML = STEPS.map((_, i) => `<div class="w-3 h-3 rounded-full transition-colors ${i === STATE.step ? 'bg-blue-600 scale-125' : i < STATE.step ? 'bg-blue-300' : 'bg-slate-300'}"></div>`).join('');
+        }
+
+        els.btnNext.onclick = () => {
+            if (STATE.step < STEPS.length - 1) loadLevel(STATE.step + 1);
+            else { playSound('success'); els.finalScreen.classList.add('active'); }
+        };
+
+        loadLevel(0);
+    </script>
+</body>
+</html>

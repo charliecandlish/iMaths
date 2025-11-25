@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Geometry Checkpoint</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/quiz.css">
+    <style>
+        /* --- Theme: Geometry (Violet) --- */
+        [data-quiz-theme="geometry"] {
+            --quiz-primary: #8b5cf6;
+            --quiz-primary-light: #ede9fe;
+            --quiz-accent: #7c3aed;
+            --quiz-text: #4c1d95;
+        }
+        
+        /* Fix: ensure pointer-events are correct for interactions */
+        .option-card { cursor: pointer; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans" data-quiz-theme="geometry">
+
+    <!-- Header -->
+    <div class="fixed top-0 left-0 w-full bg-white/90 backdrop-blur-md border-b border-slate-200 z-50 px-4 py-3 flex items-center justify-between">
+        <a href="../index.html" class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors">
+            <i class="fa-solid fa-xmark text-lg font-bold">✕</i>
+        </a>
+        <div class="flex flex-col items-center">
+            <h1 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Geometry Checkpoint</h1>
+            <div class="flex gap-1 mt-1" id="progress-dots">
+                <!-- Dots injected by JS -->
+            </div>
+        </div>
+        <div class="w-10"></div> <!-- Spacer -->
+    </div>
+
+    <!-- Quiz Container -->
+    <div class="min-h-screen flex flex-col items-center justify-center px-4 pt-20 pb-10" id="quiz-container">
+        
+        <!-- Question Card -->
+        <div class="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 mb-6 relative overflow-hidden transition-all" id="question-card">
+            <div class="absolute top-0 left-0 w-full h-2 bg-slate-100">
+                <div class="h-full bg-violet-500 transition-all duration-500" id="timer-bar" style="width: 100%"></div>
+            </div>
+            
+            <div class="mb-6">
+                <span class="inline-block px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-extrabold uppercase tracking-wider mb-3">Question <span id="q-num">1</span></span>
+                <h2 class="text-2xl font-black text-slate-800 leading-tight" id="q-text">
+                    Loading...
+                </h2>
+            </div>
+
+            <!-- Image/Visual Area -->
+            <div id="q-visual" class="mb-6 rounded-xl overflow-hidden hidden">
+                <!-- Injected visual -->
+            </div>
+
+            <!-- Options -->
+            <div class="grid grid-cols-1 gap-3" id="options-grid">
+                <!-- Options injected by JS -->
+            </div>
+        </div>
+
+        <!-- Feedback Area -->
+        <div id="feedback-area" class="fixed bottom-0 left-0 w-full bg-white p-6 rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 z-50 border-t-4 border-transparent">
+            <div class="max-w-md mx-auto">
+                <div class="flex items-center gap-4 mb-4">
+                    <div id="feedback-icon" class="w-12 h-12 rounded-full flex items-center justify-center text-2xl shrink-0"></div>
+                    <div>
+                        <h3 class="text-lg font-black" id="feedback-title"></h3>
+                        <p class="text-slate-600 text-sm leading-snug" id="feedback-text"></p>
+                    </div>
+                </div>
+                <button id="next-btn" class="w-full py-4 rounded-xl font-bold text-white text-lg shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all">
+                    Continue
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Final Screen -->
+    <div id="results-screen" class="hidden min-h-screen flex flex-col items-center justify-center px-6 bg-white text-center">
+        <div class="w-24 h-24 bg-violet-100 rounded-full flex items-center justify-center text-4xl mb-6 text-violet-600 animate-bounce">
+            🏆
+        </div>
+        <h1 class="text-4xl font-black text-slate-800 mb-2">Quiz Complete!</h1>
+        <p class="text-slate-500 mb-8">You scored <span id="final-score" class="text-violet-600 font-bold text-2xl">0</span>%</p>
+        
+        <div class="grid grid-cols-2 gap-4 w-full max-w-xs mb-8">
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div class="text-xs text-slate-400 font-bold uppercase">Correct</div>
+                <div class="text-2xl font-black text-emerald-500" id="count-correct">0</div>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div class="text-xs text-slate-400 font-bold uppercase">Time</div>
+                <div class="text-2xl font-black text-violet-500" id="time-taken">0m</div>
+            </div>
+        </div>
+
+        <button onclick="location.href='../index.html'" class="w-full max-w-xs bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-slate-800 transition-all">
+            Return Home
+        </button>
+    </div>
+
+    <script src="https://kit.fontawesome.com/93f0796c74.js" crossorigin="anonymous"></script>
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/quiz.js"></script>
+    <script>
+        // Geometry Quiz Config
+        const quizConfig = {
+            title: "Geometry Checkpoint",
+            theme: "geometry", // violet
+            moduleId: "geo_quiz",
+            questions: [
+                {
+                    q: "Angles on a straight line add up to...",
+                    options: ["90°", "180°", "270°", "360°"],
+                    correct: 1,
+                    hint: "A straight line is half a full turn."
+                },
+                {
+                    q: "What is the sum of angles in a triangle?",
+                    options: ["180°", "360°", "90°", "540°"],
+                    correct: 0,
+                    hint: "It's the same as a straight line."
+                },
+                {
+                    q: "Calculate the Area: Rectangle 5cm by 8cm.",
+                    options: ["13 cm²", "40 cm²", "26 cm²", "40 cm"],
+                    correct: 1,
+                    hint: "Area = Length × Width."
+                },
+                {
+                    q: "What is the formula for the area of a triangle?",
+                    options: ["Base × Height", "(Base × Height) ÷ 2", "Base + Height", "Half Base + Height"],
+                    correct: 1,
+                    hint: "A triangle is half a rectangle."
+                },
+                {
+                    q: "Pythagoras Theorem: If a=3 and b=4, what is c (hypotenuse)?",
+                    options: ["5", "7", "25", "12"],
+                    correct: 0,
+                    hint: "3² + 4² = c²."
+                },
+                {
+                    q: "A translation vector (-3, 2) moves a shape...",
+                    options: ["3 Right, 2 Up", "3 Left, 2 Up", "3 Down, 2 Right", "3 Left, 2 Down"],
+                    correct: 1,
+                    hint: "Top number is horizontal (- is Left). Bottom is vertical (+ is Up)."
+                },
+                {
+                    q: "Surface Area of a cube with side length 2cm?",
+                    options: ["8 cm²", "24 cm²", "4 cm²", "12 cm²"],
+                    correct: 1,
+                    hint: "One face is 2×2=4. A cube has 6 faces."
+                },
+                {
+                    q: "Which of these is NOT a transformation?",
+                    options: ["Rotation", "Reflection", "Tessellation", "Enlargement"],
+                    correct: 2,
+                    hint: "Tessellation is a pattern, not a single movement type."
+                }
+            ]
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            QuizSystem.init(quizConfig);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Fraction Fortress Checkpoint</title>
+    <link rel="stylesheet" href="../assets/css/quiz.css">
+</head>
+<body data-quiz-theme="fraction">
+    <a class="quiz-exit" href="../index.html">↺</a>
+    <main id="quiz-app" class="quiz-app"></main>
+
+    <script src="../assets/js/course.js"></script>
+    <script>
+        window.quizConfig = {
+            key: 'quiz_frac',
+            theme: 'fraction',
+            title: 'Fraction Fortress',
+            subtitle: 'Checkpoint',
+            description: 'Prove you can move between notation, equivalence, and the four operations.',
+            skillsLabel: 'Fraction Skills',
+            resultsCopy: 'Keep practising with the Foundry, Wall, and Operation Overload if any of these felt rough.',
+            questions: [
+                {
+                    prompt: 'Which fraction represents 3 parts out of 5?',
+                    options: ['3/5', '5/3', '3 : 5', '5 : 3'],
+                    answer: 0,
+                    hint: 'Top number counts the parts you have.',
+                    detail: 'Numerator = parts you have (3). Denominator = total equal parts (5).',
+                    skill: 'Notation',
+                    tag: 'Basics'
+                },
+                {
+                    prompt: 'Simplify 4/8. What is the equivalent simplest form?',
+                    options: ['1/2', '2/4', '1/4', '4/2'],
+                    answer: 0,
+                    hint: 'Divide both numbers by the same value.',
+                    detail: 'Divide top and bottom by 4 to get 1/2.',
+                    skill: 'Simplifying',
+                    tag: 'Foundry'
+                },
+                {
+                    prompt: 'Which fraction is equivalent to 1/3?',
+                    options: ['3/9', '1/6', '3/1', '2/5'],
+                    answer: 0,
+                    hint: 'Multiply both numerator and denominator by the same value.',
+                    detail: '1×3 = 3 and 3×3 = 9. So 3/9 is equivalent.',
+                    skill: 'Equivalent Fractions',
+                    tag: 'Equalizer'
+                },
+                {
+                    prompt: '1/5 + 2/5 = ?',
+                    options: ['3/5', '3/10', '2/5', '1/10'],
+                    answer: 0,
+                    hint: 'Same denominators mean you add the numerators.',
+                    detail: 'Denominator stays at 5. Add tops: 1+2 = 3. So 3/5.',
+                    skill: 'Addition',
+                    tag: 'Operation'
+                },
+                {
+                    prompt: 'To add 1/2 + 1/4, what must we do first?',
+                    options: ['Change 1/2 to 2/4', 'Add 1+1', 'Flip the second fraction', 'Multiply them'],
+                    answer: 0,
+                    hint: 'Find a common denominator.',
+                    detail: 'Turn 1/2 into 2/4 so both fractions have denominator 4.',
+                    skill: 'Common Denominator',
+                    tag: 'Strategy'
+                },
+                {
+                    prompt: 'Calculate 1/2 × 1/3',
+                    options: ['1/6', '1/5', '2/3', '5/6'],
+                    answer: 0,
+                    hint: 'Multiply tops together and bottoms together.',
+                    detail: '1×1 = 1, 2×3 = 6, so 1/6.',
+                    skill: 'Multiplication',
+                    tag: 'Operation'
+                },
+                {
+                    prompt: 'What is the rule for dividing fractions?',
+                    options: ['Keep, Change, Flip', 'Add, Subtract, Divide', 'Flip the first one', 'Cross multiply only'],
+                    answer: 0,
+                    hint: 'Keep the first fraction, change the sign, flip the second fraction.',
+                    detail: 'KCF: Keep the first fraction, Change ÷ to ×, Flip the second fraction.',
+                    skill: 'Division',
+                    tag: 'Operation'
+                }
+            ]
+        };
+    </script>
+    <script src="../assets/js/quiz.js" defer></script>
+</body>
+</html>

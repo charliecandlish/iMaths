@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Proportion Checkpoint</title>
+    <link rel="stylesheet" href="../assets/css/quiz.css">
+</head>
+<body data-quiz-theme="ratio">
+    <a class="quiz-exit" href="../index.html">↺</a>
+    <main id="quiz-app" class="quiz-app"></main>
+
+    <script src="../assets/js/course.js"></script>
+    <script>
+        window.quizConfig = {
+            key: 'rp_quiz',
+            theme: 'ratio', // Blue theme
+            title: 'Ratio Navigator',
+            subtitle: 'Proportion Checkpoint',
+            description: 'Test your skills on sharing, unitary method, percentages, and compound measures.',
+            skillsLabel: 'Core Skills',
+            resultsCopy: 'Review your insights below, then try again to improve your score.',
+            questions: [
+                {
+                    prompt: 'Simplify the ratio 15 : 25.',
+                    options: ['3 : 5', '5 : 3', '1 : 2', '3 : 25'],
+                    answer: 0,
+                    hint: 'Divide both sides by their highest common factor.',
+                    detail: 'Both divide by 5. 15÷5=3, 25÷5=5.',
+                    skill: 'Simplifying',
+                    tag: 'Basics'
+                },
+                {
+                    prompt: 'Share £60 in the ratio 2 : 3.',
+                    options: ['£20 : £40', '£24 : £36', '£30 : £30', '£12 : £48'],
+                    answer: 1,
+                    hint: 'Add parts (2+3=5). Divide total by 5. Multiply back.',
+                    detail: '60 ÷ 5 = 12. 2×12 = 24, 3×12 = 36.',
+                    skill: 'Sharing',
+                    tag: 'Ratio'
+                },
+                {
+                    prompt: 'If 5 pens cost £2.00, how much do 7 pens cost?',
+                    options: ['£2.50', '£3.50', '£2.80', '£14.00'],
+                    answer: 2,
+                    hint: 'Find the cost of 1 pen first.',
+                    detail: '1 pen = £2.00 ÷ 5 = 40p. 7 pens = 40p × 7 = £2.80.',
+                    skill: 'Unitary Method',
+                    tag: 'Proportion'
+                },
+                {
+                    prompt: 'Increase 80 by 15%.',
+                    options: ['95', '92', '68', '120'],
+                    answer: 1,
+                    hint: '10% is 8. 5% is 4.',
+                    detail: '15% = 8 + 4 = 12. 80 + 12 = 92.',
+                    skill: 'Percentages',
+                    tag: 'Increase'
+                },
+                {
+                    prompt: 'A car travels 150 miles in 3 hours. What is the speed?',
+                    options: ['50 mph', '45 mph', '450 mph', '30 mph'],
+                    answer: 0,
+                    hint: 'Speed = Distance ÷ Time.',
+                    detail: '150 ÷ 3 = 50.',
+                    skill: 'Compound Measures',
+                    tag: 'Speed'
+                },
+                {
+                    prompt: 'A map scale is 1 : 1000. The map distance is 4 cm. What is the real distance in metres?',
+                    options: ['4000 m', '400 m', '40 m', '4 m'],
+                    answer: 2,
+                    hint: 'Convert cm to m by dividing by 100.',
+                    detail: '4 × 1000 = 4000 cm. 4000 ÷ 100 = 40 m.',
+                    skill: 'Maps',
+                    tag: 'Scale'
+                }
+            ]
+        };
+    </script>
+    <script src="../assets/js/quiz.js" defer></script>
+</body>
+</html>

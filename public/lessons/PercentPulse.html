@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Percent Pulse</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #ef4444; border-color: #fca5a5; }
+
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #65a30d; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header { top: 0; height: 130px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 10px 0 12px; }
+        .instr-header h1 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+        .instr-header p { font-size: 1rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        @media (max-width: 640px) {
+            .instr-header { height: 110px; padding-top: 5px; }
+            .instr-header h1 { font-size: 0.8rem; margin-bottom: 0.1rem; }
+            .instr-header p { font-size: 0.9rem; -webkit-line-clamp: 2; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #game-board { transition: opacity 0.8s, transform 0.8s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #65a30d; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+        
+        body.reflection-active .instruction-container { opacity: 0; pointer-events: none; }
+        body.reflection-active #game-board { transform: translateY(-20vh) scale(0.8); transform-origin: center top; z-index: 40; }
+        body.reflection-active #controls { opacity: 0; pointer-events: none; }
+
+        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
+        .btn-choice:hover { border-color: #a3e635; background-color: #f7fee7; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+        /* Percent Pulse Specifics */
+        .dial { -webkit-appearance: none; width: 100%; height: 8px; background: #e2e8f0; border-radius: 99px; outline: none; margin: 20px 0; }
+        .dial::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; border-radius: 50%; background: #65a30d; cursor: pointer; border: 4px solid white; box-shadow: 0 4px 10px rgba(101, 163, 13, 0.3); transition: transform 0.1s; }
+        .dial::-webkit-slider-thumb:hover { transform: scale(1.1); }
+
+        .pulse-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); width: 100%; max-width: 800px; }
+        .stat-card { background: white; border-radius: 20px; border: 2px solid #e2e8f0; padding: 20px; text-align: center; transition: all 0.2s; }
+        .stat-card h4 { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; margin-bottom: 8px; }
+        .stat-card p { font-size: 1.8rem; font-weight: 900; color: #3f6212; }
+
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center text-center z-50">
+        <h1 class="text-4xl md:text-6xl font-black text-lime-600 mb-4">Pulse Complete!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You have mastered conversions.</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-lime-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-lime-100 text-lime-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+    
+    <div id="toast">Target Missed. Adjust Dial.</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full">
+        <div class="w-full max-w-4xl flex flex-col items-center gap-8 flex-1 justify-center min-h-0">
+            
+            <div class="w-full max-w-2xl bg-white p-6 rounded-3xl border-2 border-lime-100 shadow-sm text-center">
+                <p class="text-xs font-bold text-lime-600 uppercase tracking-widest mb-2">Target</p>
+                <p class="text-2xl md:text-3xl font-bold text-slate-800" id="percent-prompt">...</p>
+            </div>
+
+            <input id="percent-slider" type="range" min="0" max="100" value="0" step="0.1" class="dial">
+
+            <div class="pulse-grid">
+                <div class="stat-card">
+                    <h4>Percent</h4>
+                    <p id="percent-display">0%</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Decimal</h4>
+                    <p id="decimal-display">0.00</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Fraction ( /100 )</h4>
+                    <p id="fraction-display">0 / 100</p>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="controls" class="w-full flex flex-col items-center gap-4 mb-8 max-w-md shrink-0 min-h-[60px] justify-end pb-safe">
+            <button id="check-btn" class="w-full bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:scale-105 hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                Lock In <span class="text-xl">→</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, audioCtx: null };
+        const COACH_ACCENT = '#65a30d';
+        const COACH_BADGE = 'Percent Coach';
+
+        const STEPS = [
+            {
+                title: "Percent Basics",
+                desc: "Percent means 'per hundred'. <br>Set the dial to <b>45%</b> (0.45).",
+                prompt: "Set to 45%",
+                target: 45,
+                tolerance: 0,
+                coach: "Watch the fraction display update as you move the dial.",
+                reflection: { q: "Percent literally translates to...", options: [{text: "Out of 100", correct: true}, {text: "Out of 10", correct: false}] }
+            },
+            {
+                title: "Decimal Link",
+                desc: "Show <b>12.5%</b>. <br>This is equal to the decimal 0.125.",
+                prompt: "Set to 12.5%",
+                target: 12.5,
+                tolerance: 0.5,
+                coach: "It's half of 25%. Check the decimal box.",
+                reflection: { q: "To turn a percentage into a decimal, we...", options: [{text: "Divide by 100", correct: true}, {text: "Multiply by 100", correct: false}] }
+            },
+            {
+                title: "Three Quarters",
+                desc: "Shade <b>three quarters</b> of the dial. <br>Think about quarters of 100.",
+                prompt: "Set to 3/4 (75%)",
+                target: 75,
+                tolerance: 0,
+                coach: "Divide 100 by 4, then multiply by 3.",
+                reflection: { q: "What is 75% as a simplified fraction?", options: [{text: "3 / 4", correct: true}, {text: "75 / 100", correct: false}] }
+            },
+            {
+                title: "Fifth Force",
+                desc: "Convert <b>1/5</b> to a percentage. <br>How many times does 5 fit into 100?",
+                prompt: "Convert 1/5",
+                target: 20,
+                tolerance: 0,
+                coach: "100 ÷ 5 = ?. That's your answer.",
+                reflection: { q: "To convert a fraction to %, we make the bottom number...", options: [{text: "100", correct: true}, {text: "10", correct: false}] }
+            },
+            {
+                title: "Fraction Conversion",
+                desc: "Represent <b>6/25</b> as a percentage. <br>Scale it up to be out of 100.",
+                prompt: "Convert 6/25",
+                target: 24,
+                tolerance: 0,
+                coach: "Multiply 25 by 4 to get 100. Do the same to the top (6).",
+                reflection: { q: "To compare fractions easily, we can...", options: [{text: "Convert them to percentages", correct: true}, {text: "Guess based on numbers", correct: false}] }
+            },
+            {
+                title: "Decimal Dash",
+                desc: "Set the dial to represent <b>0.8</b>.",
+                prompt: "Show 0.8",
+                target: 80,
+                tolerance: 0,
+                coach: "0.8 is the same as 0.80. How many hundredths is that?",
+                reflection: { q: "0.8 is equal to...", options: [{text: "80%", correct: true}, {text: "8%", correct: false}] }
+            },
+            {
+                title: "Percentage Decrease",
+                desc: "Show a <b>17%</b> value. <br>If we decrease by 17%, we take this amount away.",
+                prompt: "Identify 17%",
+                target: 17,
+                tolerance: 0,
+                coach: "It is less than 20%. Look for the number 17.",
+                reflection: { q: "If we decrease a whole (100%) by 17%, what is left?", options: [{text: "83%", correct: true}, {text: "17%", correct: false}] }
+            },
+            {
+                title: "Tiny Percents",
+                desc: "Mark <b>3.2%</b>. <br>This is equal to the decimal 0.032.",
+                prompt: "Set to 3.2%",
+                target: 3.2,
+                tolerance: 0.2,
+                coach: "Be careful. It's a very small slice.",
+                reflection: { q: "Is 3.2% bigger than 0.3?", options: [{text: "No (0.3 is 30%)", correct: true}, {text: "Yes", correct: false}] }
+            },
+            {
+                title: "Twentieth Time",
+                desc: "Convert <b>3/20</b> to a percentage.",
+                prompt: "Convert 3/20",
+                target: 15,
+                tolerance: 0,
+                coach: "20 goes into 100 five times. So multiply the top by 5.",
+                reflection: { q: "Percent of a number means...", options: [{text: "Fraction of that number", correct: true}, {text: "Adding to that number", correct: false}] }
+            },
+            {
+                title: "The Eighths",
+                desc: "Set a <b>62.5%</b> completion bar. <br>This is 5/8.",
+                prompt: "Set to 62.5%",
+                target: 62.5,
+                tolerance: 0.5,
+                coach: "It's a bit more than half (50%).",
+                reflection: { q: "62.5% as a decimal is...", options: [{text: "0.625", correct: true}, {text: "6.25", correct: false}] }
+            }
+        ];
+
+        // --- Audio System ---
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) { 
+            if (!STATE.audioCtx) return; 
+            const ctx = STATE.audioCtx; 
+            const t = ctx.currentTime; 
+            const osc = ctx.createOscillator(); 
+            const gain = ctx.createGain(); 
+            osc.connect(gain); 
+            gain.connect(ctx.destination); 
+            if (type === 'pop') { 
+                osc.frequency.setValueAtTime(600, t); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); 
+                osc.start(t); osc.stop(t+0.1); 
+            } else if (type === 'success') { 
+                osc.frequency.setValueAtTime(440, t); 
+                osc.frequency.exponentialRampToValueAtTime(880, t+0.2); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); 
+                osc.start(t); osc.stop(t+0.5); 
+            } else { 
+                osc.type = 'triangle'; 
+                osc.frequency.setValueAtTime(150, t); 
+                gain.gain.linearRampToValueAtTime(0, t+0.2); 
+                osc.start(t); osc.stop(t+0.2); 
+            } 
+        }
+
+        // --- Core Logic ---
+        const container = document.getElementById('instruction-container');
+        const board = document.getElementById('game-board');
+        const titleEl = document.getElementById('level-title');
+        const descEl = document.getElementById('level-desc');
+        const dotsContainer = document.getElementById('progress-dots');
+        const checkBtn = document.getElementById('check-btn');
+        const toast = document.getElementById('toast');
+        const reflectionModal = document.getElementById('reflection-modal');
+        
+        const slider = document.getElementById('percent-slider');
+        const percentDisplay = document.getElementById('percent-display');
+        const decimalDisplay = document.getElementById('decimal-display');
+        const fracDisplay = document.getElementById('fraction-display');
+        const promptDisplay = document.getElementById('percent-prompt');
+
+        function initLevel() {
+            dotsContainer.innerHTML = STEPS.map((_, i) => `<div class="w-2 h-2 rounded-full transition-colors ${i === 0 ? 'bg-lime-500' : 'bg-slate-200'}"></div>`).join('');
+            renderStep();
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        function formatPercent(val) {
+            return (val % 1 === 0) ? val.toFixed(0) : val.toFixed(1);
+        }
+
+        function updateDisplays(val) {
+            const num = parseFloat(val);
+            percentDisplay.textContent = `${formatPercent(num)}%`;
+            decimalDisplay.textContent = (num / 100).toFixed(3);
+            fracDisplay.textContent = `${formatPercent(num)} / 100`;
+        }
+
+        slider.addEventListener('input', () => {
+            updateDisplays(slider.value);
+            // Optional: Throttle pop sound
+        });
+
+        function renderStep() {
+            const step = STEPS[STATE.step];
+            
+            container.className = "instruction-container instr-focus";
+            titleEl.textContent = step.title;
+            descEl.innerHTML = step.desc;
+            board.className = "board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+            
+            // Reset
+            slider.value = 0;
+            updateDisplays(0);
+            promptDisplay.textContent = step.prompt;
+
+            // Update Dots
+            Array.from(dotsContainer.children).forEach((dot, i) => {
+                dot.className = `w-2 h-2 rounded-full transition-colors ${i <= STATE.step ? 'bg-lime-500' : 'bg-slate-200'}`;
+            });
+
+            if (window.LessonCoach) {
+                LessonCoach.set(step.coach, { accent: COACH_ACCENT, badge: COACH_BADGE });
+            }
+
+            // Auto-transition
+            setTimeout(() => {
+                container.className = "instruction-container instr-header";
+                board.className = "board-visible flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+            }, 2500);
+        }
+
+        checkBtn.onclick = () => {
+            const step = STEPS[STATE.step];
+            const current = parseFloat(slider.value);
+            const diff = Math.abs(current - step.target);
+            const tolerance = step.tolerance || 0;
+
+            if (diff <= tolerance) {
+                playSound('success');
+                showReflection();
+            } else {
+                playSound('error');
+                showToast(`Aim for ${step.target}%`);
+                board.classList.add('shake-screen');
+                setTimeout(() => board.classList.remove('shake-screen'), 500);
+            }
+        };
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 2000);
+        }
+
+        function showReflection() {
+            const step = STEPS[STATE.step];
+            if (!step.reflection) {
+                nextStep();
+                return;
+            }
+
+            document.body.classList.add('reflection-active');
+            reflectionModal.classList.add('active');
+            
+            const qEl = document.getElementById('refl-question');
+            const optEl = document.getElementById('refl-options');
+            
+            qEl.textContent = step.reflection.q;
+            optEl.innerHTML = '';
+            
+            step.reflection.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    if (opt.correct) {
+                        btn.classList.add('selected');
+                        playSound('success');
+                        setTimeout(() => {
+                            reflectionModal.classList.remove('active');
+                            document.body.classList.remove('reflection-active');
+                            nextStep();
+                        }, 1000);
+                    } else {
+                        btn.classList.add('wrong');
+                        playSound('error');
+                        btn.classList.add('wiggle');
+                    }
+                };
+                optEl.appendChild(btn);
+            });
+        }
+
+        function nextStep() {
+            STATE.step++;
+            if (STATE.step >= STEPS.length) {
+                document.getElementById('final-screen').classList.remove('hidden');
+                document.getElementById('final-screen').classList.add('flex');
+                playSound('success');
+            } else {
+                renderStep();
+            }
+        }
+
+        function completeLesson() {
+            if (window.Course) {
+                Course.completeLesson('num_percent');
+            } else {
+                window.location.href = '../index.html';
+            }
+        }
+
+        initLevel();
+
+    </script>
+</body>
+</html>

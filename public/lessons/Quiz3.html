@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Ratio Boss Battle</title>
+    <link rel="stylesheet" href="../assets/css/quiz.css">
+</head>
+<body data-quiz-theme="boss">
+    <a class="quiz-exit" href="../index.html">↺</a>
+    <main id="quiz-app" class="quiz-app"></main>
+
+    <script src="../assets/js/course.js"></script>
+    <script>
+        window.quizConfig = {
+            key: 'quiz3',
+            theme: 'boss',
+            title: 'Final Ratio Boss Battle',
+            subtitle: 'Checkpoint 03',
+            description: 'Multi-step problems that combine everything from simplifying to inverse proportion.',
+            skillsLabel: 'Advanced Ratio',
+            resultsCopy: 'Scan for the questions that tripped you up and revisit the matching missions before advancing.',
+            questions: [
+                {
+                    prompt: 'Simplify 28 : 42',
+                    options: ['2 : 3', '4 : 7', '14 : 21', '1 : 1.5'],
+                    answer: 0,
+                    hint: 'What number goes into both 28 and 42?',
+                    detail: 'Divide both numbers by 14. 28÷14 = 2 and 42÷14 = 3.',
+                    skill: 'Simplifying',
+                    tag: 'HCF'
+                },
+                {
+                    prompt: '£360 is shared in the ratio 5 : 4 : 3. How much does the smallest share receive?',
+                    options: ['£90', '£120', '£108', '£60'],
+                    answer: 0,
+                    hint: 'Add the parts (5+4+3) and find the value of one part.',
+                    detail: '12 parts in total. £360 ÷ 12 = £30 per part. Smallest share is 3 parts, 3×30 = £90.',
+                    skill: 'Three-way sharing',
+                    tag: 'Splitter'
+                },
+                {
+                    prompt: 'Blue : White = 7 : 9. White has 36 more than Blue. How many are in White?',
+                    options: ['126', '162', '198', '108'],
+                    answer: 1,
+                    hint: 'Difference between 9 parts and 7 parts equals 2 parts (which is 36).',
+                    detail: '2 parts = 36 ⇒ 1 part = 18. White has 9 parts, so 9×18 = 162.',
+                    skill: 'Difference method',
+                    tag: 'Detective'
+                },
+                {
+                    prompt: 'A map scale is 1 : 25 000. A road measures 6 cm on the map. How long is it in kilometres?',
+                    options: ['1.5 km', '15 km', '0.15 km', '6 km'],
+                    answer: 0,
+                    hint: 'Multiply the map distance by 25 000 to get centimetres, then convert.',
+                    detail: '6 × 25 000 = 150 000 cm. That equals 1.5 km.',
+                    skill: 'Direct proportion',
+                    tag: 'Scale City'
+                },
+                {
+                    prompt: 'Juice : Water = 2 : 5. If the total liquid is 49 cups, how many cups are water?',
+                    options: ['35', '14', '30', '21'],
+                    answer: 0,
+                    hint: 'Total parts = 7. Divide 49 by 7 to find 1 part.',
+                    detail: '49 ÷ 7 = 7 cups per part. Water is 5 parts so 5×7 = 35 cups.',
+                    skill: 'Total-to-parts',
+                    tag: 'Word problem'
+                },
+                {
+                    prompt: '3 painters take 12 days. How many days for 8 painters?',
+                    options: ['4.5 days', '5 days', '6 days', '8 days'],
+                    answer: 0,
+                    hint: 'Painter-days stay constant (people × days).',
+                    detail: '3×12 = 36 painter-days. 36 ÷ 8 = 4.5 days for 8 painters.',
+                    skill: 'Inverse proportion',
+                    tag: 'Inverse Island'
+                },
+                {
+                    prompt: 'In a recipe, sugar : flour = 4 : 9. If the sugar weighs 260 g, how much flour is needed?',
+                    options: ['585 g', '520 g', '600 g', '740 g'],
+                    answer: 0,
+                    hint: '260 g represents 4 parts.',
+                    detail: 'One part = 260 ÷ 4 = 65 g. Flour needs 9 parts, so 9×65 = 585 g.',
+                    skill: 'Unitary method',
+                    tag: 'Scale Up'
+                },
+                {
+                    prompt: 'Red : Blue : Green = 3 : 4 : 5 and there are 180 students. How many are in Green?',
+                    options: ['60', '75', '90', '105'],
+                    answer: 1,
+                    hint: 'Total parts = 12. Divide the total number of students by 12.',
+                    detail: '180 ÷ 12 = 15 students per part. Green has 5 parts, so 5×15 = 75.',
+                    skill: 'Three-way scaling',
+                    tag: 'Applications'
+                }
+            ]
+        };
+    </script>
+    <script src="../assets/js/quiz.js" defer></script>
+</body>
+</html>
+

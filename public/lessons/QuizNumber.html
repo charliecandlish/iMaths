@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Number Checkpoint</title>
+    <link rel="stylesheet" href="../assets/css/quiz.css">
+</head>
+<body data-quiz-theme="number">
+    <a class="quiz-exit" href="../index.html">↺</a>
+    <main id="quiz-app" class="quiz-app"></main>
+
+    <script src="../assets/js/course.js"></script>
+    <script>
+        window.quizConfig = {
+            key: 'num_quiz',
+            theme: 'number',
+            title: 'Number Navigator',
+            subtitle: 'Foundation Checkpoint',
+            description: 'Quick scan across place value, integers, estimation, factors, percentages and standard form.',
+            skillsLabel: 'Number Skills',
+            resultsCopy: 'Use the feedback panel to revisit any weak spots, then replay the checkpoint for mastery.',
+            questions: [
+                {
+                    prompt: 'What is the value of the digit 7 in 7,204?',
+                    options: ['7', '70', '700', '7,000'],
+                    answer: 3,
+                    hint: 'Look at which column the 7 sits in.',
+                    detail: '7 is in the thousands column, so it represents 7,000.',
+                    skill: 'Place Value',
+                    tag: 'Magnitude'
+                },
+                {
+                    prompt: 'Evaluate -9 + 13.',
+                    options: ['-22', '-4', '4', '22'],
+                    answer: 2,
+                    hint: 'Start at -9 on a number line and move 13 steps to the right.',
+                    detail: 'Moving 13 steps right from -9 lands on 4.',
+                    skill: 'Integers',
+                    tag: 'Addition'
+                },
+                {
+                    prompt: 'Round 4.786 to 2 decimal places.',
+                    options: ['4.78', '4.79', '4.80', '4.8'],
+                    answer: 1,
+                    hint: 'Look at the third decimal place to decide whether to round up.',
+                    detail: 'Third decimal is 6 (≥5) so the second decimal place rounds up to 9.',
+                    skill: 'Rounding',
+                    tag: 'Estimation'
+                },
+                {
+                    prompt: 'Prime factor decomposition of 90 is…',
+                    options: ['2 × 3 × 15', '2 × 3 × 3 × 5', '2 × 5 × 9', '3 × 3 × 5'],
+                    answer: 1,
+                    hint: 'Keep dividing by the smallest possible primes.',
+                    detail: '90 = 2 × 45 = 2 × 3 × 15 = 2 × 3 × 3 × 5.',
+                    skill: 'Prime Factors',
+                    tag: 'HCF/LCM'
+                },
+                {
+                    prompt: 'What percentage is equivalent to 0.38?',
+                    options: ['3.8%', '38%', '0.38%', '380%'],
+                    answer: 1,
+                    hint: 'Multiply the decimal by 100 to get a percentage.',
+                    detail: '0.38 × 100 = 38%.',
+                    skill: 'Percentages',
+                    tag: 'Conversions'
+                },
+                {
+                    prompt: 'Write 6.1 × 10^3 as an ordinary number.',
+                    options: ['610', '6,100', '61,000', '610,000'],
+                    answer: 1,
+                    hint: 'A power of 3 moves the decimal three places to the right.',
+                    detail: '6.1 × 10^3 = 6100.',
+                    skill: 'Standard Form',
+                    tag: 'Notation'
+                }
+            ]
+        };
+    </script>
+    <script src="../assets/js/quiz.js" defer></script>
+</body>
+</html>
+

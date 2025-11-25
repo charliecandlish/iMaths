@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Factor Forge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #ef4444; border-color: #fca5a5; }
+
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #ea580c; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header { top: 0; height: 130px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 10px 0 12px; }
+        .instr-header h1 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+        .instr-header p { font-size: 1rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        @media (max-width: 640px) {
+            .instr-header { height: 110px; padding-top: 5px; }
+            .instr-header h1 { font-size: 0.8rem; margin-bottom: 0.1rem; }
+            .instr-header p { font-size: 0.9rem; -webkit-line-clamp: 2; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #game-board { transition: opacity 0.8s, transform 0.8s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #ea580c; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+        
+        body.reflection-active .instruction-container { opacity: 0; pointer-events: none; }
+        body.reflection-active #game-board { transform: translateY(-20vh) scale(0.8); transform-origin: center top; z-index: 40; }
+        body.reflection-active #controls { opacity: 0; pointer-events: none; }
+
+        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
+        .btn-choice:hover { border-color: #fdba74; background-color: #fff7ed; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+        /* Factor Forge Specifics */
+        .prime-btn { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #fed7aa; font-weight: 800; color: #ea580c; background: white; transition: all 0.2s; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(234, 88, 12, 0.1); }
+        .prime-btn:hover { transform: scale(1.1); border-color: #fb923c; background: #fff7ed; }
+        .prime-btn:active { transform: scale(0.95); }
+
+        .factor-target { font-size: clamp(3rem, 6vw, 5rem); font-weight: 900; color: #c2410c; transition: all 0.3s; }
+        .factor-chain { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; min-height: 40px; }
+        .chain-chip { padding: 6px 12px; border-radius: 99px; background: #ffedd5; color: #c2410c; font-weight: 700; font-size: 0.9rem; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        .progress-dot { cursor: pointer; transition: all 0.2s; }
+        .progress-dot:hover { transform: scale(1.2); }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center text-center z-50">
+        <h1 class="text-4xl md:text-6xl font-black text-orange-500 mb-4">Forge Complete!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You have deconstructed the numbers.</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-orange-500 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+    
+    <div id="toast">Try a different prime.</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full">
+        
+        <!-- Lesson View -->
+        <div id="lesson-view" class="hidden w-full max-w-2xl flex flex-col items-center gap-8 flex-1 justify-center min-h-0">
+             <div class="bg-white p-6 md:p-10 rounded-3xl shadow-sm border-2 border-orange-100 text-center w-full">
+                <div id="lesson-visual" class="text-6xl mb-6">🍒</div>
+                <div id="lesson-content" class="text-lg md:text-xl text-slate-700 leading-relaxed font-medium"></div>
+             </div>
+             <button onclick="nextStep()" class="bg-orange-500 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Continue</button>
+        </div>
+
+        <div class="w-full max-w-4xl flex flex-col items-center gap-8 flex-1 justify-center min-h-0">
+            
+            <div id="factor-view" class="flex flex-col items-center gap-6 w-full">
+                <div class="text-center">
+                    <p class="text-xs font-bold text-orange-400 uppercase tracking-widest mb-2">Current Value</p>
+                    <p class="factor-target" id="current-value">0</p>
+                </div>
+                <div class="factor-chain" id="factor-chain"></div>
+            </div>
+
+            <div id="choice-view" class="hidden w-full max-w-2xl grid-cols-1 gap-4">
+                <!-- Choices injected here -->
+            </div>
+
+        </div>
+
+        <div id="controls" class="w-full flex flex-col items-center gap-4 mb-8 max-w-3xl shrink-0 min-h-[100px] justify-end pb-safe">
+            <div id="prime-pad" class="flex flex-wrap justify-center gap-3">
+                <!-- Prime Buttons -->
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, maxStep: 0, audioCtx: null, currentVal: 0, chain: [] };
+        const COACH_ACCENT = '#ea580c';
+        const COACH_BADGE = 'Factor Coach';
+        const PRIMES = [2, 3, 5, 7, 11, 13];
+
+        const STEPS = [
+            {
+                type: 'learn',
+                title: "Factor Trees 🍒",
+                content: "To find prime factors, we use a <b>Factor Tree</b> (or Cherry Tree).<br><br>1. Split the number into any two factors.<br>2. Circle any prime numbers.<br>3. Keep splitting until only primes remain.",
+                coach: "Think of the primes as the fruit at the end of the branches!"
+            },
+            {
+                title: "Prime Breakdown",
+                desc: "Break <b>84</b> into prime factors. <br>Start with the smallest prime (2).",
+                type: "factor",
+                number: 84,
+                answer: "2 × 2 × 3 × 7",
+                coach: "Is it even? Divide by 2. Keep going until you hit 1.",
+                reflection: { q: "Why do we start with small primes?", options: [{text: "It keeps the tree orderly", correct: true}, {text: "Large primes are wrong", correct: false}] }
+            },
+            {
+                type: 'learn',
+                title: "Index Form",
+                content: "We can write repeated primes using powers.<br><br><b>2 × 2 × 3</b> becomes <b>2² × 3</b>.<br><br>This makes the answer neater!",
+                coach: "Count how many times a prime appears, and use that as the power."
+            },
+            {
+                title: "Bigger Branches",
+                desc: "Factorise <b>180</b>. <br>Use the prime pad to divide it down.",
+                type: "factor",
+                number: 180,
+                answer: "2 × 2 × 3 × 3 × 5",
+                coach: "180 ends in 0, so 2 and 5 are definitely factors.",
+                reflection: { q: "If a number ends in 0, it is divisible by...", options: [{text: "2 and 5 (so 10)", correct: true}, {text: "Only 5", correct: false}] }
+            },
+            {
+                type: 'learn',
+                title: "Venn Diagrams (HCF & LCM)",
+                content: "Draw two circles overlapping.<br>Left Circle: Factors of A.<br>Right Circle: Factors of B.<br><b>Middle (Intersection):</b> Shared factors.<br><br>HCF is the product of the middle!",
+                coach: "HCF = Highest Common Factor. It's the biggest number that divides both."
+            },
+            {
+                title: "Identify HCF",
+                desc: "Find the <b>Highest Common Factor</b> of 84 and 126. <br>Which primes do they share?",
+                type: "choice",
+                options: [
+                    { text: "14", correct: false },
+                    { text: "42", correct: true },
+                    { text: "21", correct: false }
+                ],
+                coach: "List factors: 84 = 2²×3×7, 126 = 2×3²×7. Common: 2×3×7.",
+                reflection: { q: "HCF is found by multiplying...", options: [{text: "Lowest power of common primes", correct: true}, {text: "Highest power of all primes", correct: false}] }
+            },
+            {
+                title: "Identify LCM",
+                desc: "Find the <b>Lowest Common Multiple</b> of 18 and 24. <br>It must contain all ingredients from both.",
+                type: "choice",
+                options: [
+                    { text: "72", correct: true },
+                    { text: "36", correct: false },
+                    { text: "48", correct: false }
+                ],
+                coach: "18=2×3², 24=2³×3. LCM needs max powers: 2³×3² = 8×9 = 72.",
+                reflection: { q: "LCM is always...", options: [{text: "Greater or equal to the numbers", correct: true}, {text: "Smaller than the numbers", correct: false}] }
+            },
+            {
+                title: "Prime Detective",
+                desc: "Is <b>91</b> Prime or Composite?",
+                type: "choice",
+                options: [
+                    { text: "Prime", correct: false },
+                    { text: "Composite", correct: true }
+                ],
+                coach: "Try dividing by 7. 7 × 10 = 70... 21 left... 7 × 3 = 21.",
+                reflection: { q: "A composite number has...", options: [{text: "More than 2 factors", correct: true}, {text: "Only 1 and itself", correct: false}] }
+            }
+        ];
+
+        // --- Audio System ---
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) { 
+            if (!STATE.audioCtx) return; 
+            const ctx = STATE.audioCtx; 
+            const t = ctx.currentTime; 
+            const osc = ctx.createOscillator(); 
+            const gain = ctx.createGain(); 
+            osc.connect(gain); 
+            gain.connect(ctx.destination); 
+            if (type === 'pop') { 
+                osc.frequency.setValueAtTime(600, t); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); 
+                osc.start(t); osc.stop(t+0.1); 
+            } else if (type === 'success') { 
+                osc.frequency.setValueAtTime(440, t); 
+                osc.frequency.exponentialRampToValueAtTime(880, t+0.2); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); 
+                osc.start(t); osc.stop(t+0.5); 
+            } else { 
+                osc.type = 'triangle'; 
+                osc.frequency.setValueAtTime(150, t); 
+                gain.gain.linearRampToValueAtTime(0, t+0.2); 
+                osc.start(t); osc.stop(t+0.2); 
+            } 
+        }
+
+        // --- Core Logic ---
+        const container = document.getElementById('instruction-container');
+        const board = document.getElementById('game-board');
+        const titleEl = document.getElementById('level-title');
+        const descEl = document.getElementById('level-desc');
+        const dotsContainer = document.getElementById('progress-dots');
+        const toast = document.getElementById('toast');
+        const reflectionModal = document.getElementById('reflection-modal');
+        
+        const lessonView = document.getElementById('lesson-view');
+        const lessonContent = document.getElementById('lesson-content');
+        
+        const factorView = document.getElementById('factor-view');
+        const choiceView = document.getElementById('choice-view');
+        const currentValDisplay = document.getElementById('current-value');
+        const chainDisplay = document.getElementById('factor-chain');
+        const primePad = document.getElementById('prime-pad');
+
+        function initLevel() {
+            // Init Prime Buttons
+            primePad.innerHTML = PRIMES.map(p => `<button class="prime-btn" onclick="handlePrime(${p})">${p}</button>`).join('');
+            renderStep();
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        function handlePrime(p) {
+            const step = STEPS[STATE.step];
+            if (step.type !== 'factor') return;
+
+            if (STATE.currentVal % p === 0) {
+                STATE.currentVal /= p;
+                STATE.chain.push(p);
+                updateFactorDisplay();
+                playSound('pop');
+                
+                if (STATE.currentVal === 1) {
+                    // Show Prime Factor Form
+                    const counts = {};
+                    STATE.chain.forEach(x => counts[x] = (counts[x] || 0) + 1);
+                    const parts = Object.keys(counts).sort((a,b)=>a-b).map(base => {
+                        const exp = counts[base];
+                        return exp > 1 ? `${base}<sup>${exp}</sup>` : base;
+                    });
+                    const form = parts.join(' × ');
+                    
+                    currentValDisplay.innerHTML = form;
+                    
+                    playSound('success');
+                    setTimeout(showReflection, 2000);
+                }
+            } else {
+                playSound('error');
+                showToast(`${p} does not divide ${STATE.currentVal}`);
+                board.classList.add('shake-screen');
+                setTimeout(() => board.classList.remove('shake-screen'), 500);
+            }
+        }
+
+        function updateFactorDisplay() {
+            currentValDisplay.textContent = STATE.currentVal;
+            chainDisplay.innerHTML = STATE.chain.map(p => `<span class="chain-chip">× ${p}</span>`).join('');
+        }
+
+        function renderStep() {
+            const step = STEPS[STATE.step];
+            STATE.maxStep = Math.max(STATE.maxStep || 0, STATE.step);
+            
+            container.className = "instruction-container instr-focus";
+            titleEl.textContent = step.title;
+            
+            // Reset Views
+            factorView.classList.add('hidden');
+            choiceView.classList.add('hidden');
+            choiceView.innerHTML = '';
+            primePad.classList.add('hidden');
+            lessonView.classList.add('hidden');
+            lessonView.classList.remove('flex');
+
+            // Update Dots
+            dotsContainer.innerHTML = STEPS.map((_, i) => {
+                const accessible = i <= STATE.maxStep;
+                const current = i === STATE.step;
+                let bg = 'bg-slate-200';
+                if (current) bg = 'bg-orange-500 scale-125';
+                else if (i < STATE.step) bg = 'bg-orange-300';
+                
+                return `<div 
+                    onclick="${accessible ? `jumpToStep(${i})` : ''}" 
+                    class="progress-dot w-2 h-2 rounded-full transition-all ${bg} ${accessible ? 'cursor-pointer' : 'cursor-default opacity-50'}">
+                </div>`
+            }).join('');
+
+            if (step.type === 'learn') {
+                lessonView.classList.remove('hidden');
+                lessonView.classList.add('flex');
+                lessonContent.innerHTML = step.content;
+                descEl.innerHTML = ""; 
+            } else {
+                descEl.innerHTML = step.desc;
+            if (step.type === 'factor') {
+                factorView.classList.remove('hidden');
+                primePad.classList.remove('hidden');
+                STATE.currentVal = step.number;
+                STATE.chain = [];
+                updateFactorDisplay();
+            } else {
+                choiceView.classList.remove('hidden');
+                    choiceView.className = "flex flex-col gap-3 w-full max-w-md"; 
+                step.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-choice';
+                    btn.textContent = opt.text;
+                    btn.onclick = () => checkChoice(opt.correct, btn);
+                    choiceView.appendChild(btn);
+                });
+                }
+            }
+
+            board.className = "board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+
+            if (window.LessonCoach) {
+                LessonCoach.set(step.coach, { accent: COACH_ACCENT, badge: COACH_BADGE });
+            }
+
+            // Auto-transition
+            setTimeout(() => {
+                container.className = "instruction-container instr-header";
+                board.className = "board-visible flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+            }, 2500);
+        }
+
+        function jumpToStep(i) {
+            if (i > STATE.maxStep) return;
+            STATE.step = i;
+            renderStep();
+        }
+
+        function checkChoice(isCorrect, btn) {
+            if (isCorrect) {
+                btn.classList.add('selected');
+                playSound('success');
+                setTimeout(showReflection, 1000);
+            } else {
+                btn.classList.add('wrong');
+                playSound('error');
+                showToast("Try again");
+            }
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 2000);
+        }
+
+        function showReflection() {
+            const step = STEPS[STATE.step];
+            if (!step.reflection) {
+                nextStep();
+                return;
+            }
+
+            document.body.classList.add('reflection-active');
+            reflectionModal.classList.add('active');
+            
+            const qEl = document.getElementById('refl-question');
+            const optEl = document.getElementById('refl-options');
+            
+            qEl.textContent = step.reflection.q;
+            optEl.innerHTML = '';
+            
+            step.reflection.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    if (opt.correct) {
+                        btn.classList.add('selected');
+                        playSound('success');
+                        setTimeout(() => {
+                            reflectionModal.classList.remove('active');
+                            document.body.classList.remove('reflection-active');
+                            nextStep();
+                        }, 1000);
+                    } else {
+                        btn.classList.add('wrong');
+                        playSound('error');
+                        btn.classList.add('wiggle');
+                    }
+                };
+                optEl.appendChild(btn);
+            });
+        }
+
+        function nextStep() {
+            STATE.step++;
+            if (STATE.step >= STEPS.length) {
+                document.getElementById('final-screen').classList.remove('hidden');
+                document.getElementById('final-screen').classList.add('flex');
+                playSound('success');
+            } else {
+                renderStep();
+            }
+        }
+
+        function completeLesson() {
+            if (window.Course) {
+                Course.completeLesson('num_factor');
+            } else {
+                window.location.href = '../index.html';
+            }
+        }
+
+        initLevel();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Substitution Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #ef4444; border-color: #fca5a5; }
+
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #eab308; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header { top: 0; height: 130px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 10px 0 12px; }
+        .instr-header h1 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+        .instr-header p { font-size: 1rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        @media (max-width: 640px) {
+            .instr-header { height: 110px; padding-top: 5px; }
+            .instr-header h1 { font-size: 0.8rem; margin-bottom: 0.1rem; }
+            .instr-header p { font-size: 0.9rem; -webkit-line-clamp: 2; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #game-board { transition: opacity 0.8s, transform 0.8s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #eab308; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+        
+        body.reflection-active .instruction-container { opacity: 0; pointer-events: none; }
+        body.reflection-active #game-board { transform: translateY(-20vh) scale(0.8); transform-origin: center top; z-index: 40; }
+        body.reflection-active #controls { opacity: 0; pointer-events: none; }
+
+        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
+        .btn-choice:hover { border-color: #fde047; background-color: #fefce8; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+        /* Substitution Specifics */
+        .variable-card { width: 100px; height: 120px; background: white; border: 2px solid #e2e8f0; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: transform 0.2s; position: relative; }
+        .variable-card.active { border-color: #eab308; transform: scale(1.05); background: #fefce8; }
+        .var-label { font-size: 1rem; font-weight: 700; color: #94a3b8; margin-bottom: 4px; text-transform: uppercase; }
+        .var-val { font-size: 3rem; font-weight: 900; color: #ca8a04; }
+
+        .expression-box { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 900; color: #1e293b; margin: 20px 0; min-height: 80px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .sub-slot { display: inline-block; min-width: 60px; border-bottom: 4px solid #cbd5e1; text-align: center; color: #3b82f6; transition: all 0.3s; }
+        .sub-slot.filled { border-color: #eab308; color: #ca8a04; transform: translateY(-5px); }
+
+        .calc-input { width: 100%; max-width: 300px; padding: 20px; border-radius: 20px; border: 2px solid #e2e8f0; font-size: 2rem; font-weight: 800; text-align: center; color: #ca8a04; background: white; outline: none; }
+        .calc-input:focus { border-color: #eab308; box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.1); }
+
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center text-center z-50">
+        <h1 class="text-4xl md:text-6xl font-black text-yellow-500 mb-4">Sub Master!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You can swap and solve with ease.</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-yellow-500 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Concept Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+
+    <div id="toast">Incorrect. Check your math.</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4 mb-8"></p>
+        <button id="start-step-btn" class="bg-white text-yellow-600 px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition-transform animate-bounce">Ready to Solve</button>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full">
+        <div class="w-full max-w-4xl flex flex-col items-center gap-8 flex-1 justify-center min-h-0">
+            
+            <!-- Variables -->
+            <div class="flex gap-4 justify-center flex-wrap" id="var-container">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Expression -->
+            <div class="expression-box" id="expression-display">
+                <!-- 2a + b -->
+            </div>
+
+            <!-- Input -->
+            <div class="w-full max-w-xs space-y-2 text-center">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Calculate Value</p>
+                <input id="calc-input" class="calc-input" placeholder="?" type="number" inputmode="decimal">
+            </div>
+
+        </div>
+
+        <div id="controls" class="w-full flex flex-col items-center gap-4 mb-8 max-w-md shrink-0 min-h-[60px] justify-end pb-safe">
+            <button id="check-btn" class="w-full bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:scale-105 hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                Check Value <span class="text-xl">→</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, audioCtx: null };
+        const COACH_ACCENT = '#eab308';
+        const COACH_BADGE = 'Sub Coach';
+
+        const STEPS = [
+            {
+                title: "The Swap",
+                desc: "<b>Substitution</b> is just a fancy word for replacing.<br><br>We replace letters with numbers, then calculate the value.<br><br>If <b>a = 3</b> and <b>b = -2</b>...",
+                vars: { a: 3, b: -2 },
+                exprDisplay: "2a + b",
+                calc: (v) => 2 * v.a + v.b,
+                coach: "2a means 2 × a. So 2 × 3... then add b (-2).",
+                reflection: { q: "2a + b becomes...", options: [{text: "2(3) + (-2) = 4", correct: true}, {text: "2 + 3 + (-2) = 3", correct: false}] }
+            },
+            {
+                title: "Squaring Up",
+                desc: "Order of operations (BIDMAS) is crucial.<br><br>Powers (Indices) come before Addition.<br><br>Calculate <b>x² + y</b>.",
+                vars: { x: 4, y: 5 },
+                exprDisplay: "x² + y",
+                calc: (v) => Math.pow(v.x, 2) + v.y,
+                coach: "Square x first (4 × 4), then add y.",
+                reflection: { q: "BIDMAS says we do indices (powers)...", options: [{text: "Before adding", correct: true}, {text: "After adding", correct: false}] }
+            },
+            {
+                title: "Negative Squared",
+                desc: "This is the biggest trap in algebra!<br><br>When you square a negative number, the answer is <b>positive</b>.<br><br>(-3)² = -3 × -3 = 9.",
+                vars: { p: -3 },
+                exprDisplay: "p²",
+                calc: (v) => Math.pow(v.p, 2),
+                coach: "(-3) × (-3) = +9. A negative times a negative is a positive.",
+                reflection: { q: "(-5)² equals...", options: [{text: "25", correct: true}, {text: "-25", correct: false}] }
+            },
+            {
+                title: "Division & Order",
+                desc: "A fraction bar acts like invisible brackets.<br><br>You must calculate the top (numerator) <b>before</b> you divide by the bottom.<br><br>Work out <b>(m + n) / 2</b>.",
+                vars: { m: 10, n: 4 },
+                exprDisplay: "<span style='border-top: 2px solid black; padding-top: 4px; display:inline-block; line-height:1.2'>(m + n)<br><span style='font-size:0.8em; border:none'>2</span></span>", // Visual Fraction
+                altDisplay: "(m + n) ÷ 2",
+                calc: (v) => (v.m + v.n) / 2,
+                coach: "Add m and n first because they are on top (like brackets). Then divide by 2.",
+                reflection: { q: "The fraction bar acts like...", options: [{text: "Brackets", correct: true}, {text: "Multiplication", correct: false}] }
+            },
+            {
+                title: "Hidden Multiply",
+                desc: "Remember, if letters are stuck together, we multiply them.<br><br>Calculate <b>3xy</b>.",
+                vars: { x: 2, y: 5 },
+                exprDisplay: "3xy",
+                calc: (v) => 3 * v.x * v.y,
+                coach: "This means 3 × x × y. Do 3 × 2... then × 5.",
+                reflection: { q: "3xy is the same as...", options: [{text: "3 × x × y", correct: true}, {text: "3 + x + y", correct: false}] }
+            }
+        ];
+
+        // --- Audio System ---
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) {
+            if (!STATE.audioCtx) return;
+            const ctx = STATE.audioCtx;
+            const t = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            if (type === 'pop') {
+                osc.frequency.setValueAtTime(600, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); 
+                osc.start(t); osc.stop(t+0.1); 
+            } else if (type === 'success') {
+                osc.frequency.setValueAtTime(440, t);
+                osc.frequency.exponentialRampToValueAtTime(880, t+0.2); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); 
+                osc.start(t); osc.stop(t+0.5); 
+            } else { 
+                osc.type = 'triangle'; 
+                osc.frequency.setValueAtTime(150, t);
+                gain.gain.linearRampToValueAtTime(0, t+0.2); 
+                osc.start(t); osc.stop(t+0.2); 
+            } 
+        }
+
+        // --- Core Logic ---
+        const container = document.getElementById('instruction-container');
+        const board = document.getElementById('game-board');
+        const titleEl = document.getElementById('level-title');
+        const descEl = document.getElementById('level-desc');
+        const dotsContainer = document.getElementById('progress-dots');
+        const toast = document.getElementById('toast');
+        const reflectionModal = document.getElementById('reflection-modal');
+        
+        const varContainer = document.getElementById('var-container');
+        const exprDisplay = document.getElementById('expression-display');
+        const calcInput = document.getElementById('calc-input');
+        const checkBtn = document.getElementById('check-btn');
+
+        const startStepBtn = document.getElementById('start-step-btn');
+
+        function initLevel() {
+            dotsContainer.innerHTML = STEPS.map((_, i) => `<div class="w-2 h-2 rounded-full transition-colors ${i === 0 ? 'bg-yellow-500' : 'bg-slate-200'}"></div>`).join('');
+            renderStep();
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        function renderStep() {
+            const step = STEPS[STATE.step];
+            
+            container.className = "instruction-container instr-focus";
+            startStepBtn.classList.remove('hidden'); // Show button
+            
+            titleEl.textContent = step.title;
+            descEl.innerHTML = step.desc;
+            
+            board.className = "board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+            
+            // Setup Board
+            calcInput.value = '';
+            exprDisplay.innerHTML = step.exprDisplay; // Use innerHTML for formatting
+            
+            varContainer.innerHTML = '';
+            Object.entries(step.vars).forEach(([key, val]) => {
+                const card = document.createElement('div');
+                card.className = 'variable-card';
+                card.innerHTML = `<div class="var-label">${key}</div><div class="var-val">${val}</div>`;
+                varContainer.appendChild(card);
+            });
+
+            // Update Dots
+            Array.from(dotsContainer.children).forEach((dot, i) => {
+                dot.className = `w-2 h-2 rounded-full transition-colors ${i <= STATE.step ? 'bg-yellow-500' : 'bg-slate-200'}`;
+            });
+
+            if (window.LessonCoach) {
+                LessonCoach.set(step.coach, { accent: COACH_ACCENT, badge: COACH_BADGE });
+            }
+
+            // Manual Transition
+            startStepBtn.onclick = () => {
+                startStepBtn.classList.add('hidden');
+                container.className = "instruction-container instr-header";
+                board.className = "board-visible flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+                calcInput.focus();
+            };
+        }
+
+        checkBtn.onclick = () => {
+            const step = STEPS[STATE.step];
+            const userVal = parseFloat(calcInput.value);
+            const correctVal = step.calc(step.vars);
+
+            if (isNaN(userVal)) { showToast("Enter a number"); return; }
+
+            if (userVal === correctVal) {
+                        playSound('success');
+                showReflection();
+                    } else {
+                playSound('error');
+                showToast(`Incorrect. Try again.`);
+                board.classList.add('shake-screen');
+                setTimeout(() => board.classList.remove('shake-screen'), 500);
+            }
+        };
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 2000);
+        }
+
+        function showReflection() {
+            const step = STEPS[STATE.step];
+            if (!step.reflection) {
+                nextStep();
+                return;
+            }
+
+            document.body.classList.add('reflection-active');
+            reflectionModal.classList.add('active');
+            
+            const qEl = document.getElementById('refl-question');
+            const optEl = document.getElementById('refl-options');
+            
+            qEl.textContent = step.reflection.q;
+            optEl.innerHTML = '';
+            
+            step.reflection.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    if (opt.correct) {
+                        btn.classList.add('selected');
+                    playSound('success');
+                    setTimeout(() => {
+                            reflectionModal.classList.remove('active');
+                            document.body.classList.remove('reflection-active');
+                            nextStep();
+                    }, 1000);
+                } else {
+                        btn.classList.add('wrong');
+                        playSound('error');
+                        btn.classList.add('wiggle');
+                    }
+                };
+                optEl.appendChild(btn);
+            });
+        }
+
+        function nextStep() {
+            STATE.step++;
+            if (STATE.step >= STEPS.length) {
+                document.getElementById('final-screen').classList.remove('hidden');
+                document.getElementById('final-screen').classList.add('flex');
+            playSound('success');
+            } else {
+                renderStep();
+            }
+        }
+
+        function completeLesson() {
+            if (window.Course) {
+                Course.completeLesson('alg_sub');
+            } else {
+                 window.location.href = '../index.html';
+             }
+        }
+        
+        initLevel();
+
+    </script>
+</body>
+</html>

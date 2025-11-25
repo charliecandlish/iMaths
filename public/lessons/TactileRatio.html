@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ratio Detective</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; touch-action: none; overflow: hidden; background-color: #f8fafc; user-select: none; -webkit-user-select: none; }
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #ef4444; border-color: #fca5a5; }
+        
+        /* The Cage */
+        #cage { background: white; border-radius: 32px; border: 4px solid #e2e8f0; box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1); padding: 0; width: fit-content; min-width: 300px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; position: relative; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); overflow: hidden; }
+        @media (min-width: 768px) { #cage { min-width: 600px; max-width: 800px; } }
+        
+        /* Instruction Header */
+        .instruction-container { transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1); position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transform-origin: top center; }
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #ea580c; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.5rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header { top: 0; height: 115px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding-top: 10px; padding-bottom: 12px; }
+        .instr-header h1 { font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem; opacity: 1; }
+        .instr-header p { font-size: 0.95rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        @media (min-width: 768px) { .instr-header { height: 145px; } .instr-header h1 { font-size: 1rem; margin-bottom: 0.25rem; } .instr-header p { font-size: 1.1rem; -webkit-line-clamp: 3; } }
+        
+        .word-reveal { opacity: 0.1; filter: blur(4px); transition: opacity 0.3s ease, filter 0.3s ease; }
+        .word-reveal.visible { opacity: 1; filter: blur(0); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        #reflection-modal { display: none; position: absolute; bottom: 0; left: 0; width: 100%; height: auto; min-height: 45%; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(12px); border-top: 4px solid #ea580c; border-radius: 24px 24px 0 0; padding: 32px 20px 50px 20px; transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 20px; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+        
+        /* Reflection Active State */
+        body.reflection-active .instruction-container {
+            transform: translateY(-10px) scale(0.85);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        body.reflection-active #cage {
+            transform: translateY(-120px) scale(0.9);
+            z-index: 40;
+        }
+        body.reflection-active #controls {
+            opacity: 0;
+            pointer-events: none;
+        }
+        @media (max-width: 768px) { 
+            body.reflection-active #cage { transform: translateY(-160px) scale(0.85) !important; } 
+        }
+        
+        .btn-choice { flex: 1; min-width: 140px; padding: 1rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1.1rem; }
+        .btn-choice:hover { border-color: #fb923c; background-color: #fff7ed; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+        
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; max-width: 90%; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        
+        #final-screen { display: none; position: absolute; inset: 0; background: white; z-index: 100; flex-direction: column; align-items: center; justify-content: center; text-align: center; animation: fadeIn 0.5s ease; }
+        #final-screen.active { display: flex; }
+        
+        #game-board { transition: opacity 0.8s ease 0.2s, transform 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.2s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+        
+        /* Draggable Blocks */
+        .ratio-row { display: flex; gap: 8px; width: 100%; justify-content: center; margin-bottom: 16px; min-height: 60px; }
+        .ratio-box { width: 60px; height: 60px; border-radius: 12px; border: 3px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.5rem; color: white; transition: all 0.2s; position: relative; background: #f8fafc; }
+        .ratio-box.filled { border-style: solid; transform: scale(1); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .ratio-box.filled.orange { background-color: #f97316; border-color: #ea580c; }
+        .ratio-box.filled.purple { background-color: #9333ea; border-color: #7e22ce; }
+        
+        .source-val { width: 80px; height: 80px; border-radius: 20px; background: white; border: 4px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 2rem; color: #475569; cursor: grab; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); z-index: 50; touch-action: none; }
+        .source-val:active { cursor: grabbing; transform: scale(1.05); border-color: #3b82f6; }
+        .source-val.dragging { opacity: 0.5; }
+        
+        .wiggle { animation: wiggle 0.4s ease-in-out; }
+        @keyframes wiggle { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .shake-screen { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen">
+        <h1 class="text-4xl md:text-6xl font-extrabold text-orange-500 mb-4">Case Closed!</h1>
+        <p class="text-lg md:text-2xl text-slate-600 max-w-md mx-auto px-4">You are a Ratio Detective.</p>
+        <div class="flex gap-4 mt-12">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition-transform">Play Again</button>
+            <button onclick="completeLesson()" class="bg-orange-500 text-white px-10 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition-transform shadow-xl">Next Module</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Reasoning Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+
+    <div id="toast">Incorrect. Logic reset.</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[125px] md:pt-[155px] pb-4 px-4 h-full relative justify-center items-center">
+        <div id="cage" class="shrink-0 w-full max-w-4xl p-6 min-h-[400px]">
+            
+            <!-- Labels -->
+            <div class="flex w-full mb-4 px-8">
+                <div class="w-24 text-right font-bold text-orange-500 text-xl mr-4">Orange</div>
+                <div class="flex-1"></div>
+            </div>
+            
+            <!-- Row A -->
+            <div id="row-a" class="ratio-row"></div>
+
+            <!-- Divider -->
+            <div class="w-full border-b-2 border-dashed border-slate-200 my-4"></div>
+
+            <!-- Labels -->
+            <div class="flex w-full mb-4 px-8">
+                <div class="w-24 text-right font-bold text-purple-600 text-xl mr-4">Purple</div>
+                <div class="flex-1"></div>
+            </div>
+
+            <!-- Row B -->
+            <div id="row-b" class="ratio-row"></div>
+
+            <!-- Source Value (Draggable) -->
+            <div class="mt-8 flex justify-center h-[100px] items-center relative">
+                <div id="source-val" class="source-val" draggable="true">?</div>
+                <div id="source-ghost" class="absolute text-slate-300 font-black text-3xl select-none">DRAG ME</div>
+            </div>
+            
+        </div>
+
+        <div id="controls" class="w-full flex flex-col items-center mt-8 shrink-0">
+            <button id="btn-next" class="hidden bg-slate-900 text-white px-8 py-3 md:px-12 md:py-4 rounded-full font-bold text-lg md:text-xl shadow-2xl transform hover:scale-105 hover:bg-slate-800 flex items-center gap-3 animate-bounce">
+                Continue <span class="text-xl md:text-2xl">→</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const STATE = { step: 0, isComplete: false, audioCtx: null };
+        
+        const LEVELS = [
+            { 
+                title: "The Evidence", 
+                desc: "We know there are <b>12 Orange items</b>. <br>Drag the number <b>12</b> to the Orange row to split it equally.", 
+                ratio: {a: 3, b: 1}, 
+                known: {row: 'a', val: 12}, 
+                unit: 4, 
+                reflection: { q: "Why did the 12 turn into 4s?", options: [{text: "12 split into 3 equal boxes is 4", correct: true}, {text: "Magic", correct: false}, {text: "12 minus 3 is 4", correct: false}] } 
+            },
+            { 
+                title: "The Missing Link", 
+                desc: "If every box in this ratio is <b>4</b>... <br>Drag the <b>4</b> to the Purple row to find the missing value.", 
+                ratio: {a: 3, b: 1}, 
+                known: {row: 'b', val: 4}, // We are dragging the unit value now
+                isUnitDrag: true,
+                unit: 4, 
+                reflection: { q: "Why is the Purple box also 4?", options: [{text: "In a ratio, every part is the same size", correct: true}, {text: "Purple is always 4", correct: false}] } 
+            },
+            { 
+                title: "Bigger Case", 
+                desc: "Ratio <b>2:5</b>. We have <b>30 Purple items</b>. <br>Find the Unit Size (1 part).", 
+                ratio: {a: 2, b: 5}, 
+                known: {row: 'b', val: 30}, 
+                unit: 6, 
+                reflection: { q: "What calculation finds the Unit Size?", options: [{text: "Total (30) ÷ Boxes (5) = 6", correct: true}, {text: "30 × 5", correct: false}, {text: "30 - 5", correct: false}] } 
+            },
+            { 
+                title: "Solving It", 
+                desc: "Now we know <b>1 Part = 6</b>. <br>Drag the unit (6) to solve for Orange.", 
+                ratio: {a: 2, b: 5}, 
+                known: {row: 'a', val: 12}, 
+                isUnitDrag: true,
+                unit: 6, 
+                reflection: { q: "How many Orange items?", options: [{text: "12 (2 boxes × 6)", correct: true}, {text: "6", correct: false}, {text: "18", correct: false}] } 
+            },
+            { 
+                title: "Misconception Check", 
+                desc: "A common mistake: If <b>Orange:Purple = 2:3</b>, and Purple has 15, students often calculate 15÷2. Why is this wrong?", 
+                ratio: {a: 2, b: 3}, 
+                known: {row: 'b', val: 15}, 
+                unit: 5, 
+                // Special step that just asks a question via reflection
+                type: "choice", // Not implemented in this template but we can fake it by just having reflection immediately
+                reflection: { q: "Since 15 is the PURPLE amount, we must divide by...", options: [{text: "Purple parts (3)", correct: true}, {text: "Orange parts (2)", correct: false}, {text: "Total parts (5)", correct: false}] } 
+            },
+            { 
+                title: "The Difference", 
+                desc: "<b>New Type of Clue!</b> <br>There are <b>10 MORE</b> Purple items than Orange items. <br>Drag the <b>10</b> to the <i>difference</i> (the extra boxes).", 
+                ratio: {a: 1, b: 3}, 
+                known: {row: 'diff', val: 10}, // Special logic for diff
+                unit: 5, 
+                reflection: { q: "There are 2 extra Purple boxes. If they hold 10 total...", options: [{text: "Each box holds 5 (10 ÷ 2)", correct: true}, {text: "Each box holds 10", correct: false}] } 
+            },
+            { 
+                title: "Difference Misconception", 
+                desc: "When we see 'Difference is 10', why can't we just say 'One part is 10'?", 
+                ratio: {a: 1, b: 3}, 
+                known: {row: 'diff', val: 10},
+                unit: 5,
+                // Again, fake choice step
+                reflection: { q: "Because the difference might be spread across...", options: [{text: "Multiple boxes", correct: true}, {text: "Zero boxes", correct: false}] } 
+            }
+        ];
+
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); STATE.masterGain = STATE.audioCtx.createGain(); STATE.masterGain.gain.value = 0.3; STATE.masterGain.connect(STATE.audioCtx.destination); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) { if (!STATE.audioCtx) return; const ctx = STATE.audioCtx; const t = ctx.currentTime; const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(STATE.masterGain); if (type==='pop'){osc.frequency.setValueAtTime(600,t);gain.gain.exponentialRampToValueAtTime(0.01,t+0.1);osc.start(t);osc.stop(t+0.1);} else if(type==='success'){osc.type='triangle';osc.frequency.setValueAtTime(440,t);osc.frequency.setValueAtTime(880,t+0.1);gain.gain.linearRampToValueAtTime(0.1,t+0.1);gain.gain.exponentialRampToValueAtTime(0.001,t+0.5);osc.start(t);osc.stop(t+0.5);} else {osc.type='sawtooth';osc.frequency.setValueAtTime(150,t);gain.gain.linearRampToValueAtTime(0,t+0.3);osc.start(t);osc.stop(t+0.3);} }
+
+        const els = { cage: document.getElementById('cage'), rowA: document.getElementById('row-a'), rowB: document.getElementById('row-b'), source: document.getElementById('source-val'), ghost: document.getElementById('source-ghost'), title: document.getElementById('level-title'), desc: document.getElementById('level-desc'), dots: document.getElementById('progress-dots'), final: document.getElementById('final-screen'), instrContainer: document.getElementById('instruction-container'), gameBoard: document.getElementById('game-board'), btnNext: document.getElementById('btn-next'), reflectionModal: document.getElementById('reflection-modal'), reflQuestion: document.getElementById('refl-question'), reflOptions: document.getElementById('refl-options'), toast: document.getElementById('toast') };
+
+        async function animateSequence(titleHtml, descHtml) { els.instrContainer.className = 'instruction-container instr-focus'; els.gameBoard.className = 'board-hidden flex-1 flex flex-col pt-[125px] md:pt-[155px] pb-4 px-4 h-full relative justify-center items-center'; els.title.innerHTML = titleHtml; els.desc.innerHTML = descHtml; const wrapWords = (node) => { if (node.nodeType === 3) { const text = node.nodeValue; if (!text.trim()) return; const words = text.split(/(\s+)/); const fragment = document.createDocumentFragment(); words.forEach(word => { if (word.trim().length > 0) { const span = document.createElement('span'); span.className = 'word-reveal'; span.textContent = word; fragment.appendChild(span); } else fragment.appendChild(document.createTextNode(word)); }); node.parentNode.replaceChild(fragment, node); } else if (node.nodeType === 1) Array.from(node.childNodes).forEach(wrapWords); }; wrapWords(els.desc); await new Promise(r => setTimeout(r, 800)); const words = els.desc.querySelectorAll('.word-reveal'); initAudio(); for(let i=0; i<words.length; i++) { const isShort = words[i].textContent.length <= 3; const delay = isShort ? 200 : 300; words[i].classList.add('visible'); await new Promise(r => setTimeout(r, delay)); } await new Promise(r => setTimeout(r, 1000)); els.instrContainer.classList.remove('instr-focus'); els.instrContainer.classList.add('instr-header'); els.gameBoard.classList.remove('board-hidden'); els.gameBoard.classList.add('board-visible'); }
+
+        function loadLevel(idx) { 
+            STATE.step = idx; STATE.isComplete = false; const level = LEVELS[idx]; 
+            els.btnNext.classList.add('hidden');
+            els.rowA.innerHTML = ''; els.rowB.innerHTML = '';
+            
+            // Handle "fake" steps that are just reflections
+            if (level.title.includes("Misconception")) {
+                // Visual setup same as previous or basic
+                for(let i=0; i<level.ratio.a; i++) { els.rowA.appendChild(createBox('orange')); }
+                for(let i=0; i<level.ratio.b; i++) { els.rowB.appendChild(createBox('purple')); }
+                els.source.style.display = 'none'; els.ghost.style.display = 'none';
+                
+                // Trigger reflection immediately after animation
+                setTimeout(() => {
+                    triggerReflection(level.reflection);
+                }, 3000); // Delay for reading
+            } else {
+                // Create Boxes
+                for(let i=0; i<level.ratio.a; i++) { els.rowA.appendChild(createBox('orange')); }
+                for(let i=0; i<level.ratio.b; i++) { els.rowB.appendChild(createBox('purple')); }
+
+                // Setup Source
+                els.source.style.display = 'flex';
+                els.ghost.style.display = 'block';
+                els.source.textContent = level.isUnitDrag ? level.unit : level.known.val;
+            }
+            
+            updateDots(); 
+            const titleHtml = `<span class="text-orange-500 text-lg block mb-1 uppercase tracking-widest">Case ${idx + 1}</span>${level.title}`; 
+            animateSequence(titleHtml, level.desc); 
+        }
+
+        function createBox(color) {
+            const b = document.createElement('div');
+            b.className = `ratio-box ${color}`;
+            // b.textContent = '?';
+            return b;
+        }
+
+        // Drag Logic
+        let draggedItem = null;
+        
+        els.source.addEventListener('dragstart', (e) => {
+            draggedItem = e.target;
+            e.target.classList.add('dragging');
+            initAudio();
+            playSound('pop');
+        });
+
+        els.source.addEventListener('dragend', (e) => {
+            e.target.classList.remove('dragging');
+        });
+
+        // Add drop zones
+        [els.rowA, els.rowB].forEach(row => {
+            row.addEventListener('dragover', (e) => {
+                e.preventDefault(); // Allow drop
+                if (!STATE.isComplete) row.style.transform = "scale(1.05)";
+            });
+            row.addEventListener('dragleave', (e) => {
+                row.style.transform = "scale(1)";
+            });
+            row.addEventListener('drop', (e) => {
+                e.preventDefault();
+                row.style.transform = "scale(1)";
+                handleDrop(row);
+            });
+        });
+
+        function handleDrop(targetRow) {
+            if (STATE.isComplete) return;
+            const level = LEVELS[STATE.step];
+            const isCorrectRow = (level.known.row === 'a' && targetRow === els.rowA) || 
+                                 (level.known.row === 'b' && targetRow === els.rowB) ||
+                                 (level.known.row === 'diff' && targetRow === els.rowB); // Simplification: Drag to bigger row for diff
+
+            if (isCorrectRow) {
+                // Animate filling
+                playSound('success');
+                fillRow(targetRow, level.unit);
+                
+                els.source.style.display = 'none';
+                els.ghost.style.display = 'none';
+                
+                setTimeout(() => {
+                    if (level.reflection) triggerReflection(level.reflection);
+                    else completeLevel();
+                }, 1000);
+            } else {
+                playSound('error');
+                document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 500);
+                els.toast.textContent = "Wrong clue! Try the other row.";
+                els.toast.classList.add('active'); setTimeout(() => els.toast.classList.remove('active'), 2000);
+            }
+        }
+
+        function fillRow(row, val) {
+            Array.from(row.children).forEach((box, i) => {
+                setTimeout(() => {
+                    box.classList.add('filled');
+                    box.textContent = val;
+                    playSound('pop');
+                }, i * 100);
+            });
+        }
+
+        function resetStep() {
+            document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 500);
+            els.toast.textContent = "Logic reset.";
+            els.toast.classList.add('active'); setTimeout(() => els.toast.classList.remove('active'), 2500);
+            els.reflectionModal.classList.remove('active'); 
+            document.body.classList.remove('reflection-active');
+            loadLevel(STATE.step);
+        }
+
+        function triggerReflection(refl) { 
+            els.reflQuestion.textContent = refl.q; 
+            els.reflOptions.innerHTML = ''; 
+            const shuffled = [...refl.options].sort(() => Math.random() - 0.5); 
+            shuffled.forEach(opt => { 
+                const btn = document.createElement('button'); 
+                btn.className = "btn-choice"; 
+                btn.textContent = opt.text; 
+                btn.onclick = () => { 
+                    if (opt.correct) { 
+                        btn.classList.add('selected'); 
+                        setTimeout(() => { els.reflectionModal.classList.remove('active'); completeLevel(); }, 600); 
+                    } else { 
+                        playSound('error'); 
+                        btn.classList.add('wrong', 'wiggle'); 
+                        setTimeout(() => resetStep(), 1000); 
+                    } 
+                }; 
+                els.reflOptions.appendChild(btn); 
+            }); 
+            document.body.classList.add('reflection-active'); 
+            els.reflectionModal.classList.add('active'); 
+        }
+
+        function completeLevel() { STATE.isComplete = true; playSound('success'); document.body.classList.remove('reflection-active'); els.btnNext.classList.remove('hidden'); }
+        function completeLesson() { const progress = JSON.parse(localStorage.getItem('ratioCourseData')) || {}; progress.detective = true; localStorage.setItem('ratioCourseData', JSON.stringify(progress)); window.location.href = '../index.html'; }
+
+        els.btnNext.onclick = () => { if (STATE.step < LEVELS.length - 1) { loadLevel(STATE.step + 1); } else { playSound('success'); els.final.classList.add('active'); } };
+        function updateDots() { const dotContainer = document.getElementById('progress-dots'); dotContainer.innerHTML = ''; LEVELS.forEach((_, i) => { const d = document.createElement('div'); d.className = `w-3 h-3 rounded-full transition-colors ${i === STATE.step ? 'bg-orange-500 scale-125' : i < STATE.step ? 'bg-orange-300' : 'bg-slate-300'}`; dotContainer.appendChild(d); }); }
+        
+        els.source.addEventListener('touchstart', (e) => { e.preventDefault(); });
+
+        loadLevel(0);
+    </script>
+</body>
+</html>

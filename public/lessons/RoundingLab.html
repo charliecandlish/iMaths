@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rounding Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #ef4444; border-color: #fca5a5; }
+
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #4f46e5; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header { top: 0; height: 130px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 10px 0 12px; }
+        .instr-header h1 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+        .instr-header p { font-size: 1rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        @media (max-width: 640px) {
+            .instr-header { height: 110px; padding-top: 5px; }
+            .instr-header h1 { font-size: 0.8rem; margin-bottom: 0.1rem; }
+            .instr-header p { font-size: 0.9rem; -webkit-line-clamp: 2; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #game-board { transition: opacity 0.8s, transform 0.8s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #4f46e5; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+        
+        body.reflection-active .instruction-container { opacity: 0; pointer-events: none; }
+        body.reflection-active #game-board { transform: translateY(-20vh) scale(0.8); transform-origin: center top; z-index: 40; }
+        body.reflection-active #controls { opacity: 0; pointer-events: none; }
+
+        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
+        .btn-choice:hover { border-color: #818cf8; background-color: #eef2ff; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+        /* Rounding Lab Specifics */
+        .input-field { width: 100%; padding: 20px; border-radius: 20px; border: 2px solid #e2e8f0; font-size: 2rem; font-weight: 800; text-align: center; color: #312e81; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: all 0.2s; }
+        .input-field:focus { outline: none; border-color: #6366f1; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2); transform: translateY(-2px); }
+        
+        .number-display { font-size: clamp(3rem, 6vw, 5rem); font-weight: 900; color: #1e293b; margin-bottom: 10px; }
+        .target-badge { display: inline-flex; padding: 8px 16px; background: #eef2ff; color: #4f46e5; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 99px; font-size: 0.9rem; }
+
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        .progress-dot { cursor: pointer; transition: all 0.2s; }
+        .progress-dot:hover { transform: scale(1.2); }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center text-center z-50">
+        <h1 class="text-4xl md:text-6xl font-black text-indigo-600 mb-4">Lab Complete!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You have mastered the art of estimation.</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Concept Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+    
+    <div id="toast">Incorrect rounding. Try again.</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full">
+        
+        <!-- Lesson View -->
+        <div id="lesson-view" class="hidden w-full max-w-2xl flex flex-col items-center gap-8 flex-1 justify-center min-h-0">
+             <div class="bg-white p-6 md:p-10 rounded-3xl shadow-sm border-2 border-indigo-50 text-center w-full">
+                <div id="lesson-visual" class="text-6xl mb-6">🤔</div>
+                <div id="lesson-content" class="text-lg md:text-xl text-slate-700 leading-relaxed font-medium"></div>
+             </div>
+             <button onclick="nextStep()" class="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Continue</button>
+        </div>
+
+        <!-- Question View -->
+        <div id="question-view" class="w-full max-w-2xl flex flex-col items-center gap-8 flex-1 justify-center min-h-0">
+            <div class="text-center">
+                <div class="target-badge mb-4" id="round-target">Nearest 10</div>
+                <div class="number-display" id="round-number">37.48</div>
+            </div>
+
+            <div class="w-full max-w-md space-y-2">
+                <p class="text-center text-xs font-bold text-slate-400 uppercase tracking-widest">Type your result</p>
+                <input id="round-input" class="input-field" placeholder="?" autocomplete="off" type="text" inputmode="decimal">
+            </div>
+        </div>
+
+        <div id="controls" class="w-full flex flex-col items-center gap-4 mb-8 max-w-md shrink-0 min-h-[60px] justify-end pb-safe">
+            <button id="check-btn" class="w-full bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:scale-105 hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                Check Answer <span class="text-xl">→</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, maxStep: 0, audioCtx: null };
+        const COACH_ACCENT = '#4f46e5';
+        const COACH_BADGE = 'Rounding Coach';
+
+        const STEPS = [
+            {
+                type: 'learn',
+                title: "What is Rounding?",
+                content: "Rounding means making a number simpler but keeping its value close to what it was. <br><br><b>Example:</b> 73 rounded to the nearest 10 is 70.",
+                coach: "We use rounding to estimate and make calculations easier."
+            },
+            {
+                type: 'learn',
+                title: "Decimal Places (d.p.)",
+                content: "When rounding to decimal places, we count digits after the dot. <br><br><b>3.14159</b> to 2 d.p. means keeping 3.14.",
+                coach: "Check the next digit. 5 or more? Round up. 4 or less? Round down."
+            },
+            {
+                title: "1 Decimal Place",
+                desc: "Round <b>37.482</b> to 1 d.p. <br>Look at the second decimal digit to decide.",
+                number: 37.482,
+                targetStr: "1 decimal place",
+                answer: "37.5",
+                coach: "Identify the tenths column (4). The next digit is 8 (>= 5), so round up.",
+                reflection: { q: "Why did we round up?", options: [{text: "Because the next digit was 5 or more", correct: true}, {text: "We always round up for decimals", correct: false}] }
+            },
+            {
+                title: "2 Decimal Places",
+                desc: "Round <b>4.9673</b> to 2 d.p. <br>Precision matters.",
+                number: 4.9673,
+                targetStr: "2 decimal places",
+                answer: "4.97",
+                coach: "Second decimal is 6. Next is 7. Round the 6 up to 7.",
+                reflection: { q: "Which digit determines the rounding?", options: [{text: "The one immediately to the right", correct: true}, {text: "The last digit of the number", correct: false}] }
+            },
+            {
+                type: 'learn',
+                title: "Whole Numbers",
+                content: "We can also round to the nearest 10, 100, or 1000.<br><br>For nearest 10, look at the units column. For nearest 100, look at the tens.",
+                coach: "The rules are the same: 5 or more rounds up!"
+            },
+            {
+                title: "Nearest Ten",
+                desc: "Round <b>4835</b> to the nearest 10. <br>Find the tens column.",
+                number: 4835,
+                targetStr: "nearest 10",
+                answer: "4840",
+                coach: "Tens digit is 3. Next is 5. Round up to 4840.",
+                reflection: { q: "If it ends in 5, do we round up or down?", options: [{text: "Round Up", correct: true}, {text: "Round Down", correct: false}] }
+            },
+            {
+                title: "Nearest Hundred",
+                desc: "Round <b>4835</b> to the nearest 100. <br>Look at the tens digit now.",
+                number: 4835,
+                targetStr: "nearest 100",
+                answer: "4800",
+                coach: "Hundreds digit is 8. Next is 3 (less than 5). Keep the 8, rest become zeros.",
+                reflection: { q: "When the checking digit is < 5, the rounding digit...", options: [{text: "Stays the same", correct: true}, {text: "Goes down by 1", correct: false}] }
+            },
+            {
+                title: "Negative Integers",
+                desc: "Round <b>-126.7</b> to the nearest integer. <br>Think about the number line.",
+                number: -126.7,
+                targetStr: "nearest integer",
+                answer: "-127",
+                coach: "-126.7 is closer to -127 than -126.",
+                reflection: { q: "Rounding -1.5 to nearest integer gives...", options: [{text: "-2", correct: true}, {text: "-1", correct: false}] }
+            },
+            {
+                type: 'learn',
+                title: "Significant Figures (s.f.)",
+                content: "The first non-zero digit is the <b>1st Significant Figure</b>.<br>Zeros at the start (0.00...) are NOT significant.<br><br><b>0.00509</b><br>5 is the 1st s.f.",
+                coach: "We start counting significant figures from the first number that isn't zero."
+            },
+            {
+                title: "Significant Figures",
+                desc: "Round <b>0.00491</b> to 2 sig figs. <br>Leading zeros don't count.",
+                number: 0.00491,
+                targetStr: "2 significant figures",
+                answer: "0.0049",
+                coach: "First significant figure is 4. Second is 9. Next is 1, so stay at 49.",
+                reflection: { q: "Are the leading zeros significant?", options: [{text: "No, never", correct: true}, {text: "Yes, always", correct: false}] }
+            }
+        ];
+
+        // --- Audio System ---
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) { 
+            if (!STATE.audioCtx) return; 
+            const ctx = STATE.audioCtx; 
+            const t = ctx.currentTime; 
+            const osc = ctx.createOscillator(); 
+            const gain = ctx.createGain(); 
+            osc.connect(gain); 
+            gain.connect(ctx.destination); 
+            if (type === 'pop') { 
+                osc.frequency.setValueAtTime(600, t); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); 
+                osc.start(t); osc.stop(t+0.1); 
+            } else if (type === 'success') { 
+                osc.frequency.setValueAtTime(440, t); 
+                osc.frequency.exponentialRampToValueAtTime(880, t+0.2); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); 
+                osc.start(t); osc.stop(t+0.5); 
+            } else { 
+                osc.type = 'triangle'; 
+                osc.frequency.setValueAtTime(150, t); 
+                gain.gain.linearRampToValueAtTime(0, t+0.2); 
+                osc.start(t); osc.stop(t+0.2); 
+            } 
+        }
+
+        // --- Core Logic ---
+        const container = document.getElementById('instruction-container');
+        const board = document.getElementById('game-board');
+        const titleEl = document.getElementById('level-title');
+        const descEl = document.getElementById('level-desc');
+        const dotsContainer = document.getElementById('progress-dots');
+        const checkBtn = document.getElementById('check-btn');
+        const toast = document.getElementById('toast');
+        const reflectionModal = document.getElementById('reflection-modal');
+        
+        const lessonView = document.getElementById('lesson-view');
+        const questionView = document.getElementById('question-view');
+        const controls = document.getElementById('controls');
+        const lessonContent = document.getElementById('lesson-content');
+        
+        const numberDisplay = document.getElementById('round-number');
+        const targetBadge = document.getElementById('round-target');
+        const inputField = document.getElementById('round-input');
+
+        function initLevel() {
+            renderStep();
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        function formatNumberDisplay(val) {
+            // Use toString to preserve decimals exactly as written in code (mostly)
+            return String(val);
+        }
+
+        function renderStep() {
+            const step = STEPS[STATE.step];
+            STATE.maxStep = Math.max(STATE.maxStep || 0, STATE.step);
+            
+            container.className = "instruction-container instr-focus";
+            titleEl.textContent = step.title;
+            
+            // Render Dots
+            dotsContainer.innerHTML = STEPS.map((_, i) => {
+                const accessible = i <= STATE.maxStep;
+                const current = i === STATE.step;
+                let bg = 'bg-slate-200';
+                if (current) bg = 'bg-indigo-500 scale-125';
+                else if (i < STATE.step) bg = 'bg-indigo-300';
+                
+                return `<div 
+                    onclick="${accessible ? `jumpToStep(${i})` : ''}" 
+                    class="progress-dot w-2 h-2 rounded-full transition-all ${bg} ${accessible ? 'cursor-pointer' : 'cursor-default opacity-50'}">
+                </div>`
+            }).join('');
+
+            if (step.type === 'learn') {
+                // Lesson Mode
+                descEl.innerHTML = ""; // Clear description for lesson mode, or keep it? 
+                // Actually, the design usually has title in header, content in board.
+                // Let's put the content in the board card.
+                
+                lessonView.classList.remove('hidden');
+                lessonView.classList.add('flex');
+                questionView.classList.add('hidden');
+                questionView.classList.remove('flex');
+                controls.classList.add('hidden');
+                controls.classList.remove('flex');
+                
+                lessonContent.innerHTML = step.content;
+                
+            } else {
+                // Question Mode
+                descEl.innerHTML = step.desc;
+                
+                lessonView.classList.add('hidden');
+                lessonView.classList.remove('flex');
+                questionView.classList.remove('hidden');
+                questionView.classList.add('flex');
+                controls.classList.remove('hidden');
+                controls.classList.add('flex');
+            
+                // Reset Inputs
+            inputField.value = '';
+            numberDisplay.textContent = formatNumberDisplay(step.number);
+            targetBadge.textContent = step.targetStr;
+            }
+
+            board.className = "board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+
+            if (window.LessonCoach) {
+                LessonCoach.set(step.coach, { accent: COACH_ACCENT, badge: COACH_BADGE });
+            }
+
+            // Auto-transition
+            setTimeout(() => {
+                container.className = "instruction-container instr-header";
+                board.className = "board-visible flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+                if (step.type !== 'learn') {
+                inputField.focus();
+                }
+            }, 2500);
+        }
+
+        function jumpToStep(i) {
+            if (i > STATE.maxStep) return;
+            STATE.step = i;
+            renderStep();
+        }
+
+        function sanitize(val) {
+            return val.replace(/\s/g, '').toLowerCase();
+        }
+
+        checkBtn.onclick = () => {
+            const step = STEPS[STATE.step];
+            const user = sanitize(inputField.value);
+            const answer = sanitize(String(step.answer));
+            
+            if (!user) {
+                showToast("Please type an answer.");
+                return;
+            }
+
+            if (user === answer) {
+                playSound('success');
+                showReflection();
+            } else {
+                playSound('error');
+                showToast(`Try again. Expected: ${step.answer}`);
+                board.classList.add('shake-screen');
+                setTimeout(() => board.classList.remove('shake-screen'), 500);
+            }
+        };
+
+        inputField.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') checkBtn.click();
+        });
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 2000);
+        }
+
+        function showReflection() {
+            const step = STEPS[STATE.step];
+            if (!step.reflection) {
+                nextStep();
+                return;
+            }
+
+            document.body.classList.add('reflection-active');
+            reflectionModal.classList.add('active');
+            
+            const qEl = document.getElementById('refl-question');
+            const optEl = document.getElementById('refl-options');
+            
+            qEl.textContent = step.reflection.q;
+            optEl.innerHTML = '';
+            
+            step.reflection.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    if (opt.correct) {
+                        btn.classList.add('selected');
+                        playSound('success');
+                        setTimeout(() => {
+                            reflectionModal.classList.remove('active');
+                            document.body.classList.remove('reflection-active');
+                            nextStep();
+                        }, 1000);
+                    } else {
+                        btn.classList.add('wrong');
+                        playSound('error');
+                        btn.classList.add('wiggle');
+                    }
+                };
+                optEl.appendChild(btn);
+            });
+        }
+
+        function nextStep() {
+            STATE.step++;
+            if (STATE.step >= STEPS.length) {
+                document.getElementById('final-screen').classList.remove('hidden');
+                document.getElementById('final-screen').classList.add('flex');
+                playSound('success');
+            } else {
+                renderStep();
+            }
+        }
+
+        function completeLesson() {
+            if (window.Course) {
+                Course.completeLesson('num_round');
+            } else {
+                window.location.href = '../index.html';
+            }
+        }
+
+        initLevel();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>F.D.P. Connector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #ef4444; border-color: #fca5a5; }
+        
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-header { top: 0; height: 130px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 10px 0 12px; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #84cc16; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header h1 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+        .instr-header p { font-size: 1rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        @media (max-width: 640px) {
+            .instr-header { height: 110px; padding-top: 5px; }
+            .instr-header h1 { font-size: 0.8rem; margin-bottom: 0.1rem; }
+            .instr-header p { font-size: 0.9rem; -webkit-line-clamp: 2; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #grid-container { display: grid; grid-template-columns: repeat(10, 1fr); width: 100%; max-width: 350px; aspect-ratio: 1; gap: 2px; background: #e2e8f0; padding: 2px; border-radius: 8px; transition: all 0.3s; }
+        .grid-cell { background: white; border-radius: 2px; transition: all 0.1s; cursor: pointer; }
+        .grid-cell.active { background: #84cc16; }
+        
+        @media (max-width: 640px) {
+            #grid-container { max-width: 90vw; margin-bottom: 1rem; }
+        }
+
+        .stat-card { background: white; border-radius: 16px; padding: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); flex: 1; display: flex; flex-direction: column; items-center; min-width: 80px; }
+        .stat-label { font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-value { font-size: 1.2rem; font-weight: 900; color: #334155; }
+        
+        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
+        .btn-choice:hover { border-color: #a3e635; background-color: #f7fee7; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+        
+        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #84cc16; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+
+        /* Reflection Active State - Optimized */
+        body.reflection-active .instruction-container {
+            opacity: 0; pointer-events: none;
+        }
+        body.reflection-active #game-board {
+            transform: translateY(-20vh) scale(0.8);
+            transform-origin: center top;
+            z-index: 40;
+        }
+        body.reflection-active #controls {
+            opacity: 0; pointer-events: none;
+        }
+        @media (max-width: 640px) { 
+            body.reflection-active #game-board { transform: translateY(-10vh) scale(0.65) !important; } 
+        }
+
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+        
+        .shake-screen { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        
+        .wiggle { animation: wiggle 0.4s ease-in-out; }
+        @keyframes wiggle { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; max-width: 90%; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center text-center z-50">
+        <h1 class="text-4xl md:text-6xl font-black text-lime-500 mb-4">FDP Master!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You speak the language of Math.</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-lime-500 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-lime-100 text-lime-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Reasoning Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+    
+    <div id="toast">Incorrect. Resetting...</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[120px] pb-safe px-4 w-full items-center max-w-5xl overflow-y-auto justify-between h-full">
+        
+        <div class="flex flex-col md:flex-row w-full gap-4 md:gap-8 items-center justify-center flex-1 shrink-0 min-h-0">
+            <!-- Grid -->
+            <div id="grid-container" class="shrink-0">
+                <!-- JS fills this -->
+            </div>
+            
+            <!-- Stats -->
+            <div class="flex flex-row md:flex-col gap-2 md:gap-4 w-full max-w-[350px] md:max-w-[200px] justify-center shrink-0">
+                <div class="stat-card">
+                    <span class="stat-label">Fraction</span>
+                    <span id="val-frac" class="stat-value">0/100</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Decimal</span>
+                    <span id="val-dec" class="stat-value">0.00</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Percent</span>
+                    <span id="val-pct" class="stat-value">0%</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="controls" class="w-full flex justify-center pointer-events-auto shrink-0 mb-safe min-h-[60px] items-end pb-4"></div>
+
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, maxStep: 0, filled: 0, isDrag: false, audioCtx: null };
+        const COACH_ACCENT = '#84cc16';
+        const COACH_BADGE = 'Fraction Coach';
+
+        const STEPS = [
+            {
+                title: "The Century Grid",
+                desc: "This grid has 100 squares. Each square is <b>1%</b>. <br>Click to fill 10 squares.",
+                type: "fill",
+                target: 10,
+                coach: "Each square is worth 1%. Fill ten of them to visualise 10% as 10/100 and 0.10.",
+                reflection: { q: "10 squares out of 100 is...", options: [{text: "10%", correct: true}, {text: "1%", correct: false}] }
+            },
+            {
+                title: "Half Way",
+                desc: "Fill 50 squares. Notice the decimal becomes <b>0.50</b>.",
+                type: "fill",
+                target: 50,
+                coach: "Half of the grid equals 0.50 and 50%. Watch all three displays update together.",
+                reflection: { q: "0.50 is half. So 50% is equal to the fraction...", options: [{text: "1/2", correct: true}, {text: "1/50", correct: false}] }
+            },
+            {
+                title: "The Place Value Trap",
+                desc: "Is <b>0.5</b> the same as <b>5%</b>? Let's test it. <br>Fill <b>5</b> squares (5%). Check the decimal.",
+                type: "fill",
+                target: 5,
+                coach: "Tiny decimal places mean tiny percentages. Compare 0.05 to 5%.",
+                reflection: { q: "5% is 0.05. So 0.5 (which is 0.50) must be...", options: [{text: "50%", correct: true}, {text: "5%", correct: false}] }
+            },
+            {
+                title: "Three Quarters",
+                desc: "Fill 75 squares. <br>This is 75%, 0.75, and 3/4.",
+                type: "fill",
+                target: 75,
+                coach: "Think in chunks: 50 squares for half, then another 25 to make three quarters.",
+                reflection: { q: "If 25% is 1/4, then 75% is...", options: [{text: "3 times 1/4 (3/4)", correct: true}, {text: "4 times 1/4", correct: false}] }
+            }
+        ];
+
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) { if (!STATE.audioCtx) return; const ctx = STATE.audioCtx; const t = ctx.currentTime; const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); if (type === 'pop') { osc.frequency.setValueAtTime(600, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); osc.start(t); osc.stop(t+0.1); } else if (type === 'success') { osc.frequency.setValueAtTime(440, t); osc.frequency.exponentialRampToValueAtTime(880, t+0.2); gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); osc.start(t); osc.stop(t+0.5); } else if (type === 'tick') { osc.type = 'square'; osc.frequency.setValueAtTime(200, t); gain.gain.linearRampToValueAtTime(0, t+0.05); osc.start(t); osc.stop(t+0.05); } else { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); gain.gain.linearRampToValueAtTime(0, t+0.2); osc.start(t); osc.stop(t+0.2); } }
+
+        const els = { grid: document.getElementById('grid-container'), frac: document.getElementById('val-frac'), dec: document.getElementById('val-dec'), pct: document.getElementById('val-pct'), controls: document.getElementById('controls'), title: document.getElementById('level-title'), desc: document.getElementById('level-desc'), instr: document.getElementById('instruction-container'), board: document.getElementById('game-board'), reflModal: document.getElementById('reflection-modal'), reflQ: document.getElementById('refl-question'), reflOpts: document.getElementById('refl-options'), dots: document.getElementById('progress-dots'), final: document.getElementById('final-screen'), toast: document.getElementById('toast') };
+
+        function createGrid() {
+            els.grid.innerHTML = '';
+            for(let i=0; i<100; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.onmouseover = (e) => { if(e.buttons === 1) fillTo(i+1); };
+                cell.onmousedown = () => fillTo(i+1);
+                els.grid.appendChild(cell);
+            }
+        }
+        
+        function fillTo(n) {
+            if (n !== STATE.filled) playSound('tick');
+            STATE.filled = n;
+            const cells = document.querySelectorAll('.grid-cell');
+            cells.forEach((c, i) => {
+                if (i < n) c.classList.add('active');
+                else c.classList.remove('active');
+            });
+            updateStats();
+            checkTarget();
+        }
+        
+        function updateStats() {
+            els.frac.textContent = `${STATE.filled}/100`;
+            els.dec.textContent = (STATE.filled / 100).toFixed(2);
+            els.pct.textContent = `${STATE.filled}%`;
+        }
+        
+        function checkTarget() {
+            const step = STEPS[STATE.step];
+            if (step.type === 'fill' && STATE.filled === step.target) {
+                // Show Next button if not already there
+                if(!els.controls.querySelector('button')) {
+                    playSound('success');
+                    const btn = document.createElement('button');
+                    btn.className = 'bg-lime-500 text-white px-8 py-3 rounded-xl font-bold text-xl shadow-lg hover:scale-105 transition animate-bounce';
+                    btn.textContent = "Next";
+                    btn.onclick = () => {
+                         if(step.reflection) triggerReflection(step.reflection);
+                         else nextStep();
+                    };
+                    els.controls.appendChild(btn);
+                    
+                    // Enter key support
+                    const handleEnter = (e) => {
+                        if (e.key === 'Enter') {
+                            btn.click();
+                            document.removeEventListener('keydown', handleEnter);
+                        }
+                    };
+                    document.addEventListener('keydown', handleEnter);
+                }
+            }
+        }
+
+        async function animateSequence(title, desc) {
+            els.instr.className = 'instruction-container instr-focus';
+            els.board.className = 'board-hidden flex-1 flex flex-col pt-[140px] pb-6 px-4 w-full items-center max-w-5xl';
+            els.title.innerHTML = title;
+            els.desc.innerHTML = desc;
+            
+            const words = desc.split(' ');
+            els.desc.innerHTML = words.map(w => `<span class="opacity-0 transition-opacity duration-300">${w} </span>`).join('');
+            await new Promise(r => setTimeout(r, 500));
+            const spans = els.desc.querySelectorAll('span');
+            initAudio();
+            for(let i=0; i<spans.length; i++) { 
+                spans[i].classList.remove('opacity-0');
+                await new Promise(r => setTimeout(r, 30)); 
+            }
+            
+            await new Promise(r => setTimeout(r, 1000));
+            els.instr.className = 'instruction-container instr-header';
+            els.board.className = 'board-visible flex-1 flex flex-col pt-[140px] pb-6 px-4 w-full items-center max-w-5xl';
+        }
+
+        function updateCoach(step) {
+            if (window.LessonCoach && typeof LessonCoach.set === 'function') {
+                LessonCoach.set(step.coach || "Use the filled squares, decimal, and percent readouts together.", {
+                    accent: COACH_ACCENT,
+                    badge: COACH_BADGE
+                });
+            }
+        }
+
+        function loadStep(idx) {
+            STATE.step = idx;
+            STATE.maxStep = Math.max(STATE.maxStep || 0, idx);
+            STATE.filled = 0;
+            fillTo(0); // Reset grid
+            updateDots();
+            
+            // Close any open modals
+            els.reflModal.classList.remove('active');
+            document.body.classList.remove('reflection-active');
+            
+            animateSequence(STEPS[idx].title, STEPS[idx].desc);
+            els.controls.innerHTML = '';
+            updateCoach(STEPS[idx]);
+        }
+        
+        function jumpToStep(stepIndex) {
+            if (stepIndex <= STATE.maxStep) {
+                loadStep(stepIndex);
+            }
+        }
+
+        function triggerReflection(refl) {
+            els.reflQ.textContent = refl.q;
+            els.reflOpts.innerHTML = '';
+            const opts = [...refl.options].sort(() => Math.random() - 0.5);
+            
+            // Remove any existing key handlers
+            const existingHandlers = els.reflOpts.querySelectorAll('[data-key-handler]');
+            existingHandlers.forEach(el => {
+                if (el._keyHandler) {
+                    document.removeEventListener('keydown', el._keyHandler);
+                }
+            });
+            
+            opts.forEach((o, index) => {
+                const btn = document.createElement('button');
+                btn.className = "btn-choice";
+                btn.textContent = o.text;
+                btn.onclick = () => handleReflectionChoice(o, btn);
+                
+                // Number key support (1, 2, 3, etc.)
+                const handleKeyPress = (e) => {
+                    if (e.key === String(index + 1)) {
+                        btn.click();
+                    }
+                };
+                document.addEventListener('keydown', handleKeyPress);
+                btn._keyHandler = handleKeyPress;
+                
+                els.reflOpts.appendChild(btn);
+            });
+            document.body.classList.add('reflection-active');
+            els.reflModal.classList.add('active');
+        }
+        
+        function handleReflectionChoice(opt, btn) {
+            // Remove all key handlers
+            els.reflOpts.querySelectorAll('.btn-choice').forEach(b => {
+                if (b._keyHandler) {
+                    document.removeEventListener('keydown', b._keyHandler);
+                }
+            });
+            
+            if (opt.correct) {
+                btn.classList.add('selected');
+                playSound('success');
+                setTimeout(() => {
+                    els.reflModal.classList.remove('active');
+                    document.body.classList.remove('reflection-active');
+                    nextStep();
+                }, 1000);
+            } else {
+                playSound('error');
+                btn.classList.add('wrong', 'wiggle');
+                setTimeout(() => {
+                    // Reset the question - close modal and restart current step
+                    els.reflModal.classList.remove('active');
+                    document.body.classList.remove('reflection-active');
+                    resetStep();
+                }, 1500);
+            }
+        }
+
+        function resetStep() {
+            document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 500);
+            els.toast.classList.add('active'); setTimeout(() => els.toast.classList.remove('active'), 2000);
+            els.reflModal.classList.remove('active'); 
+            document.body.classList.remove('reflection-active');
+            loadStep(STATE.step);
+        }
+
+        function nextStep() {
+            if (STATE.step < STEPS.length - 1) loadStep(STATE.step + 1);
+            else els.final.classList.remove('hidden');
+        }
+
+        function updateDots() {
+            els.dots.innerHTML = STEPS.map((_, i) => {
+                const accessible = i <= STATE.maxStep;
+                const current = i === STATE.step;
+                let bg = 'bg-slate-300';
+                if (current) bg = 'bg-lime-500 scale-125';
+                else if (i < STATE.step) bg = 'bg-lime-300';
+                
+                return `<div 
+                    onclick="${accessible ? `jumpToStep(${i})` : ''}" 
+                    class="w-3 h-3 rounded-full transition-all ${bg} ${accessible ? 'cursor-pointer' : 'cursor-default opacity-50'}">
+                </div>`
+            }).join('');
+        }
+
+        function completeLesson() {
+            if (window.Course) {
+                Course.completeLesson('rp_fdp');
+            } else {
+                window.location.href = '../index.html';
+            }
+        }
+
+        createGrid();
+        loadStep(0);
+    </script>
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Operation Overload</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #ef4444; border-color: #fca5a5; }
+        
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-header { top: 0; height: 130px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 10px 0 12px; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #f59e0b; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header h1 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+        .instr-header p { font-size: 1rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        @media (max-width: 640px) {
+            .instr-header { height: 110px; padding-top: 5px; }
+            .instr-header h1 { font-size: 0.8rem; margin-bottom: 0.1rem; }
+            .instr-header p { font-size: 0.9rem; -webkit-line-clamp: 2; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .ops-card { background: white; padding: 2rem; border-radius: 24px; box-shadow: 0 20px 40px -5px rgba(245, 158, 11, 0.15); width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; gap: 2rem; position: relative; overflow: hidden; margin-top: 10px; }
+        .ops-row { display: flex; align-items: center; gap: 1.5rem; font-size: 3rem; font-weight: 900; color: #334155; flex-wrap: wrap; justify-content: center; }
+        
+        @media (max-width: 640px) {
+            .ops-card { padding: 1rem; gap: 0.5rem; width: 95%; }
+            .ops-row { font-size: 1.5rem; gap: 0.5rem; }
+        }
+
+        .fraction { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 60px; }
+        .frac-num { border-bottom: 4px solid #334155; width: 100%; text-align: center; padding-bottom: 2px; }
+        .frac-den { width: 100%; text-align: center; padding-top: 2px; }
+        
+        .input-box { width: 80px; height: 80px; border: 4px solid #e2e8f0; border-radius: 12px; font-size: 2.5rem; text-align: center; font-weight: 900; color: #0f172a; outline: none; transition: all 0.2s; }
+        .input-box:focus { border-color: #f59e0b; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2); }
+        .input-box.correct { background: #dcfce7; border-color: #22c55e; color: #15803d; }
+        .input-box.wrong { background: #fee2e2; border-color: #ef4444; color: #991b1b; animation: wiggle 0.4s; }
+        
+        @media (max-width: 640px) {
+            .input-box { width: 50px; height: 50px; font-size: 1.5rem; border-width: 2px; }
+            .fraction { width: 36px; gap: 2px; }
+            .frac-num { border-bottom-width: 2px; }
+            .mini-bar { height: 4px; }
+        }
+
+        .mini-bar { height: 8px; background: #cbd5e1; width: 100%; border-radius: 4px; margin-top: 8px; position: relative; overflow: hidden; }
+        .mini-fill { height: 100%; background: #f59e0b; position: absolute; top: 0; left: 0; transition: width 0.5s; }
+
+        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
+        .btn-choice:hover { border-color: #fcd34d; background-color: #fffbeb; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+        
+        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #f59e0b; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+
+        /* Reflection Active State - Optimized */
+        body.reflection-active .instruction-container {
+            opacity: 0; pointer-events: none;
+        }
+        body.reflection-active #game-board {
+            transform: translateY(-20vh) scale(0.8);
+            transform-origin: center top;
+            z-index: 40;
+        }
+        body.reflection-active #controls {
+            opacity: 0; pointer-events: none;
+        }
+        @media (max-width: 640px) { 
+            body.reflection-active #game-board { transform: translateY(-10vh) scale(0.65) !important; } 
+        }
+
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+        
+        .shake-screen { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        
+        .wiggle { animation: wiggle 0.4s ease-in-out; }
+        @keyframes wiggle { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; max-width: 90%; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center text-center z-50">
+        <h1 class="text-4xl md:text-6xl font-black text-amber-500 mb-4">Operator!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You can calculate anything.</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-amber-500 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Reasoning Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+    
+    <div id="toast">Incorrect. Resetting...</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[140px] pb-6 px-4 w-full items-center max-w-5xl">
+        
+        <div class="ops-card" id="problem-container">
+            <!-- JS Fills this -->
+        </div>
+        
+        <div id="controls" class="w-full flex flex-col items-center gap-6 mt-12"></div>
+
+    </div>
+
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, audioCtx: null };
+        const COACH_ACCENT = '#f59e0b';
+        const COACH_BADGE = 'Fraction Coach';
+
+        const STEPS = [
+            {
+                title: "Adding Slices",
+                desc: "1 slice + 2 slices = 3 slices. <br>When adding fractions, we ONLY add the top numbers.",
+                type: "add",
+                f1: {n: 1, d: 5},
+                f2: {n: 2, d: 5},
+                res: {n: 3, d: 5},
+                coach: "Check that the denominators match before you add. Only the numerators are allowed to change.",
+                reflection: { q: "Why didn't the bottom number change (become 10)?", options: [{text: "Because the slice SIZE stays the same", correct: true}, {text: "It just happens that way", correct: false}] }
+            },
+            {
+                title: "Misconception Check",
+                desc: "If I have <b>1/5</b> of a pizza and you give me <b>2/5</b>, do I have <b>3/10</b>?",
+                type: "add", // Visual
+                f1: {n: 1, d: 5},
+                f2: {n: 2, d: 5},
+                res: {n: 3, d: 5},
+                coach: "Adding denominators would shrink the slices—stick to changing the numerator only.",
+                reflection: { q: "Is 1/5 + 2/5 = 3/10?", options: [{text: "No! Denominators never add.", correct: true}, {text: "Yes, add top and bottom.", correct: false}] }
+            },
+            {
+                title: "Subtraction",
+                desc: "Same rule for minus. <br>Subtract the tops, keep the bottom.",
+                type: "sub",
+                f1: {n: 4, d: 7},
+                f2: {n: 1, d: 7},
+                res: {n: 3, d: 7},
+                coach: "When subtracting, imagine removing slices from the same-sized pizza. Denominator stays fixed.",
+                reflection: { q: "4/7 - 1/7 = 3/7. Because...", options: [{text: "4 pieces minus 1 piece is 3 pieces", correct: true}, {text: "7 minus 7 is 0", correct: false}] }
+            },
+            {
+                title: "Multiplication",
+                desc: "Multiplying is different! <br>Multiply Top x Top and Bottom x Bottom.",
+                type: "mult",
+                f1: {n: 1, d: 2},
+                f2: {n: 1, d: 3},
+                res: {n: 1, d: 6},
+                coach: "When you multiply fractions, both numerator and denominator change—picture a fraction of a fraction.",
+                reflection: { q: "1/2 times 1/3 means 'Half OF a Third'. Is the answer smaller?", options: [{text: "Yes, 1/6 is smaller than 1/3", correct: true}, {text: "No, it's bigger", correct: false}] }
+            }
+        ];
+
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) { if (!STATE.audioCtx) return; const ctx = STATE.audioCtx; const t = ctx.currentTime; const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); if (type === 'pop') { osc.frequency.setValueAtTime(600, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); osc.start(t); osc.stop(t+0.1); } else if (type === 'success') { osc.frequency.setValueAtTime(440, t); osc.frequency.exponentialRampToValueAtTime(880, t+0.2); gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); osc.start(t); osc.stop(t+0.5); } else if (type === 'type') { osc.type = 'triangle'; osc.frequency.setValueAtTime(800, t); gain.gain.linearRampToValueAtTime(0, t+0.05); osc.start(t); osc.stop(t+0.05); } else { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); gain.gain.linearRampToValueAtTime(0, t+0.2); osc.start(t); osc.stop(t+0.2); } }
+
+        const els = { card: document.getElementById('problem-container'), controls: document.getElementById('controls'), title: document.getElementById('level-title'), desc: document.getElementById('level-desc'), instr: document.getElementById('instruction-container'), board: document.getElementById('game-board'), reflModal: document.getElementById('reflection-modal'), reflQ: document.getElementById('refl-question'), reflOpts: document.getElementById('refl-options'), dots: document.getElementById('progress-dots'), final: document.getElementById('final-screen'), toast: document.getElementById('toast') };
+
+        function renderProblem(step) {
+            els.card.innerHTML = '';
+            const opMap = { 'add': '+', 'sub': '-', 'mult': '×', 'div': '÷' };
+            
+            const row = document.createElement('div');
+            row.className = 'ops-row';
+            
+            row.innerHTML = `
+                <div class="fraction">
+                    <div class="frac-num">${step.f1.n}</div>
+                    <div class="frac-den">${step.f1.d}</div>
+                    <div class="mini-bar"><div class="mini-fill" style="width:${(step.f1.n/step.f1.d)*100}%"></div></div>
+                </div>
+                <div class="text-amber-500">${opMap[step.type]}</div>
+                <div class="fraction">
+                    <div class="frac-num">${step.f2.n}</div>
+                    <div class="frac-den">${step.f2.d}</div>
+                    <div class="mini-bar"><div class="mini-fill" style="width:${(step.f2.n/step.f2.d)*100}%"></div></div>
+                </div>
+                <div>=</div>
+                <div class="flex flex-col gap-2 items-center">
+                    <input type="number" id="ans-n" class="input-box" placeholder="?">
+                    <div class="w-[80px] h-[4px] bg-slate-700 rounded"></div>
+                    <input type="number" id="ans-d" class="input-box" placeholder="?">
+                </div>
+            `;
+            
+            els.card.appendChild(row);
+            
+            // Auto focus
+            setTimeout(() => document.getElementById('ans-n').focus(), 500);
+            
+            // Listeners
+            const inputs = row.querySelectorAll('input');
+            inputs.forEach(inp => {
+                inp.oninput = () => {
+                    playSound('type');
+                    checkAnswer();
+                };
+            });
+        }
+        
+        function checkAnswer() {
+            const nVal = parseInt(document.getElementById('ans-n').value);
+            const dVal = parseInt(document.getElementById('ans-d').value);
+            const step = STEPS[STATE.step];
+            
+            const nCorrect = nVal === step.res.n;
+            const dCorrect = dVal === step.res.d;
+            
+            if (nCorrect) document.getElementById('ans-n').classList.add('correct');
+            if (dCorrect) document.getElementById('ans-d').classList.add('correct');
+            
+            if (nCorrect && dCorrect) {
+                 document.getElementById('ans-n').disabled = true;
+                 document.getElementById('ans-d').disabled = true;
+                 playSound('success');
+                 
+                 // Show next button
+                 if(!els.controls.querySelector('button')) {
+                     const btn = document.createElement('button');
+                     btn.className = 'bg-amber-500 text-white px-8 py-3 rounded-xl font-bold text-xl shadow-lg hover:scale-105 transition animate-bounce';
+                     btn.textContent = "Next";
+                     btn.onclick = () => {
+                         if(step.reflection) triggerReflection(step.reflection);
+                         else nextStep();
+                     };
+                     els.controls.appendChild(btn);
+                 }
+            }
+        }
+
+        async function animateSequence(title, desc) {
+            els.instr.className = 'instruction-container instr-focus';
+            els.board.className = 'board-hidden flex-1 flex flex-col pt-[140px] pb-6 px-4 w-full items-center max-w-5xl';
+            els.title.innerHTML = title;
+            els.desc.innerHTML = desc;
+            
+            const words = desc.split(' ');
+            els.desc.innerHTML = words.map(w => `<span class="opacity-0 transition-opacity duration-300">${w} </span>`).join('');
+            await new Promise(r => setTimeout(r, 500));
+            const spans = els.desc.querySelectorAll('span');
+            initAudio();
+            for(let i=0; i<spans.length; i++) { 
+                spans[i].classList.remove('opacity-0');
+                await new Promise(r => setTimeout(r, 30)); 
+            }
+            
+            await new Promise(r => setTimeout(r, 1000));
+            els.instr.className = 'instruction-container instr-header';
+            els.board.className = 'board-visible flex-1 flex flex-col pt-[140px] pb-6 px-4 w-full items-center max-w-5xl';
+        }
+
+        function updateCoach(step) {
+            if (window.LessonCoach && typeof LessonCoach.set === 'function') {
+                LessonCoach.set(step.coach || "Match the operation to the rule: add/subtract tops only, multiply across.", {
+                    accent: COACH_ACCENT,
+                    badge: COACH_BADGE
+                });
+            }
+        }
+
+        function loadStep(idx) {
+            STATE.step = idx;
+            updateDots();
+            animateSequence(STEPS[idx].title, STEPS[idx].desc);
+            els.controls.innerHTML = '';
+            renderProblem(STEPS[idx]);
+            updateCoach(STEPS[idx]);
+        }
+
+        function triggerReflection(refl) {
+            els.reflQ.textContent = refl.q;
+            els.reflOpts.innerHTML = '';
+            const opts = [...refl.options].sort(() => Math.random() - 0.5);
+            opts.forEach(o => {
+                const btn = document.createElement('button');
+                btn.className = "btn-choice";
+                btn.textContent = o.text;
+                btn.onclick = () => {
+                    if (o.correct) {
+                        btn.classList.add('selected');
+                        setTimeout(() => { els.reflModal.classList.remove('active'); nextStep(); }, 500);
+                    } else {
+                        playSound('error');
+                        btn.classList.add('wrong', 'wiggle');
+                        setTimeout(() => resetStep(), 1000);
+                    }
+                };
+                els.reflOpts.appendChild(btn);
+            });
+            document.body.classList.add('reflection-active');
+            els.reflModal.classList.add('active');
+        }
+
+        function resetStep() {
+            document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 500);
+            els.toast.classList.add('active'); setTimeout(() => els.toast.classList.remove('active'), 2000);
+            els.reflModal.classList.remove('active'); 
+            document.body.classList.remove('reflection-active');
+            loadStep(STATE.step);
+        }
+
+        function nextStep() {
+            if (STATE.step < STEPS.length - 1) loadStep(STATE.step + 1);
+            else els.final.classList.remove('hidden');
+        }
+
+        function updateDots() {
+            els.dots.innerHTML = STEPS.map((_, i) => `<div class="w-3 h-3 rounded-full transition-colors ${i === STATE.step ? 'bg-amber-500 scale-125' : i < STATE.step ? 'bg-amber-300' : 'bg-slate-300'}"></div>`).join('');
+        }
+
+        function completeLesson() {
+            const progress = JSON.parse(localStorage.getItem('ratioCourseData')) || {};
+            progress.frac_ops = true;
+            localStorage.setItem('ratioCourseData', JSON.stringify(progress));
+            window.location.href = '../index.html';
+        }
+
+        loadStep(0);
+    </script>
+</body>
+</html>

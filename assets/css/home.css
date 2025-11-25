@@ -1,0 +1,215 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f1f5f9;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.course-card {
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+    overflow: hidden;
+}
+
+.course-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.15);
+}
+
+.course-card:active {
+    transform: scale(0.98);
+}
+
+.progress-ring-circle {
+    transition: stroke-dashoffset 1s ease-in-out;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+
+.locked {
+    opacity: 0.6;
+    pointer-events: none;
+    filter: grayscale(1);
+}
+
+.locked::after {
+    content: '\f023';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    color: #64748b;
+    opacity: 0.8;
+}
+
+.status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.status-badge.completed {
+    color: #22c55e;
+    opacity: 1;
+}
+
+.status-badge.inprogress {
+    color: #f59e0b;
+    opacity: 1;
+}
+
+.icon-art { color: #3b82f6; }
+.icon-simplifier { color: #ec4899; }
+.icon-quiz1 { color: #6366f1; }
+.icon-split { color: #a855f7; }
+.icon-detective { color: #f97316; }
+.icon-scale { color: #10b981; }
+.icon-inverse { color: #0ea5e9; }
+.icon-wordlab { color: #f43f5e; }
+.icon-quiz2 { color: #64748b; }
+.icon-quiz3 { color: #10b981; }
+.icon-frac-foundry { color: #8b5cf6; }
+.icon-frac-eq { color: #6366f1; }
+.icon-frac-wall { color: #06b6d4; }
+.icon-mixed { color: #d946ef; }
+.icon-frac-ops { color: #f59e0b; }
+.icon-fdp { color: #84cc16; }
+.icon-quiz-frac { color: #7c3aed; }
+
+.section-header {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.section-header:hover {
+    background: #f8fafc;
+}
+
+.chevron {
+    transition: transform 0.3s;
+}
+
+.section-content {
+    transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    overflow: hidden;
+    max-height: 2000px;
+    opacity: 1;
+}
+
+.section-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+}
+
+.module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .module-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+}
+
+header {
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+.progress-container {
+    width: 120px;
+}
+
+#auth-modal.hidden {
+    display: none !important;
+}
+
+#auth-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(248,250,252,0.95);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-box {
+    background: white;
+    padding: 2rem;
+    border-radius: 24px;
+    box-shadow: 0 20px 50px -10px rgba(0,0,0,0.15);
+    width: 100%;
+    max-width: 400px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.auth-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.auth-input:focus {
+    border-color: #6366f1;
+}
+
+.auth-btn {
+    width: 100%;
+    padding: 12px;
+    background: #6366f1;
+    color: white;
+    font-weight: 700;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: transform 0.1s;
+}
+
+.auth-btn:active {
+    transform: scale(0.98);
+}
+
+.auth-toggle {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    cursor: pointer;
+}
+
+.auth-toggle:hover {
+    color: #6366f1;
+    text-decoration: underline;
+}

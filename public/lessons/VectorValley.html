@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vector Valley</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #0ea5e9; border-color: #7dd3fc; }
+
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #0284c7; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header { top: 0; height: 130px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 10px 0 12px; }
+        .instr-header h1 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+        .instr-header p { font-size: 1rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        @media (max-width: 640px) {
+            .instr-header { height: 110px; padding-top: 5px; }
+            .instr-header h1 { font-size: 0.8rem; margin-bottom: 0.1rem; }
+            .instr-header p { font-size: 0.9rem; -webkit-line-clamp: 2; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #game-board { transition: opacity 0.8s, transform 0.8s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #0284c7; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+        
+        body.reflection-active .instruction-container { opacity: 0; pointer-events: none; }
+        body.reflection-active #game-board { transform: translateY(-20vh) scale(0.8); transform-origin: center top; z-index: 40; }
+        body.reflection-active #controls { opacity: 0; pointer-events: none; }
+
+        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
+        .btn-choice:hover { border-color: #7dd3fc; background-color: #f0f9ff; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+        /* Vector Valley Specifics */
+        .vector-grid {
+            width: 300px; height: 250px; position: relative; margin-bottom: 20px;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+            border: 2px solid #94a3b8; border-radius: 12px;
+        }
+        .vector-arrow {
+            position: absolute; height: 4px; background: #0284c7; transform-origin: left center;
+        }
+        .vector-arrow::after {
+            content: ''; position: absolute; right: -2px; top: -4px;
+            border: 6px solid transparent; border-left-color: #0284c7;
+        }
+        
+        .col-vector {
+            font-family: 'Inter', sans-serif; font-weight: 900; font-size: 1.5rem; color: #0284c7;
+            display: inline-flex; flex-direction: column; border-left: 3px solid #0284c7; border-right: 3px solid #0284c7;
+            border-radius: 8px; padding: 5px 10px; align-items: center;
+        }
+
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center text-center z-50">
+        <h1 class="text-4xl md:text-6xl font-black text-sky-600 mb-4">Vector Victor!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You understand magnitude and direction.</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-sky-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-sky-100 text-sky-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Vector Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+    
+    <div id="toast">Check the direction.</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full">
+        <div class="w-full max-w-4xl flex flex-col items-center gap-8 flex-1 justify-center min-h-0">
+            
+            <div class="vector-grid" id="vector-area">
+                <!-- Vectors injected -->
+            </div>
+
+            <div id="notation-area" class="text-center mb-4">
+                <!-- Text injected -->
+            </div>
+
+            <div id="choice-grid" class="grid grid-cols-1 gap-4 w-full max-w-md">
+                <!-- Choices injected -->
+            </div>
+
+        </div>
+
+        <div id="controls" class="w-full flex flex-col items-center gap-4 mb-8 max-w-md shrink-0 min-h-[60px] justify-end pb-safe">
+        </div>
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, audioCtx: null };
+        const COACH_ACCENT = '#0284c7';
+        const COACH_BADGE = 'Vector Pilot';
+
+        const STEPS = [
+            {
+                title: "Column Vectors",
+                desc: "Top number is X (Right/Left). Bottom number is Y (Up/Down). <br>What does this vector mean?",
+                vector: {x: 3, y: 2},
+                display: "col",
+                options: ["3 Right, 2 Up", "3 Up, 2 Right", "3 Left, 2 Down"],
+                correct: 0,
+                coach: "Top is horizontal. Positive means Right. Bottom is vertical. Positive means Up.",
+                reflection: { q: "A negative top number means move...", options: [{text: "Left", correct: true}, {text: "Down", correct: false}] }
+            },
+            {
+                title: "Adding Vectors",
+                desc: "Add the tops, add the bottoms. <br><b>a</b> = (2, 1), <b>b</b> = (1, 3). <br>What is <b>a + b</b>?",
+                vector: {x: 3, y: 4}, // Result
+                display: "math",
+                a: {x:2, y:1}, b: {x:1, y:3},
+                options: ["(3, 4)", "(2, 3)", "(1, 2)"],
+                correct: 0,
+                coach: "2+1=3. 1+3=4. The result is (3, 4).",
+                reflection: { q: "Adding vectors is like...", options: [{text: "Following one path then the other", correct: true}, {text: "Going backwards", correct: false}] }
+            },
+            {
+                title: "Scalar Multiplication",
+                desc: "<b>2a</b> means double the vector. <br>If <b>a</b> = (3, -2), what is <b>2a</b>?",
+                vector: {x: 6, y: -4},
+                display: "scalar",
+                a: {x:3, y:-2}, mult: 2,
+                options: ["(6, -4)", "(5, 0)", "(6, -2)"],
+                correct: 0,
+                coach: "Multiply both numbers by 2. 2×3=6. 2×(-2)=-4.",
+                reflection: { q: "Does the direction change when multiplying by a positive number?", options: [{text: "No, only the length", correct: true}, {text: "Yes, it reverses", correct: false}] }
+            },
+            {
+                title: "Negative Vectors",
+                desc: "<b>-a</b> goes in the opposite direction. <br>If <b>a</b> = (2, 5), what is <b>-a</b>?",
+                vector: {x: -2, y: -5},
+                display: "neg",
+                a: {x:2, y:5},
+                options: ["(-2, -5)", "(2, -5)", "(-2, 5)"],
+                correct: 0,
+                coach: "Flip the signs. 2 becomes -2. 5 becomes -5.",
+                reflection: { q: "The vector -a is...", options: [{text: "Parallel but opposite", correct: true}, {text: "Perpendicular", correct: false}] }
+            }
+        ];
+
+        // --- Audio System ---
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) { 
+            if (!STATE.audioCtx) return; 
+            const ctx = STATE.audioCtx; 
+            const t = ctx.currentTime; 
+            const osc = ctx.createOscillator(); 
+            const gain = ctx.createGain(); 
+            osc.connect(gain); 
+            gain.connect(ctx.destination); 
+            if (type === 'pop') { 
+                osc.frequency.setValueAtTime(600, t); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); 
+                osc.start(t); osc.stop(t+0.1); 
+            } else if (type === 'success') { 
+                osc.frequency.setValueAtTime(440, t); 
+                osc.frequency.exponentialRampToValueAtTime(880, t+0.2); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); 
+                osc.start(t); osc.stop(t+0.5); 
+            } else { 
+                osc.type = 'triangle'; 
+                osc.frequency.setValueAtTime(150, t); 
+                gain.gain.linearRampToValueAtTime(0, t+0.2); 
+                osc.start(t); osc.stop(t+0.2); 
+            } 
+        }
+
+        // --- Core Logic ---
+        const container = document.getElementById('instruction-container');
+        const board = document.getElementById('game-board');
+        const titleEl = document.getElementById('level-title');
+        const descEl = document.getElementById('level-desc');
+        const dotsContainer = document.getElementById('progress-dots');
+        const toast = document.getElementById('toast');
+        const reflectionModal = document.getElementById('reflection-modal');
+        
+        const vectorArea = document.getElementById('vector-area');
+        const notationArea = document.getElementById('notation-area');
+        const choiceGrid = document.getElementById('choice-grid');
+
+        function initLevel() {
+            dotsContainer.innerHTML = STEPS.map((_, i) => `<div class="w-2 h-2 rounded-full transition-colors ${i === 0 ? 'bg-sky-500' : 'bg-slate-200'}"></div>`).join('');
+            renderStep();
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        function renderStep() {
+            const step = STEPS[STATE.step];
+            
+            container.className = "instruction-container instr-focus";
+            titleEl.textContent = step.title;
+            descEl.innerHTML = step.desc;
+            board.className = "board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+            
+            // Render Visual
+            vectorArea.innerHTML = '';
+            
+            // Draw arrow on grid
+            // Center at 150, 125.
+            const startX = 150 - (step.vector.x * 10); // Scale 20px per unit
+            const startY = 125 + (step.vector.y * 10); // Y up is negative in CSS top
+            // CSS rotation logic is tricky for arrows without SVG. Let's use SVG inside grid.
+            
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.style.position = "absolute";
+            
+            const arrow = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            // Start middle
+            const sx = 150; 
+            const sy = 125;
+            // End: x + (vec.x * 20), y - (vec.y * 20)
+            const ex = sx + (step.vector.x * 20);
+            const ey = sy - (step.vector.y * 20);
+            
+            arrow.setAttribute("x1", sx);
+            arrow.setAttribute("y1", sy);
+            arrow.setAttribute("x2", ex);
+            arrow.setAttribute("y2", ey);
+            arrow.setAttribute("stroke", "#0284c7");
+            arrow.setAttribute("stroke-width", "4");
+            arrow.setAttribute("marker-end", "url(#arrowhead)");
+            
+            // Define marker
+            const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+            defs.innerHTML = `<marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#0284c7"/></marker>`;
+            svg.appendChild(defs);
+            svg.appendChild(arrow);
+            vectorArea.appendChild(svg);
+
+            // Notation
+            if (step.display === 'col') {
+                notationArea.innerHTML = `<div class="col-vector"><span>${step.vector.x}</span><span>${step.vector.y}</span></div>`;
+            } else if (step.display === 'math') {
+                notationArea.innerHTML = `<div class="flex gap-2 items-center justify-center">
+                    <div class="col-vector"><span>${step.a.x}</span><span>${step.a.y}</span></div>
+                    <span class="text-2xl font-bold text-slate-400">+</span>
+                    <div class="col-vector"><span>${step.b.x}</span><span>${step.b.y}</span></div>
+                    <span class="text-2xl font-bold text-slate-400">=</span>
+                    <span class="text-2xl font-bold text-slate-800">?</span>
+                </div>`;
+            } else if (step.display === 'scalar') {
+                notationArea.innerHTML = `<div class="flex gap-2 items-center justify-center">
+                    <span class="text-2xl font-bold text-slate-800">${step.mult}</span>
+                    <div class="col-vector"><span>${step.a.x}</span><span>${step.a.y}</span></div>
+                </div>`;
+            } else if (step.display === 'neg') {
+                notationArea.innerHTML = `<div class="flex gap-2 items-center justify-center">
+                    <span class="text-2xl font-bold text-slate-800">-</span>
+                    <div class="col-vector"><span>${step.a.x}</span><span>${step.a.y}</span></div>
+                </div>`;
+            }
+
+            // Choices
+            choiceGrid.innerHTML = '';
+            step.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(idx === step.correct, btn);
+                choiceGrid.appendChild(btn);
+            });
+
+            // Update Dots
+            Array.from(dotsContainer.children).forEach((dot, i) => {
+                dot.className = `w-2 h-2 rounded-full transition-colors ${i <= STATE.step ? 'bg-sky-500' : 'bg-slate-200'}`;
+            });
+
+            if (window.LessonCoach) {
+                LessonCoach.set(step.coach, { accent: COACH_ACCENT, badge: COACH_BADGE });
+            }
+
+            // Auto-transition
+            setTimeout(() => {
+                container.className = "instruction-container instr-header";
+                board.className = "board-visible flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+            }, 2500);
+        }
+
+        function checkAnswer(isCorrect, btn) {
+            if (isCorrect) {
+                btn.classList.add('selected');
+                playSound('success');
+                setTimeout(showReflection, 1000);
+            } else {
+                btn.classList.add('wrong');
+                playSound('error');
+                showToast("Check the numbers.");
+                btn.classList.add('wiggle');
+            }
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 2000);
+        }
+
+        function showReflection() {
+            const step = STEPS[STATE.step];
+            if (!step.reflection) {
+                nextStep();
+                return;
+            }
+
+            document.body.classList.add('reflection-active');
+            reflectionModal.classList.add('active');
+            
+            const qEl = document.getElementById('refl-question');
+            const optEl = document.getElementById('refl-options');
+            
+            qEl.textContent = step.reflection.q;
+            optEl.innerHTML = '';
+            
+            step.reflection.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    if (opt.correct) {
+                        btn.classList.add('selected');
+                        playSound('success');
+                        setTimeout(() => {
+                            reflectionModal.classList.remove('active');
+                            document.body.classList.remove('reflection-active');
+                            nextStep();
+                        }, 1000);
+                    } else {
+                        btn.classList.add('wrong');
+                        playSound('error');
+                        btn.classList.add('wiggle');
+                    }
+                };
+                optEl.appendChild(btn);
+            });
+        }
+
+        function nextStep() {
+            STATE.step++;
+            if (STATE.step >= STEPS.length) {
+                document.getElementById('final-screen').classList.remove('hidden');
+                document.getElementById('final-screen').classList.add('flex');
+                playSound('success');
+            } else {
+                renderStep();
+            }
+        }
+
+        function completeLesson() {
+            if (window.Course) {
+                Course.completeLesson('geo_vector');
+            } else {
+                window.location.href = '../index.html';
+            }
+        }
+
+        initLevel();
+
+    </script>
+</body>
+</html>

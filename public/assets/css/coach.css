@@ -1,0 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&display=swap');
+
+:root {
+    --coach-accent: #6366f1;
+    --coach-surface: #ffffff;
+    --coach-border: rgba(15, 23, 42, 0.08);
+    --coach-shadow: 0 20px 35px rgba(15, 23, 42, 0.12);
+}
+
+.lesson-coach-shell {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 80;
+    max-width: min(320px, calc(100vw - 48px));
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-family: 'Inter', sans-serif;
+}
+
+.lesson-coach-card {
+    background: var(--coach-surface);
+    border: 1px solid var(--coach-border);
+    border-radius: 20px;
+    box-shadow: var(--coach-shadow);
+    padding: 16px 18px 16px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.lesson-coach-card.hidden {
+    transform: translateY(20px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.lesson-coach-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    background: var(--coach-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    font-weight: 800;
+    box-shadow: 0 12px 24px rgba(99, 102, 241, 0.2);
+    flex-shrink: 0;
+}
+
+.lesson-coach-avatar::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: white;
+    margin-left: 4px;
+    opacity: 0.6;
+}
+
+.lesson-coach-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.lesson-coach-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 800;
+    color: rgba(15, 23, 42, 0.5);
+    margin-bottom: 4px;
+}
+
+.lesson-coach-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.45;
+}
+
+.lesson-coach-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: rgba(15, 23, 42, 0.45);
+}
+
+.lesson-coach-dismiss {
+    border: none;
+    background: none;
+    color: rgba(15, 23, 42, 0.5);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    padding: 0;
+}
+
+.lesson-coach-dismiss:hover {
+    color: #0f172a;
+}
+
+.lesson-coach-fab {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: var(--coach-accent);
+    color: white;
+    font-weight: 900;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 20px 30px rgba(99, 102, 241, 0.35);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.lesson-coach-fab.visible {
+    display: flex;
+}
+
+@media (max-width: 640px) {
+    .lesson-coach-shell {
+        right: 14px;
+        bottom: 14px;
+        max-width: calc(100vw - 28px);
+    }
+}
+
+/* --- Shared Themes for Lessons --- */
+body.bg-ocean {
+    background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #1e40af 100%) !important;
+    color: white;
+}
+body.bg-ocean .instruction-container { color: #0f172a; }
+
+body.bg-sunrise {
+    background: linear-gradient(135deg, #f59e0b 0%, #ec4899 50%, #7c3aed 100%) !important;
+}
+
+body.bg-football {
+    background: repeating-linear-gradient(0deg, #15803d, #15803d 50px, #16a34a 50px, #16a34a 100px) !important;
+}
+
+body.bg-boxing {
+    background: radial-gradient(circle at center, #b91c1c 0%, #7f1d1d 40%, #000000 100%) !important;
+}
+
+body.bg-car {
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 60%, #334155 100%) !important;
+    color: white;
+}
+
+body.bg-forest {
+    background: linear-gradient(135deg, #166534 0%, #14532d 50%, #3f6212 100%) !important;
+}
+
+body.bg-pink {
+    background: linear-gradient(135deg, #fbcfe8 0%, #f9a8d4 50%, #f472b6 100%) !important;
+}

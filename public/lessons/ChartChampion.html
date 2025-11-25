@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chart Champion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #3b82f6; border-color: #93c5fd; }
+
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #2563eb; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header { top: 0; height: 130px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 10px 0 12px; }
+        .instr-header h1 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+        .instr-header p { font-size: 1rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        @media (max-width: 640px) {
+            .instr-header { height: 110px; padding-top: 5px; }
+            .instr-header h1 { font-size: 0.8rem; margin-bottom: 0.1rem; }
+            .instr-header p { font-size: 0.9rem; -webkit-line-clamp: 2; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #game-board { transition: opacity 0.8s, transform 0.8s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #2563eb; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+        
+        body.reflection-active .instruction-container { opacity: 0; pointer-events: none; }
+        body.reflection-active #game-board { transform: translateY(-20vh) scale(0.8); transform-origin: center top; z-index: 40; }
+        body.reflection-active #controls { opacity: 0; pointer-events: none; }
+
+        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
+        .btn-choice:hover { border-color: #93c5fd; background-color: #eff6ff; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+        /* Chart Champion Specifics */
+        .chart-container {
+            width: 100%; max-width: 320px; height: 200px; background: white; 
+            border-left: 2px solid #94a3b8; border-bottom: 2px solid #94a3b8;
+            display: flex; align-items: flex-end; justify-content: space-around; padding: 0 10px;
+            margin-bottom: 20px; position: relative;
+        }
+        
+        .bar {
+            width: 40px; background: #3b82f6; border-radius: 4px 4px 0 0; transition: height 0.5s;
+            position: relative;
+        }
+        .bar-label { position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; font-weight: 700; color: #64748b; }
+        .bar-val { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; font-weight: 700; color: #3b82f6; }
+
+        .picto-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .picto-label { width: 60px; font-weight: 700; color: #64748b; font-size: 0.9rem; text-align: right; }
+        .picto-icons { display: flex; gap: 5px; }
+        .picto-icon { font-size: 1.5rem; }
+
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center text-center z-50">
+        <h1 class="text-4xl md:text-6xl font-black text-blue-600 mb-4">Chart Topper!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You interpret graphs perfectly.</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Visual Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+    
+    <div id="toast">Check the scale/key.</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full">
+        <div class="w-full max-w-4xl flex flex-col items-center gap-8 flex-1 justify-center min-h-0">
+            
+            <div id="chart-area" class="w-full flex flex-col items-center">
+                <!-- Chart injected -->
+            </div>
+
+            <div id="choice-grid" class="grid grid-cols-1 gap-4 w-full max-w-md">
+                <!-- Choices injected -->
+            </div>
+
+        </div>
+
+        <div id="controls" class="w-full flex flex-col items-center gap-4 mb-8 max-w-md shrink-0 min-h-[60px] justify-end pb-safe">
+        </div>
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, audioCtx: null };
+        const COACH_ACCENT = '#2563eb';
+        const COACH_BADGE = 'Graph Guru';
+
+        const STEPS = [
+            {
+                title: "Pictograms",
+                desc: "Key: 🔴 = 4 people. <br>How many people chose Red?",
+                type: "picto",
+                key: 4,
+                rows: [
+                    { label: "Red", count: 3 }, // 3 icons = 12
+                    { label: "Blue", count: 1.5 } // 1.5 icons = 6
+                ],
+                options: ["3", "12", "4"],
+                correct: 1,
+                coach: "There are 3 circles. Each means 4 people. 3 × 4 = 12.",
+                reflection: { q: "If a whole circle is 4, half a circle is...", options: [{text: "2", correct: true}, {text: "1", correct: false}] }
+            },
+            {
+                title: "Bar Charts",
+                desc: "Which bar shows the highest value?",
+                type: "bar",
+                bars: [
+                    { label: "A", h: 50, val: 10 },
+                    { label: "B", h: 80, val: 16 },
+                    { label: "C", h: 30, val: 6 }
+                ],
+                options: ["A", "B", "C"],
+                correct: 1,
+                coach: "Bar B is the tallest. It represents the highest frequency.",
+                reflection: { q: "Bar charts must have...", options: [{text: "Equal width bars & gaps", correct: true}, {text: "Touching bars", correct: false}] }
+            },
+            {
+                title: "Line Graphs",
+                desc: "Line graphs show change over <b>Time</b>. <br>If the line goes down, the value is...",
+                type: "line", // Placeholder visual
+                visual: "down",
+                options: ["Increasing", "Decreasing", "Staying same"],
+                correct: 1,
+                coach: "A downward slope means the value is getting smaller over time.",
+                reflection: { q: "We use line graphs for...", options: [{text: "Time Series data", correct: true}, {text: "Categorical data", correct: false}] }
+            },
+            {
+                title: "Dual Bar Charts",
+                desc: "We can compare two sets of data side-by-side. <br>Like Boys vs Girls.",
+                type: "bar",
+                dual: true, // Just visual hint
+                bars: [
+                    { label: "Tennis", h: 60, val: 12 }, // Boys
+                    { label: "Tennis", h: 40, val: 8 }   // Girls
+                ],
+                options: ["Compare groups", "Show total only"],
+                correct: 0,
+                coach: "Dual bars let us see differences between groups easily.",
+                reflection: { q: "A key is needed to...", options: [{text: "Identify the groups", correct: true}, {text: "Make it colorful", correct: false}] }
+            }
+        ];
+
+        // --- Audio System ---
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) { 
+            if (!STATE.audioCtx) return; 
+            const ctx = STATE.audioCtx; 
+            const t = ctx.currentTime; 
+            const osc = ctx.createOscillator(); 
+            const gain = ctx.createGain(); 
+            osc.connect(gain); 
+            gain.connect(ctx.destination); 
+            if (type === 'pop') { 
+                osc.frequency.setValueAtTime(600, t); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); 
+                osc.start(t); osc.stop(t+0.1); 
+            } else if (type === 'success') { 
+                osc.frequency.setValueAtTime(440, t); 
+                osc.frequency.exponentialRampToValueAtTime(880, t+0.2); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); 
+                osc.start(t); osc.stop(t+0.5); 
+            } else { 
+                osc.type = 'triangle'; 
+                osc.frequency.setValueAtTime(150, t); 
+                gain.gain.linearRampToValueAtTime(0, t+0.2); 
+                osc.start(t); osc.stop(t+0.2); 
+            } 
+        }
+
+        // --- Core Logic ---
+        const container = document.getElementById('instruction-container');
+        const board = document.getElementById('game-board');
+        const titleEl = document.getElementById('level-title');
+        const descEl = document.getElementById('level-desc');
+        const dotsContainer = document.getElementById('progress-dots');
+        const toast = document.getElementById('toast');
+        const reflectionModal = document.getElementById('reflection-modal');
+        
+        const chartArea = document.getElementById('chart-area');
+        const choiceGrid = document.getElementById('choice-grid');
+
+        function initLevel() {
+            dotsContainer.innerHTML = STEPS.map((_, i) => `<div class="w-2 h-2 rounded-full transition-colors ${i === 0 ? 'bg-blue-500' : 'bg-slate-200'}"></div>`).join('');
+            renderStep();
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        function renderStep() {
+            const step = STEPS[STATE.step];
+            
+            container.className = "instruction-container instr-focus";
+            titleEl.textContent = step.title;
+            descEl.innerHTML = step.desc;
+            board.className = "board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+            
+            chartArea.innerHTML = '';
+            
+            if (step.type === 'picto') {
+                step.rows.forEach(row => {
+                    const r = document.createElement('div');
+                    r.className = 'picto-row';
+                    let icons = '';
+                    // Full icons
+                    for(let i=0; i<Math.floor(row.count); i++) icons += '<span class="picto-icon">🔴</span>';
+                    // Half icon
+                    if(row.count % 1 !== 0) icons += '<span class="picto-icon" style="clip-path: inset(0 50% 0 0);">🔴</span>';
+                    
+                    r.innerHTML = `<div class="picto-label">${row.label}</div><div class="picto-icons">${icons}</div>`;
+                    chartArea.appendChild(r);
+                });
+            } else if (step.type === 'bar') {
+                const c = document.createElement('div');
+                c.className = 'chart-container';
+                step.bars.forEach(b => {
+                    c.innerHTML += `
+                        <div class="bar" style="height:${b.h}%">
+                            <div class="bar-val">${b.val}</div>
+                            <div class="bar-label">${b.label}</div>
+                        </div>
+                    `;
+                });
+                chartArea.appendChild(c);
+            } else if (step.type === 'line') {
+                chartArea.innerHTML = `<svg width="300" height="150" style="border-left:2px solid #94a3b8; border-bottom:2px solid #94a3b8;"><path d="M10,10 L290,140" stroke="#3b82f6" stroke-width="4" fill="none"/></svg>`;
+            }
+
+            // Choices
+            choiceGrid.innerHTML = '';
+            step.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(idx === step.correct, btn);
+                choiceGrid.appendChild(btn);
+            });
+
+            // Update Dots
+            Array.from(dotsContainer.children).forEach((dot, i) => {
+                dot.className = `w-2 h-2 rounded-full transition-colors ${i <= STATE.step ? 'bg-blue-500' : 'bg-slate-200'}`;
+            });
+
+            if (window.LessonCoach) {
+                LessonCoach.set(step.coach, { accent: COACH_ACCENT, badge: COACH_BADGE });
+            }
+
+            // Auto-transition
+            setTimeout(() => {
+                container.className = "instruction-container instr-header";
+                board.className = "board-visible flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+            }, 2500);
+        }
+
+        function checkAnswer(isCorrect, btn) {
+            if (isCorrect) {
+                btn.classList.add('selected');
+                playSound('success');
+                setTimeout(showReflection, 1000);
+            } else {
+                btn.classList.add('wrong');
+                playSound('error');
+                showToast("Incorrect.");
+                btn.classList.add('wiggle');
+            }
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 2000);
+        }
+
+        function showReflection() {
+            const step = STEPS[STATE.step];
+            if (!step.reflection) {
+                nextStep();
+                return;
+            }
+
+            document.body.classList.add('reflection-active');
+            reflectionModal.classList.add('active');
+            
+            const qEl = document.getElementById('refl-question');
+            const optEl = document.getElementById('refl-options');
+            
+            qEl.textContent = step.reflection.q;
+            optEl.innerHTML = '';
+            
+            step.reflection.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    if (opt.correct) {
+                        btn.classList.add('selected');
+                        playSound('success');
+                        setTimeout(() => {
+                            reflectionModal.classList.remove('active');
+                            document.body.classList.remove('reflection-active');
+                            nextStep();
+                        }, 1000);
+                    } else {
+                        btn.classList.add('wrong');
+                        playSound('error');
+                        btn.classList.add('wiggle');
+                    }
+                };
+                optEl.appendChild(btn);
+            });
+        }
+
+        function nextStep() {
+            STATE.step++;
+            if (STATE.step >= STEPS.length) {
+                document.getElementById('final-screen').classList.remove('hidden');
+                document.getElementById('final-screen').classList.add('flex');
+                playSound('success');
+            } else {
+                renderStep();
+            }
+        }
+
+        function completeLesson() {
+            if (window.Course) {
+                Course.completeLesson('stats_charts');
+            } else {
+                window.location.href = '../index.html';
+            }
+        }
+
+        initLevel();
+
+    </script>
+</body>
+</html>

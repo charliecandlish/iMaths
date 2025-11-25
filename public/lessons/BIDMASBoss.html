@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BIDMAS Boss</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 50%, #ede9fe 100%); overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #7c3aed; border-color: #c4b5fd; }
+
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-focus { top: 0; height: 100%; background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 50%, #ede9fe 100%); }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #7c3aed; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header { top: 0; height: 110px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 8px 0 10px; }
+        .instr-header h1 { font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem; }
+        .instr-header p { font-size: 0.95rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        @media (max-width: 640px) {
+            .instr-header { height: 95px; padding-top: 5px; }
+            .instr-header h1 { font-size: 0.75rem; margin-bottom: 0.1rem; }
+            .instr-header p { font-size: 0.85rem; -webkit-line-clamp: 2; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #game-board { transition: opacity 0.8s, transform 0.8s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #7c3aed; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+        
+        body.reflection-active .instruction-container { opacity: 0; pointer-events: none; }
+        body.reflection-active #game-board { transform: translateY(-20vh) scale(0.8); transform-origin: center top; z-index: 40; }
+        body.reflection-active #controls { opacity: 0; pointer-events: none; }
+
+        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
+        .btn-choice:hover { border-color: #c4b5fd; background-color: #f5f3ff; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+        /* BIDMAS Specifics */
+        .expression-display { 
+            font-family: 'JetBrains Mono', monospace;
+            font-size: clamp(1.6rem, 4.5vw, 2.5rem); 
+            font-weight: 700; 
+            color: #5b21b6; 
+            background: white; 
+            padding: 16px 24px; 
+            border-radius: 16px; 
+            border: 3px solid #ede9fe;
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.12);
+            text-align: center;
+            min-width: 260px;
+        }
+        .expression-display .highlight { color: #7c3aed; background: #ede9fe; padding: 2px 6px; border-radius: 6px; }
+
+        .bidmas-key { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin-bottom: 12px; }
+        .bidmas-letter { 
+            width: 36px; height: 36px; 
+            display: flex; align-items: center; justify-content: center; 
+            border-radius: 8px; 
+            font-weight: 800; 
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            opacity: 0.5;
+        }
+        .bidmas-letter.active { 
+            opacity: 1;
+            transform: scale(1.15); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25); 
+        }
+        .b-key { background: #fee2e2; color: #dc2626; }
+        .i-key { background: #fef3c7; color: #d97706; }
+        .d-key { background: #dcfce7; color: #16a34a; }
+        .m-key { background: #dbeafe; color: #2563eb; }
+        .a-key { background: #f3e8ff; color: #9333ea; }
+        .s-key { background: #fce7f3; color: #db2777; }
+
+        .input-field { width: 100%; max-width: 180px; padding: 14px; border-radius: 14px; border: 3px solid #e2e8f0; font-size: 1.6rem; font-weight: 800; text-align: center; color: #5b21b6; background: white; font-family: 'JetBrains Mono', monospace; }
+        .input-field:focus { outline: none; border-color: #7c3aed; box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1); }
+
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; max-width: 90%; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        
+        .progress-dot { cursor: pointer; transition: all 0.2s; }
+        .progress-dot:hover { transform: scale(1.2); }
+        .hidden { display: none !important; }
+
+        /* Working Steps Display */
+        .working-box {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: #64748b;
+            text-align: left;
+            max-width: 300px;
+            width: 100%;
+        }
+        .working-box .step { margin: 4px 0; }
+        .working-box .step.current { color: #7c3aed; font-weight: 700; }
+        .working-box .step.done { color: #22c55e; text-decoration: line-through; opacity: 0.7; }
+
+        /* Misconception Box */
+        .misconception-box {
+            background: linear-gradient(135deg, #fef2f2, #fff1f2);
+            border: 2px solid #fecaca;
+            border-radius: 16px;
+            padding: 16px;
+            max-width: 400px;
+            width: 100%;
+        }
+        .misconception-box .wrong-way {
+            color: #dc2626;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .misconception-box .right-way {
+            color: #16a34a;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Comparison Box */
+        .compare-box {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .compare-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            text-align: center;
+            min-width: 120px;
+        }
+        .compare-item.wrong { border-color: #fca5a5; background: #fef2f2; }
+        .compare-item.right { border-color: #86efac; background: #f0fdf4; }
+        .compare-item .label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+        .compare-item .value { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; }
+
+        /* Lesson Card Styling */
+        .lesson-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.08);
+            border: 2px solid #ede9fe;
+            max-width: 500px;
+            width: 100%;
+        }
+        .lesson-card h2 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #5b21b6;
+            margin-bottom: 12px;
+        }
+        .lesson-card p, .lesson-card div {
+            color: #475569;
+            line-height: 1.6;
+        }
+        .lesson-card .example {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 12px 0;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .lesson-card .example .wrong { color: #dc2626; }
+        .lesson-card .example .right { color: #16a34a; }
+
+        .check-btn {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 14px;
+            font-weight: 800;
+            font-size: 1rem;
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.3);
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .check-btn:hover { transform: scale(1.05); box-shadow: 0 10px 28px rgba(124, 58, 237, 0.4); }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.3s ease; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .pulse { animation: pulse 0.5s ease; }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-gradient-to-br from-violet-50 to-purple-50 flex flex-col items-center justify-center text-center z-50">
+        <div class="text-6xl mb-4">🏆</div>
+        <h1 class="text-4xl md:text-5xl font-black text-violet-600 mb-4">BIDMAS Master!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You've conquered the order of operations!</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-violet-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Quick Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-2xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+    
+    <div id="toast">Check the order!</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[100px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full gap-3">
+        
+        <!-- Lesson View -->
+        <div id="lesson-view" class="hidden w-full max-w-xl flex flex-col items-center gap-4 flex-1 justify-center min-h-0">
+             <div id="lesson-card" class="lesson-card text-center">
+                <div id="lesson-visual" class="text-4xl mb-3">🎯</div>
+                <div id="lesson-content" class="text-base md:text-lg leading-relaxed"></div>
+             </div>
+             <button onclick="nextStep()" class="check-btn">Continue</button>
+        </div>
+
+        <!-- Question View -->
+        <div id="question-view" class="hidden w-full flex flex-col items-center gap-3 flex-1 justify-start min-h-0 pt-2">
+            
+            <div class="bidmas-key" id="bidmas-key">
+                <div class="bidmas-letter b-key">B</div>
+                <div class="bidmas-letter i-key">I</div>
+                <div class="bidmas-letter d-key">D</div>
+                <div class="bidmas-letter m-key">M</div>
+                <div class="bidmas-letter a-key">A</div>
+                <div class="bidmas-letter s-key">S</div>
+            </div>
+
+            <div class="expression-display" id="expression">
+                <!-- Expression injected here -->
+            </div>
+
+            <div id="working-display" class="working-box hidden">
+                <!-- Step-by-step working shown here -->
+            </div>
+
+            <div class="flex flex-col items-center gap-1.5">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Your Answer</p>
+                <input type="text" id="answer-input" class="input-field" placeholder="?" inputmode="decimal" autocomplete="off">
+            </div>
+
+            <button id="check-btn" class="check-btn">
+                Check Answer
+            </button>
+        </div>
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, maxStep: 0, audioCtx: null };
+        const COACH_ACCENT = '#7c3aed';
+        const COACH_BADGE = 'BIDMAS Coach';
+
+        const STEPS = [
+            // ========================================
+            // SECTION 1: INTRODUCTION TO BIDMAS
+            // ========================================
+            {
+                type: 'learn',
+                title: "Welcome to BIDMAS!",
+                content: `
+                    <h2>🎯 Why Do We Need BIDMAS?</h2>
+                    <p>Without rules, <b>3 + 4 × 2</b> could mean:</p>
+                    <div class="example">
+                        <div class="wrong">❌ (3 + 4) × 2 = 7 × 2 = 14</div>
+                        <div class="right">✅ 3 + (4 × 2) = 3 + 8 = 11</div>
+                    </div>
+                    <p><b>BIDMAS</b> is the agreed order so everyone gets the <b>same answer</b>!</p>
+                `,
+                coach: "BIDMAS is also called BODMAS or PEMDAS in other countries. Same rules!"
+            },
+            {
+                type: 'learn',
+                title: "The BIDMAS Order",
+                content: `
+                    <h2>📋 The Order of Operations</h2>
+                    <div style="text-align: left; padding: 12px; background: #f8fafc; border-radius: 12px; margin: 12px 0;">
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #fee2e2; color: #dc2626; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">B</span> <b>Brackets</b> — do these first!</div>
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #fef3c7; color: #d97706; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">I</span> <b>Indices</b> — powers like 3² or √9</div>
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #dcfce7; color: #16a34a; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">D</span> <b>Division</b> — same level as multiply</div>
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #dbeafe; color: #2563eb; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">M</span> <b>Multiplication</b> — same level as divide</div>
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #f3e8ff; color: #9333ea; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">A</span> <b>Addition</b> — same level as subtract</div>
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #fce7f3; color: #db2777; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">S</span> <b>Subtraction</b> — same level as add</div>
+                    </div>
+                `,
+                coach: "Think of it as a priority list. Higher priority operations get done first!"
+            },
+
+            // ========================================
+            // SECTION 2: MULTIPLICATION BEFORE ADDITION
+            // (The #1 Most Common Mistake!)
+            // ========================================
+            {
+                type: 'learn',
+                title: "⚠️ Misconception #1: Left to Right",
+                content: `
+                    <h2>The Most Common Mistake!</h2>
+                    <p>Many students read <b>left to right</b> like a sentence. This is <b>WRONG</b>!</p>
+                    <div class="example">
+                        <div><b>3 + 4 × 2</b></div>
+                        <div class="wrong">❌ WRONG: 3 + 4 = 7, then 7 × 2 = <b>14</b></div>
+                        <div class="right">✅ RIGHT: 4 × 2 = 8, then 3 + 8 = <b>11</b></div>
+                    </div>
+                    <p>Multiplication <b>ALWAYS</b> comes before addition, no matter where it appears!</p>
+                `,
+                coach: "Scan the WHOLE expression for × and ÷ before doing + and −"
+            },
+            {
+                title: "Multiply First",
+                desc: "Calculate: <b>3 + 4 × 2</b>",
+                expression: "3 + 4 × 2",
+                answer: 11,
+                highlight: "M",
+                working: ["4 × 2 = 8", "3 + 8 = 11"],
+                coach: "Do 4 × 2 = 8 FIRST, then add 3. Answer: 11, NOT 14!",
+                reflection: { q: "In 5 + 2 × 3, which operation do you do first?", options: [{text: "2 × 3 (multiplication)", correct: true}, {text: "5 + 2 (addition)", correct: false}] }
+            },
+            {
+                title: "Another Example",
+                desc: "Calculate: <b>7 + 3 × 5</b>",
+                expression: "7 + 3 × 5",
+                answer: 22,
+                highlight: "M",
+                working: ["3 × 5 = 15", "7 + 15 = 22"],
+                coach: "Find the ×! 3 × 5 = 15 first, then 7 + 15 = 22. NOT 10 × 5 = 50!",
+                reflection: { q: "What is 2 + 6 × 4?", options: [{text: "26", correct: true}, {text: "32", correct: false}] }
+            },
+            {
+                title: "Multiply at the Start",
+                desc: "Calculate: <b>8 × 2 + 5</b>",
+                expression: "8 × 2 + 5",
+                answer: 21,
+                highlight: "M",
+                working: ["8 × 2 = 16", "16 + 5 = 21"],
+                coach: "Even when × comes first, we still do it first! 8 × 2 = 16, then + 5 = 21.",
+                reflection: { q: "What is 4 × 3 + 2?", options: [{text: "14", correct: true}, {text: "20", correct: false}] }
+            },
+            {
+                title: "Multiply in the Middle",
+                desc: "Calculate: <b>5 + 2 × 4 + 3</b>",
+                expression: "5 + 2 × 4 + 3",
+                answer: 16,
+                highlight: "M",
+                working: ["2 × 4 = 8", "5 + 8 + 3 = 16"],
+                coach: "Find the × in the middle! 2 × 4 = 8, then add everything: 5 + 8 + 3 = 16.",
+                reflection: { q: "What is 1 + 3 × 2 + 5?", options: [{text: "12", correct: true}, {text: "13", correct: false}] }
+            },
+            {
+                title: "Multiple Additions",
+                desc: "Calculate: <b>2 + 3 + 4 × 2</b>",
+                expression: "2 + 3 + 4 × 2",
+                answer: 13,
+                highlight: "M",
+                working: ["4 × 2 = 8", "2 + 3 + 8 = 13"],
+                coach: "Scan for ×! It's at the end: 4 × 2 = 8. Then 2 + 3 + 8 = 13.",
+                reflection: { q: "What is 1 + 2 + 3 × 4?", options: [{text: "15", correct: true}, {text: "24", correct: false}] }
+            },
+
+            // ========================================
+            // SECTION 3: DIVISION BEFORE ADD/SUBTRACT
+            // ========================================
+            {
+                type: 'learn',
+                title: "Division Has Same Priority as ×",
+                content: `
+                    <h2>Division Also Comes First!</h2>
+                    <p>Division and multiplication are at the <b>same level</b>.</p>
+                    <p>Both come BEFORE addition and subtraction.</p>
+                    <div class="example">
+                        <div><b>10 + 8 ÷ 2</b></div>
+                        <div class="right">✅ 8 ÷ 2 = 4, then 10 + 4 = <b>14</b></div>
+                        <div class="wrong">❌ NOT 18 ÷ 2 = 9</div>
+                    </div>
+                `,
+                coach: "Think: × and ÷ are 'stronger' than + and −"
+            },
+            {
+                title: "Division Before Addition",
+                desc: "Calculate: <b>10 + 8 ÷ 2</b>",
+                expression: "10 + 8 ÷ 2",
+                answer: 14,
+                highlight: "D",
+                working: ["8 ÷ 2 = 4", "10 + 4 = 14"],
+                coach: "Division first! 8 ÷ 2 = 4, then 10 + 4 = 14.",
+                reflection: { q: "What is 12 + 6 ÷ 3?", options: [{text: "14", correct: true}, {text: "6", correct: false}] }
+            },
+            {
+                title: "Division Before Subtraction",
+                desc: "Calculate: <b>20 - 12 ÷ 4</b>",
+                expression: "20 - 12 ÷ 4",
+                answer: 17,
+                highlight: "D",
+                working: ["12 ÷ 4 = 3", "20 - 3 = 17"],
+                coach: "12 ÷ 4 = 3 first, then 20 - 3 = 17. NOT 8 ÷ 4 = 2!",
+                reflection: { q: "What is 15 - 10 ÷ 2?", options: [{text: "10", correct: true}, {text: "2.5", correct: false}] }
+            },
+            {
+                title: "Division at Start",
+                desc: "Calculate: <b>24 ÷ 6 + 5</b>",
+                expression: "24 ÷ 6 + 5",
+                answer: 9,
+                highlight: "D",
+                working: ["24 ÷ 6 = 4", "4 + 5 = 9"],
+                coach: "24 ÷ 6 = 4 first, then 4 + 5 = 9.",
+                reflection: { q: "What is 18 ÷ 3 + 2?", options: [{text: "8", correct: true}, {text: "3", correct: false}] }
+            },
+            {
+                title: "Mixed × and ÷",
+                desc: "Calculate: <b>3 + 12 ÷ 4 × 2</b>",
+                expression: "3 + 12 ÷ 4 × 2",
+                answer: 9,
+                highlight: "DM",
+                working: ["12 ÷ 4 = 3", "3 × 2 = 6", "3 + 6 = 9"],
+                coach: "÷ and × left to right: 12 ÷ 4 = 3, then 3 × 2 = 6, finally 3 + 6 = 9.",
+                reflection: { q: "For × and ÷ at same level, we go...", options: [{text: "Left to right", correct: true}, {text: "Right to left", correct: false}] }
+            },
+
+            // ========================================
+            // SECTION 4: BRACKETS - THE BOSS
+            // ========================================
+            {
+                type: 'learn',
+                title: "Brackets Change Everything!",
+                content: `
+                    <h2>Brackets Are the BOSS! 👑</h2>
+                    <p>Brackets override ALL other rules. Always do them first!</p>
+                    <div class="example">
+                        <div><b>Without brackets:</b> 3 + 4 × 2 = 3 + 8 = <b>11</b></div>
+                        <div><b>With brackets:</b> (3 + 4) × 2 = 7 × 2 = <b>14</b></div>
+                    </div>
+                    <p>The brackets <b>force</b> us to add first!</p>
+                `,
+                coach: "Brackets are like a VIP pass - they always get priority!"
+            },
+            {
+                title: "Brackets First",
+                desc: "Calculate: <b>(3 + 4) × 2</b>",
+                expression: "(3 + 4) × 2",
+                answer: 14,
+                highlight: "B",
+                working: ["(3 + 4) = 7", "7 × 2 = 14"],
+                coach: "Brackets first: 3 + 4 = 7. Then 7 × 2 = 14.",
+                reflection: { q: "What is (5 + 3) × 2?", options: [{text: "16", correct: true}, {text: "11", correct: false}] }
+            },
+            {
+                title: "Brackets with Division",
+                desc: "Calculate: <b>(10 + 2) ÷ 3</b>",
+                expression: "(10 + 2) ÷ 3",
+                answer: 4,
+                highlight: "B",
+                working: ["(10 + 2) = 12", "12 ÷ 3 = 4"],
+                coach: "Brackets first: 10 + 2 = 12. Then 12 ÷ 3 = 4.",
+                reflection: { q: "What is (15 - 3) ÷ 4?", options: [{text: "3", correct: true}, {text: "14.25", correct: false}] }
+            },
+            {
+                title: "Brackets at End",
+                desc: "Calculate: <b>2 × (5 + 3)</b>",
+                expression: "2 × (5 + 3)",
+                answer: 16,
+                highlight: "B",
+                working: ["(5 + 3) = 8", "2 × 8 = 16"],
+                coach: "Even though brackets are at the end, do them first! 5 + 3 = 8, then 2 × 8 = 16.",
+                reflection: { q: "What is 3 × (4 + 2)?", options: [{text: "18", correct: true}, {text: "14", correct: false}] }
+            },
+            {
+                title: "Subtraction in Brackets",
+                desc: "Calculate: <b>20 ÷ (7 - 3)</b>",
+                expression: "20 ÷ (7 - 3)",
+                answer: 5,
+                highlight: "B",
+                working: ["(7 - 3) = 4", "20 ÷ 4 = 5"],
+                coach: "Brackets first: 7 - 3 = 4. Then 20 ÷ 4 = 5.",
+                reflection: { q: "What is 18 ÷ (5 - 2)?", options: [{text: "6", correct: true}, {text: "1.6", correct: false}] }
+            },
+            {
+                title: "Two Sets of Brackets",
+                desc: "Calculate: <b>(2 + 3) × (4 - 1)</b>",
+                expression: "(2 + 3) × (4 - 1)",
+                answer: 15,
+                highlight: "B",
+                working: ["(2 + 3) = 5", "(4 - 1) = 3", "5 × 3 = 15"],
+                coach: "Both brackets first: 2+3=5 and 4-1=3. Then 5 × 3 = 15.",
+                reflection: { q: "What is (3 + 2) × (5 - 3)?", options: [{text: "10", correct: true}, {text: "7", correct: false}] }
+            },
+
+            // ========================================
+            // SECTION 5: SAME PRIORITY = LEFT TO RIGHT
+            // ========================================
+            {
+                type: 'learn',
+                title: "⚠️ Misconception #2: Same Priority",
+                content: `
+                    <h2>When Operations Are Equal</h2>
+                    <p>× and ÷ have <b>equal priority</b>.<br>+ and − have <b>equal priority</b>.</p>
+                    <p>When equal, work <b>LEFT to RIGHT</b>!</p>
+                    <div class="example">
+                        <div><b>12 ÷ 3 × 2</b></div>
+                        <div class="right">✅ Left to right: 12 ÷ 3 = 4, then 4 × 2 = <b>8</b></div>
+                        <div class="wrong">❌ NOT 12 ÷ 6 = 2</div>
+                    </div>
+                    <p><b>Common mistake:</b> Thinking × always comes before ÷!</p>
+                `,
+                coach: "Only use left-to-right for SAME priority operations!"
+            },
+            {
+                title: "Division then Multiply",
+                desc: "Calculate: <b>20 ÷ 4 × 2</b>",
+                expression: "20 ÷ 4 × 2",
+                answer: 10,
+                highlight: "DM",
+                working: ["20 ÷ 4 = 5", "5 × 2 = 10"],
+                coach: "Same priority! Left to right: 20 ÷ 4 = 5, then 5 × 2 = 10.",
+                reflection: { q: "What is 8 ÷ 2 × 2?", options: [{text: "8", correct: true}, {text: "2", correct: false}] }
+            },
+            {
+                title: "Multiply then Divide",
+                desc: "Calculate: <b>6 × 4 ÷ 8</b>",
+                expression: "6 × 4 ÷ 8",
+                answer: 3,
+                highlight: "DM",
+                working: ["6 × 4 = 24", "24 ÷ 8 = 3"],
+                coach: "Left to right: 6 × 4 = 24, then 24 ÷ 8 = 3.",
+                reflection: { q: "What is 10 × 2 ÷ 5?", options: [{text: "4", correct: true}, {text: "1", correct: false}] }
+            },
+            {
+                title: "Subtraction Chain",
+                desc: "Calculate: <b>20 - 8 - 3</b>",
+                expression: "20 - 8 - 3",
+                answer: 9,
+                highlight: "AS",
+                working: ["20 - 8 = 12", "12 - 3 = 9"],
+                coach: "Left to right: 20 - 8 = 12, then 12 - 3 = 9. NOT 20 - 5 = 15!",
+                reflection: { q: "What is 15 - 5 - 2?", options: [{text: "8", correct: true}, {text: "12", correct: false}] }
+            },
+            {
+                title: "Mixed Add & Subtract",
+                desc: "Calculate: <b>10 + 5 - 3 + 2</b>",
+                expression: "10 + 5 - 3 + 2",
+                answer: 14,
+                highlight: "AS",
+                working: ["10 + 5 = 15", "15 - 3 = 12", "12 + 2 = 14"],
+                coach: "All same priority - just go left to right!",
+                reflection: { q: "What is 8 + 4 - 6 + 1?", options: [{text: "7", correct: true}, {text: "5", correct: false}] }
+            },
+
+            // ========================================
+            // SECTION 6: INDICES (POWERS)
+            // ========================================
+            {
+                type: 'learn',
+                title: "Indices (Powers)",
+                content: `
+                    <h2>What Are Indices?</h2>
+                    <p>Indices (also called powers or exponents) are repeated multiplication:</p>
+                    <div class="example">
+                        <div>3² = 3 × 3 = <b>9</b></div>
+                        <div>2³ = 2 × 2 × 2 = <b>8</b></div>
+                        <div>5² = 5 × 5 = <b>25</b></div>
+                    </div>
+                    <p>In BIDMAS, indices come AFTER brackets but BEFORE × ÷ + −</p>
+                `,
+                coach: "The small number (exponent) tells you how many times to multiply!"
+            },
+            {
+                title: "Power Before Add",
+                desc: "Calculate: <b>2 + 3²</b>",
+                expression: "2 + 3²",
+                answer: 11,
+                highlight: "I",
+                working: ["3² = 9", "2 + 9 = 11"],
+                coach: "Power first! 3² = 9, then 2 + 9 = 11. NOT 5² = 25!",
+                reflection: { q: "What is 5 + 2²?", options: [{text: "9", correct: true}, {text: "49", correct: false}] }
+            },
+            {
+                title: "Power Before Multiply",
+                desc: "Calculate: <b>2 × 3²</b>",
+                expression: "2 × 3²",
+                answer: 18,
+                highlight: "IM",
+                working: ["3² = 9", "2 × 9 = 18"],
+                coach: "Power first: 3² = 9. Then 2 × 9 = 18. NOT 6² = 36!",
+                reflection: { q: "What is 4 × 2²?", options: [{text: "16", correct: true}, {text: "64", correct: false}] }
+            },
+            {
+                title: "Power and Subtract",
+                desc: "Calculate: <b>20 - 4²</b>",
+                expression: "20 - 4²",
+                answer: 4,
+                highlight: "I",
+                working: ["4² = 16", "20 - 16 = 4"],
+                coach: "4² = 16 first, then 20 - 16 = 4.",
+                reflection: { q: "What is 30 - 5²?", options: [{text: "5", correct: true}, {text: "625", correct: false}] }
+            },
+            {
+                title: "Mixed Operations",
+                desc: "Calculate: <b>5 × 2 + 3²</b>",
+                expression: "5 × 2 + 3²",
+                answer: 19,
+                highlight: "IM",
+                working: ["3² = 9", "5 × 2 = 10", "10 + 9 = 19"],
+                coach: "Power: 3² = 9. Multiply: 5 × 2 = 10. Add: 10 + 9 = 19.",
+                reflection: { q: "The order is: Indices, then...", options: [{text: "Multiply, then Add", correct: true}, {text: "Add, then Multiply", correct: false}] }
+            },
+
+            // ========================================
+            // SECTION 7: BRACKETS VS POWERS MISCONCEPTION
+            // ========================================
+            {
+                type: 'learn',
+                title: "⚠️ Misconception #3: Brackets & Powers",
+                content: `
+                    <h2>These Are DIFFERENT!</h2>
+                    <p>Watch out! Brackets change when we square:</p>
+                    <div class="example">
+                        <div><b>(2 + 3)²</b> = 5² = <b>25</b></div>
+                        <div style="color: #64748b; font-size: 0.9em;">(brackets first, then square the result)</div>
+                    </div>
+                    <div class="example">
+                        <div><b>2² + 3²</b> = 4 + 9 = <b>13</b></div>
+                        <div style="color: #64748b; font-size: 0.9em;">(square each number, then add)</div>
+                    </div>
+                    <p>The bracket groups things together!</p>
+                `,
+                coach: "The bracket makes us add BEFORE squaring. Without it, we square first!"
+            },
+            {
+                title: "Brackets with Power",
+                desc: "Calculate: <b>(2 + 3)²</b>",
+                expression: "(2 + 3)²",
+                answer: 25,
+                highlight: "BI",
+                working: ["(2 + 3) = 5", "5² = 25"],
+                coach: "Brackets first: 2 + 3 = 5. Then square: 5² = 25.",
+                reflection: { q: "What is (1 + 2)²?", options: [{text: "9", correct: true}, {text: "5", correct: false}] }
+            },
+            {
+                title: "Without Brackets",
+                desc: "Calculate: <b>2² + 3²</b>",
+                expression: "2² + 3²",
+                answer: 13,
+                highlight: "I",
+                working: ["2² = 4", "3² = 9", "4 + 9 = 13"],
+                coach: "No brackets! Square each: 2² = 4, 3² = 9. Then add: 4 + 9 = 13.",
+                reflection: { q: "What is 1² + 4²?", options: [{text: "17", correct: true}, {text: "25", correct: false}] }
+            },
+            {
+                title: "Subtraction Version",
+                desc: "Calculate: <b>(4 - 1)²</b>",
+                expression: "(4 - 1)²",
+                answer: 9,
+                highlight: "BI",
+                working: ["(4 - 1) = 3", "3² = 9"],
+                coach: "Brackets: 4 - 1 = 3. Then 3² = 9. Compare: 4² - 1² = 16 - 1 = 15!",
+                reflection: { q: "What is (5 - 2)²?", options: [{text: "9", correct: true}, {text: "21", correct: false}] }
+            },
+            {
+                title: "Compare: With vs Without",
+                desc: "Calculate: <b>4² - 1²</b>",
+                expression: "4² - 1²",
+                answer: 15,
+                highlight: "I",
+                working: ["4² = 16", "1² = 1", "16 - 1 = 15"],
+                coach: "No brackets! 4² = 16, 1² = 1, then 16 - 1 = 15. Compare to (4-1)² = 9!",
+                reflection: { q: "5² - 3² equals...", options: [{text: "16", correct: true}, {text: "4", correct: false}] }
+            },
+
+            // ========================================
+            // SECTION 8: COMPLEX EXPRESSIONS
+            // ========================================
+            {
+                type: 'learn',
+                title: "Putting It All Together",
+                content: `
+                    <h2>Step-by-Step Approach</h2>
+                    <p>For complex expressions, work through BIDMAS carefully:</p>
+                    <div class="example" style="text-align: left;">
+                        <div><b>3 + (4 × 2)² ÷ 4</b></div>
+                        <div style="margin-top: 8px;">
+                            <span style="color: #dc2626;">B</span>: 4 × 2 = 8<br>
+                            <span style="color: #d97706;">I</span>: 8² = 64<br>
+                            <span style="color: #16a34a;">D</span>: 64 ÷ 4 = 16<br>
+                            <span style="color: #9333ea;">A</span>: 3 + 16 = <b>19</b>
+                        </div>
+                    </div>
+                `,
+                coach: "Take it one step at a time. Write out each step!"
+            },
+            {
+                title: "Full BIDMAS",
+                desc: "Calculate: <b>3 + (4 × 2)² ÷ 4</b>",
+                expression: "3 + (4 × 2)² ÷ 4",
+                answer: 19,
+                highlight: "BID",
+                working: ["(4 × 2) = 8", "8² = 64", "64 ÷ 4 = 16", "3 + 16 = 19"],
+                coach: "B: 4×2=8. I: 8²=64. D: 64÷4=16. A: 3+16=19.",
+                reflection: { q: "We do brackets, then indices, then...", options: [{text: "Division, then Addition", correct: true}, {text: "Addition, then Division", correct: false}] }
+            },
+            {
+                title: "BIDMAS Inside Brackets",
+                desc: "Calculate: <b>4 × (3 + 2²) - 6</b>",
+                expression: "4 × (3 + 2²) - 6",
+                answer: 22,
+                highlight: "BIM",
+                working: ["Inside brackets: 2² = 4", "3 + 4 = 7", "4 × 7 = 28", "28 - 6 = 22"],
+                coach: "Inside brackets, still follow BIDMAS! 2² = 4, then 3 + 4 = 7. Then 4 × 7 - 6 = 22.",
+                reflection: { q: "Inside brackets, we still follow...", options: [{text: "BIDMAS order", correct: true}, {text: "Left to right only", correct: false}] }
+            },
+            {
+                title: "Nested Operations",
+                desc: "Calculate: <b>(3² + 4) × 2</b>",
+                expression: "(3² + 4) × 2",
+                answer: 26,
+                highlight: "BI",
+                working: ["Inside: 3² = 9", "9 + 4 = 13", "13 × 2 = 26"],
+                coach: "Inside brackets: 3² = 9 first, then 9 + 4 = 13. Finally 13 × 2 = 26.",
+                reflection: { q: "What is (2² + 1) × 3?", options: [{text: "15", correct: true}, {text: "27", correct: false}] }
+            },
+
+            // ========================================
+            // SECTION 9: NEGATIVE NUMBERS
+            // ========================================
+            {
+                type: 'learn',
+                title: "BIDMAS with Negatives",
+                content: `
+                    <h2>Negative Numbers Still Follow BIDMAS!</h2>
+                    <p>The rules don't change with negative numbers:</p>
+                    <div class="example">
+                        <div><b>-3 + 4 × 2</b></div>
+                        <div>Multiply first: 4 × 2 = 8</div>
+                        <div>Then add: -3 + 8 = <b>5</b></div>
+                    </div>
+                    <div class="example">
+                        <div><b>3 - 5 × 2</b></div>
+                        <div>Multiply first: 5 × 2 = 10</div>
+                        <div>Then subtract: 3 - 10 = <b>-7</b></div>
+                    </div>
+                `,
+                coach: "BIDMAS works exactly the same with negative numbers!"
+            },
+            {
+                title: "Negative Start",
+                desc: "Calculate: <b>-3 + 4 × 2</b>",
+                expression: "-3 + 4 × 2",
+                answer: 5,
+                highlight: "M",
+                working: ["4 × 2 = 8", "-3 + 8 = 5"],
+                coach: "Still multiply first! 4 × 2 = 8. Then -3 + 8 = 5.",
+                reflection: { q: "What is -5 + 2 × 4?", options: [{text: "3", correct: true}, {text: "-12", correct: false}] }
+            },
+            {
+                title: "Negative Result",
+                desc: "Calculate: <b>3 - 5 × 2</b>",
+                expression: "3 - 5 × 2",
+                answer: -7,
+                highlight: "M",
+                working: ["5 × 2 = 10", "3 - 10 = -7"],
+                coach: "Multiply: 5 × 2 = 10. Then 3 - 10 = -7. The answer CAN be negative!",
+                reflection: { q: "What is 2 - 3 × 3?", options: [{text: "-7", correct: true}, {text: "-3", correct: false}] }
+            },
+            {
+                title: "Negative in Brackets",
+                desc: "Calculate: <b>(-2 + 5) × 3</b>",
+                expression: "(-2 + 5) × 3",
+                answer: 9,
+                highlight: "B",
+                working: ["(-2 + 5) = 3", "3 × 3 = 9"],
+                coach: "Brackets first: -2 + 5 = 3. Then 3 × 3 = 9.",
+                reflection: { q: "What is (-3 + 7) × 2?", options: [{text: "8", correct: true}, {text: "-8", correct: false}] }
+            },
+
+            // ========================================
+            // SECTION 10: GCSE EXAM STYLE QUESTIONS
+            // ========================================
+            {
+                type: 'learn',
+                title: "GCSE Exam Tips",
+                content: `
+                    <h2>What Examiners Look For</h2>
+                    <p>In GCSE exams, BIDMAS questions often:</p>
+                    <ul style="text-align: left; margin: 12px auto; max-width: 300px;">
+                        <li>• Have <b>negative numbers</b></li>
+                        <li>• Use <b>fractions</b> as division</li>
+                        <li>• Have <b>nested brackets</b></li>
+                        <li>• Mix <b>all operations</b></li>
+                    </ul>
+                    <p><b>Always show your working step by step!</b></p>
+                `,
+                coach: "Examiners love to test common misconceptions!"
+            },
+            {
+                title: "Division as Fraction",
+                desc: "Calculate: <b>12 ÷ (2 + 4)</b>",
+                expression: "12 ÷ (2 + 4)",
+                answer: 2,
+                highlight: "B",
+                working: ["(2 + 4) = 6", "12 ÷ 6 = 2"],
+                coach: "Brackets: 2 + 4 = 6. Then 12 ÷ 6 = 2. This is like the fraction 12/6!",
+                reflection: { q: "What is 20 ÷ (3 + 2)?", options: [{text: "4", correct: true}, {text: "8.67", correct: false}] }
+            },
+            {
+                title: "GCSE Challenge 1",
+                desc: "Calculate: <b>2³ + 4 × 3 - 5</b>",
+                expression: "2³ + 4 × 3 - 5",
+                answer: 15,
+                highlight: "IM",
+                working: ["2³ = 8", "4 × 3 = 12", "8 + 12 - 5 = 15"],
+                coach: "Power: 2³ = 8. Multiply: 4 × 3 = 12. Then 8 + 12 - 5 = 15.",
+                reflection: { q: "What is 3² + 2 × 4 - 1?", options: [{text: "16", correct: true}, {text: "20", correct: false}] }
+            },
+            {
+                title: "GCSE Challenge 2",
+                desc: "Calculate: <b>24 ÷ (3 + 1)² + 2</b>",
+                expression: "24 ÷ (3 + 1)² + 2",
+                answer: 3.5,
+                highlight: "BID",
+                working: ["(3 + 1) = 4", "4² = 16", "24 ÷ 16 = 1.5", "1.5 + 2 = 3.5"],
+                coach: "Brackets: 3+1=4. Power: 4²=16. Division: 24÷16=1.5. Add: 1.5+2=3.5.",
+                reflection: { q: "What is 18 ÷ (2 + 1)² + 1?", options: [{text: "3", correct: true}, {text: "7", correct: false}] }
+            },
+            {
+                title: "GCSE Challenge 3",
+                desc: "Calculate: <b>5 × 3² - 2 × (4 + 1)</b>",
+                expression: "5 × 3² - 2 × (4 + 1)",
+                answer: 35,
+                highlight: "BIM",
+                working: ["3² = 9", "(4 + 1) = 5", "5 × 9 = 45", "2 × 5 = 10", "45 - 10 = 35"],
+                coach: "I: 3² = 9. B: 4+1 = 5. M: 5×9=45, 2×5=10. S: 45-10 = 35.",
+                reflection: { q: "What is 4 × 2² - 3 × (1 + 2)?", options: [{text: "7", correct: true}, {text: "1", correct: false}] }
+            },
+            {
+                title: "GCSE Challenge 4",
+                desc: "Calculate: <b>(2 + 3)² - (4 - 1)²</b>",
+                expression: "(2 + 3)² - (4 - 1)²",
+                answer: 16,
+                highlight: "BI",
+                working: ["(2 + 3) = 5", "(4 - 1) = 3", "5² = 25", "3² = 9", "25 - 9 = 16"],
+                coach: "Both brackets first, then both squares, then subtract!",
+                reflection: { q: "What is (3 + 2)² - (5 - 3)²?", options: [{text: "21", correct: true}, {text: "9", correct: false}] }
+            },
+            {
+                title: "GCSE Challenge 5",
+                desc: "Calculate: <b>100 ÷ 5 ÷ 4 + 3 × 2</b>",
+                expression: "100 ÷ 5 ÷ 4 + 3 × 2",
+                answer: 11,
+                highlight: "DM",
+                working: ["100 ÷ 5 = 20", "20 ÷ 4 = 5", "3 × 2 = 6", "5 + 6 = 11"],
+                coach: "÷ and × left to right: 100÷5=20, 20÷4=5, 3×2=6. Then 5+6=11.",
+                reflection: { q: "You've mastered BIDMAS!", options: [{text: "I'm ready for the exam!", correct: true}, {text: "Let me practice more", correct: false}] }
+            }
+        ];
+
+        // --- Audio System ---
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) { 
+            if (!STATE.audioCtx) return; 
+            const ctx = STATE.audioCtx; 
+            const t = ctx.currentTime; 
+            const osc = ctx.createOscillator(); 
+            const gain = ctx.createGain(); 
+            osc.connect(gain); 
+            gain.connect(ctx.destination); 
+            if (type === 'pop') { 
+                osc.frequency.setValueAtTime(600, t); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); 
+                osc.start(t); osc.stop(t+0.1); 
+            } else if (type === 'success') { 
+                osc.frequency.setValueAtTime(440, t); 
+                osc.frequency.exponentialRampToValueAtTime(880, t+0.2); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); 
+                osc.start(t); osc.stop(t+0.5); 
+            } else { 
+                osc.type = 'triangle'; 
+                osc.frequency.setValueAtTime(150, t); 
+                gain.gain.linearRampToValueAtTime(0, t+0.2); 
+                osc.start(t); osc.stop(t+0.2); 
+            } 
+        }
+
+        // --- DOM Elements ---
+        const container = document.getElementById('instruction-container');
+        const board = document.getElementById('game-board');
+        const titleEl = document.getElementById('level-title');
+        const descEl = document.getElementById('level-desc');
+        const dotsContainer = document.getElementById('progress-dots');
+        const toast = document.getElementById('toast');
+        const reflectionModal = document.getElementById('reflection-modal');
+        
+        const lessonView = document.getElementById('lesson-view');
+        const questionView = document.getElementById('question-view');
+        const lessonContent = document.getElementById('lesson-content');
+        const expressionEl = document.getElementById('expression');
+        const answerInput = document.getElementById('answer-input');
+        const checkBtn = document.getElementById('check-btn');
+        const bidmasKey = document.getElementById('bidmas-key');
+        const workingDisplay = document.getElementById('working-display');
+
+        function initLevel() {
+            renderStep();
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        function renderStep() {
+            const step = STEPS[STATE.step];
+            STATE.maxStep = Math.max(STATE.maxStep || 0, STATE.step);
+            
+            container.className = "instruction-container instr-focus";
+            titleEl.textContent = step.title;
+            
+            lessonView.classList.add('hidden');
+            questionView.classList.add('hidden');
+            workingDisplay.classList.add('hidden');
+
+            dotsContainer.innerHTML = STEPS.map((_, i) => {
+                const accessible = i <= STATE.maxStep;
+                const current = i === STATE.step;
+                let bg = 'bg-slate-200';
+                if (current) bg = 'bg-violet-500 scale-125';
+                else if (i < STATE.step) bg = 'bg-violet-300';
+                
+                return `<div 
+                    onclick="${accessible ? `jumpToStep(${i})` : ''}" 
+                    class="progress-dot w-2 h-2 rounded-full transition-all ${bg} ${accessible ? 'cursor-pointer' : 'cursor-default opacity-50'}">
+                </div>`
+            }).join('');
+
+            if (step.type === 'learn') {
+                lessonView.classList.remove('hidden');
+                lessonContent.innerHTML = step.content;
+                descEl.innerHTML = "";
+            } else {
+                descEl.innerHTML = step.desc;
+                questionView.classList.remove('hidden');
+                
+                expressionEl.textContent = step.expression;
+                answerInput.value = '';
+                
+                // Show working steps if available
+                if (step.working && step.working.length > 0) {
+                    workingDisplay.classList.remove('hidden');
+                    workingDisplay.innerHTML = step.working.map((s, i) => 
+                        `<div class="step">${i + 1}. ${s.replace('=', '→')}</div>`
+                    ).join('');
+                }
+                
+                // Highlight BIDMAS letters
+                const letters = bidmasKey.querySelectorAll('.bidmas-letter');
+                letters.forEach(l => l.classList.remove('active'));
+                if (step.highlight) {
+                    step.highlight.split('').forEach(char => {
+                        const letter = bidmasKey.querySelector(`.${char.toLowerCase()}-key`);
+                        if (letter) letter.classList.add('active');
+                    });
+                }
+            }
+
+            board.className = "board-hidden flex-1 flex flex-col pt-[100px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full gap-3";
+
+            if (window.LessonCoach) {
+                LessonCoach.set(step.coach, { accent: COACH_ACCENT, badge: COACH_BADGE });
+            }
+
+            setTimeout(() => {
+                container.className = "instruction-container instr-header";
+                board.className = "board-visible flex-1 flex flex-col pt-[100px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full gap-3";
+                if (step.type !== 'learn') answerInput.focus();
+            }, 2000);
+        }
+
+        function jumpToStep(i) {
+            if (i > STATE.maxStep) return;
+            STATE.step = i;
+            renderStep();
+        }
+
+        checkBtn.onclick = () => {
+            const step = STEPS[STATE.step];
+            const userAnswer = parseFloat(answerInput.value);
+            
+            if (isNaN(userAnswer)) {
+                showToast("Enter a number.");
+                return;
+            }
+
+            if (Math.abs(userAnswer - step.answer) < 0.001) {
+                playSound('success');
+                expressionEl.classList.add('pulse');
+                setTimeout(() => expressionEl.classList.remove('pulse'), 500);
+                showReflection();
+            } else {
+                playSound('error');
+                answerInput.classList.add('shake');
+                setTimeout(() => answerInput.classList.remove('shake'), 300);
+                showToast("Check the order of operations!");
+            }
+        };
+
+        answerInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') checkBtn.click();
+        });
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 2500);
+        }
+
+        function showReflection() {
+            const step = STEPS[STATE.step];
+            if (!step.reflection) { nextStep(); return; }
+
+            document.body.classList.add('reflection-active');
+            reflectionModal.classList.add('active');
+            
+            document.getElementById('refl-question').textContent = step.reflection.q;
+            const optEl = document.getElementById('refl-options');
+            optEl.innerHTML = '';
+            
+            step.reflection.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    if (opt.correct) {
+                        btn.classList.add('selected');
+                        playSound('success');
+                        setTimeout(() => {
+                            reflectionModal.classList.remove('active');
+                            document.body.classList.remove('reflection-active');
+                            nextStep();
+                        }, 1000);
+                    } else {
+                        btn.classList.add('wrong');
+                        playSound('error');
+                    }
+                };
+                optEl.appendChild(btn);
+            });
+        }
+
+        function nextStep() {
+            STATE.step++;
+            if (STATE.step >= STEPS.length) {
+                document.getElementById('final-screen').classList.remove('hidden');
+                playSound('success');
+            } else {
+                renderStep();
+            }
+        }
+
+        function completeLesson() {
+            if (window.Course) {
+                Course.completeLesson('num_bidmas');
+            } else {
+                window.location.href = '../index.html';
+            }
+        }
+
+        window.nextStep = nextStep;
+        window.jumpToStep = jumpToStep;
+        window.completeLesson = completeLesson;
+
+        initLevel();
+    </script>
+</body>
+</html>

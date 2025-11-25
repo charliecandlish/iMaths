@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Long Operations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #dcfce7 100%); overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #16a34a; border-color: #86efac; }
+
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-focus { top: 0; height: 100%; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #dcfce7 100%); }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #16a34a; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.6rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header { top: 0; height: 140px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding-top: 12px; padding-bottom: 12px; }
+        .instr-header h1 { font-size: 1rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; opacity: 1; }
+        .instr-header p { font-size: 1.2rem; color: #475569; max-width: 900px; text-align: center; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #game-board { transition: opacity 0.8s, transform 0.8s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #16a34a; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+        
+        body.reflection-active .instruction-container { opacity: 0; pointer-events: none; }
+        body.reflection-active #game-board { transform: translateY(-20vh) scale(0.8); transform-origin: center top; z-index: 40; }
+
+        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
+        .btn-choice:hover { border-color: #86efac; background-color: #f0fdf4; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+        /* Grid Method Styles */
+        .grid-container {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(22, 163, 74, 0.1);
+            border: 3px solid #dcfce7;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .split-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #166534;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: #f0fdf4;
+            border-radius: 12px;
+        }
+
+        .area-grid {
+            display: grid;
+            gap: 4px;
+            background: #16a34a;
+            padding: 4px;
+            border-radius: 12px;
+            margin: 16px 0;
+        }
+
+        .grid-cell {
+            background: #ecfdf5;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+
+        .grid-header {
+            background: #dcfce7;
+            color: #166534;
+            font-weight: 800;
+            font-size: 1.2rem;
+        }
+
+        .grid-corner {
+            background: #16a34a;
+            color: white;
+            font-weight: 900;
+            font-size: 1.3rem;
+        }
+
+        .grid-input {
+            width: 90%;
+            height: 80%;
+            border: 2px solid #86efac;
+            border-radius: 8px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #166534;
+            background: white;
+            outline: none;
+        }
+        .grid-input:focus {
+            border-color: #16a34a;
+            background: #f0fdf4;
+            transform: scale(1.05);
+        }
+        .grid-input.correct {
+            background: #dcfce7;
+            border-color: #22c55e;
+            color: #15803d;
+        }
+        .grid-input.wrong {
+            background: #fee2e2;
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+
+        .sum-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-top: 20px;
+            padding: 16px;
+            background: #f0fdf4;
+            border-radius: 12px;
+        }
+
+        .sum-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .sum-input {
+            width: 100px;
+            padding: 8px;
+            border: 2px solid #86efac;
+            border-radius: 8px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #166534;
+            background: white;
+            outline: none;
+        }
+        .sum-input:focus {
+            border-color: #16a34a;
+            background: #f0fdf4;
+        }
+        .sum-input.correct {
+            background: #dcfce7;
+            border-color: #22c55e;
+        }
+
+        .check-btn {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            color: white;
+            padding: 14px 32px;
+            border-radius: 16px;
+            font-weight: 800;
+            font-size: 1rem;
+            box-shadow: 0 8px 20px rgba(22, 163, 74, 0.3);
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .check-btn:hover { transform: scale(1.05); box-shadow: 0 12px 28px rgba(22, 163, 74, 0.4); }
+        .check-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        #toast.success { background: #22c55e; box-shadow: 0 10px 25px rgba(34, 197, 94, 0.4); }
+        
+        .progress-dot { cursor: pointer; transition: all 0.2s; }
+        .progress-dot:hover { transform: scale(1.2); }
+        .hidden { display: none !important; }
+
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .shake { animation: shake 0.3s ease; }
+        
+        /* Division/Fraction Styles */
+        .border-b-3 { border-bottom: 3px solid; }
+        
+        #busstop-display {
+            font-family: 'JetBrains Mono', monospace;
+            min-height: 200px;
+        }
+        
+        #hcf-input.correct {
+            background: #dcfce7;
+            border-color: #22c55e;
+            color: #15803d;
+        }
+        
+        #hcf-input.wrong {
+            background: #fee2e2;
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+        
+        #division-answer.correct {
+            background: #dcfce7;
+            border-color: #22c55e;
+            color: #15803d;
+        }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 flex flex-col items-center justify-center text-center z-50">
+        <div class="text-6xl mb-4">🎯</div>
+        <h1 class="text-4xl md:text-6xl font-black text-green-600 mb-4">Grid Master!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You've mastered the grid method.</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-green-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Quick Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+    
+    <div id="toast">Check your grid!</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[140px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full">
+        
+        <!-- Lesson View -->
+        <div id="lesson-view" class="hidden w-full max-w-2xl flex flex-col items-center gap-6 flex-1 justify-center min-h-0">
+             <div class="bg-white p-6 md:p-10 rounded-3xl shadow-sm border-2 border-green-100 text-center w-full">
+                <div id="lesson-visual" class="text-5xl mb-4">📐</div>
+                <div id="lesson-content" class="text-lg md:text-xl text-slate-700 leading-relaxed font-medium"></div>
+             </div>
+             <button onclick="nextStep()" class="check-btn">Continue</button>
+        </div>
+
+        <!-- Grid Method View -->
+        <div id="grid-view" class="hidden w-full flex flex-col items-center gap-4 flex-1 justify-start min-h-0 pt-4">
+            
+            <div class="grid-container">
+                <!-- Split Display -->
+                <div class="split-display" id="split-display">
+                    <!-- Injected by JS -->
+                </div>
+
+                <!-- Area Grid -->
+                <div class="area-grid" id="area-grid">
+                    <!-- Grid injected by JS -->
+                </div>
+
+                <!-- Sum Section -->
+                <div class="sum-section hidden" id="sum-section">
+                    <div class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Add the partial products:</div>
+                    <div class="sum-row" id="sum-display">
+                        <span id="sum-expression" class="text-green-600 font-mono">?</span>
+                        <span>=</span>
+                        <input type="text" id="sum-total" class="sum-input" placeholder="?" inputmode="numeric" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+
+            <button id="check-grid-btn" class="check-btn">Check Grid</button>
+        </div>
+
+        <!-- Division View - Interactive Bus Stop Method -->
+        <div id="division-view" class="hidden w-full flex flex-col items-center gap-4 flex-1 justify-start min-h-0 pt-4">
+            
+            <div class="grid-container w-full max-w-2xl">
+                <!-- Bus Stop Display -->
+                <div class="bg-white p-6 rounded-3xl shadow-sm border-2 border-green-100 mb-4">
+                    <div class="font-mono text-2xl font-bold text-green-700 mb-4 text-center" id="busstop-header">
+                        <!-- Injected by JS -->
+                    </div>
+                    <div id="busstop-working" class="space-y-4">
+                        <!-- Interactive steps injected here -->
+                    </div>
+                </div>
+
+                <!-- Final Answer -->
+                <div class="text-center mt-4" id="final-answer-section">
+                    <div class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Final Answer</div>
+                    <input type="text" id="division-answer" class="w-32 p-3 text-center text-3xl font-bold border-3 border-green-200 rounded-xl focus:border-green-500 focus:outline-none" placeholder="?" inputmode="numeric" autocomplete="off">
+                </div>
+            </div>
+
+            <button id="check-div-btn" class="check-btn">Check Answer</button>
+        </div>
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, maxStep: 0, audioCtx: null, gridPhase: 0, divPhase: 0 };
+        const COACH_ACCENT = '#16a34a';
+        const COACH_BADGE = 'Grid Coach';
+
+        const STEPS = [
+            {
+                type: 'learn',
+                title: "The Grid Method",
+                content: "The <b>Grid Method</b> breaks multiplication into smaller, easier steps!<br><br>Example: <b>23 × 14</b><br><br>1. Split: 23 = 20 + 3, 14 = 10 + 4<br>2. Fill the grid: Multiply each pair<br>3. Add all the products together<br><br>It's like a multiplication table!",
+                coach: "The grid makes big multiplications visual and easy!"
+            },
+            {
+                title: "Simple Grid",
+                desc: "Calculate: <b>24 × 6</b> using the grid method",
+                num1: 24,
+                num2: 6,
+                split1: [20, 4],
+                split2: [6],
+                grid: { rows: [20, 4], cols: [6] },
+                answer: 144,
+                coach: "Split 24 into 20 and 4. Multiply each by 6, then add!",
+                reflection: { q: "Why do we split numbers in the grid method?", options: [{text: "To make multiplication easier", correct: true}, {text: "To make it look pretty", correct: false}] }
+            },
+            {
+                title: "Two by Two",
+                desc: "Calculate: <b>23 × 12</b> using the grid",
+                num1: 23,
+                num2: 12,
+                split1: [20, 3],
+                split2: [10, 2],
+                grid: { rows: [20, 3], cols: [10, 2] },
+                answer: 276,
+                coach: "23 = 20+3, 12 = 10+2. Fill all 4 cells, then add them up!",
+                reflection: { q: "How many cells do we fill for 23 × 12?", options: [{text: "4 cells (2×2 grid)", correct: true}, {text: "2 cells", correct: false}] }
+            },
+            {
+                title: "Bigger Numbers",
+                desc: "Calculate: <b>34 × 25</b>",
+                num1: 34,
+                num2: 25,
+                split1: [30, 4],
+                split2: [20, 5],
+                grid: { rows: [30, 4], cols: [20, 5] },
+                answer: 850,
+                coach: "34 = 30+4, 25 = 20+5. Multiply each pair, then sum!",
+                reflection: { q: "What is 30 × 20?", options: [{text: "600", correct: true}, {text: "50", correct: false}] }
+            },
+            {
+                title: "GCSE Challenge",
+                desc: "Calculate: <b>45 × 36</b>",
+                num1: 45,
+                num2: 36,
+                split1: [40, 5],
+                split2: [30, 6],
+                grid: { rows: [40, 5], cols: [30, 6] },
+                answer: 1620,
+                coach: "45 = 40+5, 36 = 30+6. Fill the grid and add all products!",
+                reflection: { q: "The grid method helps us...", options: [{text: "Break big problems into small ones", correct: true}, {text: "Skip multiplication", correct: false}] }
+            },
+            {
+                type: 'learn',
+                title: "The Bus Stop Method",
+                content: "The <b>Bus Stop Method</b> is a step-by-step way to divide!<br><br><b>84 ÷ 4</b><br><br>1. <b>Divide</b>: How many times does 4 go into 8? (2)<br>2. <b>Multiply</b>: 4 × 2 = 8<br>3. <b>Subtract</b>: 8 - 8 = 0<br>4. <b>Bring down</b> the next digit (4)<br>5. Repeat: 4 goes into 4 once (1)<br><br>Answer: <b>21</b>",
+                coach: "DMSB: Divide, Multiply, Subtract, Bring down!"
+            },
+            {
+                title: "Simple Start",
+                desc: "Calculate: <b>84 ÷ 4</b> using the bus stop method",
+                dividend: 84,
+                divisor: 4,
+                answer: 21,
+                steps: [
+                    { current: "8", quotient: 2, product: 8, remainder: 0, bringDown: 4 },
+                    { current: "4", quotient: 1, product: 4, remainder: 0, bringDown: null }
+                ],
+                coach: "4 goes into 8 twice (2), remainder 0. Bring down 4. 4 goes into 4 once (1).",
+                reflection: { q: "In bus stop, after subtracting we...", options: [{text: "Bring down the next digit", correct: true}, {text: "Start over", correct: false}] }
+            },
+            {
+                title: "Two Digit Start",
+                desc: "Calculate: <b>156 ÷ 6</b>",
+                dividend: 156,
+                divisor: 6,
+                answer: 26,
+                steps: [
+                    { current: "15", quotient: 2, product: 12, remainder: 3, bringDown: 6 },
+                    { current: "36", quotient: 6, product: 36, remainder: 0, bringDown: null }
+                ],
+                coach: "6 goes into 15 twice (2), remainder 3. Bring down 6 → 36. 6 goes into 36 six times (6).",
+                reflection: { q: "6 goes into 15...", options: [{text: "2 times with remainder 3", correct: true}, {text: "3 times exactly", correct: false}] }
+            },
+            {
+                title: "Three Digits",
+                desc: "Calculate: <b>504 ÷ 7</b>",
+                dividend: 504,
+                divisor: 7,
+                answer: 72,
+                steps: [
+                    { current: "5", quotient: 0, product: 0, remainder: 5, bringDown: 0 },
+                    { current: "50", quotient: 7, product: 49, remainder: 1, bringDown: 4 },
+                    { current: "14", quotient: 2, product: 14, remainder: 0, bringDown: null }
+                ],
+                coach: "7 doesn't go into 5, so try 50. 7 goes into 50 seven times (7), remainder 1. Bring down 4 → 14. 7 goes into 14 twice (2).",
+                reflection: { q: "When the divisor doesn't go into the first digit...", options: [{text: "Try the first two digits", correct: true}, {text: "The answer is 0", correct: false}] }
+            },
+            {
+                title: "With Remainder",
+                desc: "Calculate: <b>97 ÷ 4</b>",
+                dividend: 97,
+                divisor: 4,
+                answer: 24.25,
+                steps: [
+                    { current: "9", quotient: 2, product: 8, remainder: 1, bringDown: 7 },
+                    { current: "17", quotient: 4, product: 16, remainder: 1, bringDown: null, decimal: true },
+                    { current: "10", quotient: 2, product: 8, remainder: 2, bringDown: 0 },
+                    { current: "20", quotient: 5, product: 20, remainder: 0, bringDown: null }
+                ],
+                coach: "4 goes into 9 twice (2), remainder 1. Bring down 7 → 17. 4 goes into 17 four times (4), remainder 1. Add decimal point, bring down 0 → 10. Continue...",
+                reflection: { q: "When we have a remainder and no more digits...", options: [{text: "Add a decimal point and continue", correct: true}, {text: "Stop and write remainder", correct: false}] }
+            },
+            {
+                title: "GCSE Challenge",
+                desc: "Calculate: <b>432 ÷ 12</b>",
+                dividend: 432,
+                divisor: 12,
+                answer: 36,
+                steps: [
+                    { current: "4", quotient: 0, product: 0, remainder: 4, bringDown: 3 },
+                    { current: "43", quotient: 3, product: 36, remainder: 7, bringDown: 2 },
+                    { current: "72", quotient: 6, product: 72, remainder: 0, bringDown: null }
+                ],
+                coach: "12 doesn't go into 4, try 43. 12 goes into 43 three times (3), remainder 7. Bring down 2 → 72. 12 goes into 72 six times (6).",
+                reflection: { q: "You've mastered the bus stop method!", options: [{text: "I'm ready!", correct: true}, {text: "Let me practice more", correct: false}] }
+            }
+        ];
+
+        // --- Audio System ---
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) { 
+            if (!STATE.audioCtx) return; 
+            const ctx = STATE.audioCtx; 
+            const t = ctx.currentTime; 
+            const osc = ctx.createOscillator(); 
+            const gain = ctx.createGain(); 
+            osc.connect(gain); 
+            gain.connect(ctx.destination); 
+            if (type === 'pop') { 
+                osc.frequency.setValueAtTime(600, t); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); 
+                osc.start(t); osc.stop(t+0.1); 
+            } else if (type === 'success') { 
+                osc.frequency.setValueAtTime(440, t); 
+                osc.frequency.exponentialRampToValueAtTime(880, t+0.2); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); 
+                osc.start(t); osc.stop(t+0.5); 
+            } else { 
+                osc.type = 'triangle'; 
+                osc.frequency.setValueAtTime(150, t); 
+                gain.gain.linearRampToValueAtTime(0, t+0.2); 
+                osc.start(t); osc.stop(t+0.2); 
+            } 
+        }
+
+        // --- DOM Elements ---
+        const container = document.getElementById('instruction-container');
+        const board = document.getElementById('game-board');
+        const titleEl = document.getElementById('level-title');
+        const descEl = document.getElementById('level-desc');
+        const dotsContainer = document.getElementById('progress-dots');
+        const toast = document.getElementById('toast');
+        const reflectionModal = document.getElementById('reflection-modal');
+        
+        const lessonView = document.getElementById('lesson-view');
+        const gridView = document.getElementById('grid-view');
+        const divisionView = document.getElementById('division-view');
+        const lessonContent = document.getElementById('lesson-content');
+        const splitDisplay = document.getElementById('split-display');
+        const areaGrid = document.getElementById('area-grid');
+        const sumSection = document.getElementById('sum-section');
+        const checkGridBtn = document.getElementById('check-grid-btn');
+        const checkDivBtn = document.getElementById('check-div-btn');
+
+        function initLevel() {
+            renderStep();
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        function renderStep() {
+            const step = STEPS[STATE.step];
+            STATE.maxStep = Math.max(STATE.maxStep || 0, STATE.step);
+            STATE.gridPhase = 0;
+            
+            container.className = "instruction-container instr-focus";
+            titleEl.textContent = step.title;
+            
+            lessonView.classList.add('hidden');
+            gridView.classList.add('hidden');
+            divisionView.classList.add('hidden');
+
+            dotsContainer.innerHTML = STEPS.map((_, i) => {
+                const accessible = i <= STATE.maxStep;
+                const current = i === STATE.step;
+                let bg = 'bg-slate-200';
+                if (current) bg = 'bg-green-500 scale-125';
+                else if (i < STATE.step) bg = 'bg-green-300';
+                
+                return `<div 
+                    onclick="${accessible ? `jumpToStep(${i})` : ''}" 
+                    class="progress-dot w-2 h-2 rounded-full transition-all ${bg} ${accessible ? 'cursor-pointer' : 'cursor-default opacity-50'}">
+                </div>`
+            }).join('');
+
+            if (step.type === 'learn') {
+                lessonView.classList.remove('hidden');
+                lessonContent.innerHTML = step.content;
+                descEl.innerHTML = "";
+            } else if (step.grid) {
+                // Grid Method
+                descEl.innerHTML = step.desc;
+                gridView.classList.remove('hidden');
+                renderGridMethod(step);
+            } else if (step.dividend !== undefined) {
+                // Division - Fraction First Method
+                descEl.innerHTML = step.desc;
+                divisionView.classList.remove('hidden');
+                STATE.divPhase = 0;
+                renderDivisionMethod(step);
+            }
+
+            board.className = "board-hidden flex-1 flex flex-col pt-[140px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full";
+
+            if (window.LessonCoach) {
+                LessonCoach.set(step.coach, { accent: COACH_ACCENT, badge: COACH_BADGE });
+            }
+
+            setTimeout(() => {
+                container.className = "instruction-container instr-header";
+                board.className = "board-visible flex-1 flex flex-col pt-[140px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full";
+            }, 2000);
+        }
+
+        function renderGridMethod(step) {
+            // Reset state
+            STATE.gridPhase = 0;
+            
+            // Split Display
+            const split1Str = step.split1.join(' + ');
+            const split2Str = step.split2.join(' + ');
+            splitDisplay.innerHTML = `
+                <span class="text-green-600">${step.num1}</span>
+                <span>=</span>
+                <span>${split1Str}</span>
+                <span class="text-slate-400 mx-2">×</span>
+                <span class="text-green-600">${step.num2}</span>
+                <span>=</span>
+                <span>${split2Str}</span>
+            `;
+
+            // Create Grid
+            const rows = step.grid.rows;
+            const cols = step.grid.cols;
+            
+            areaGrid.style.gridTemplateColumns = `60px repeat(${cols.length}, 1fr)`;
+            areaGrid.style.gridTemplateRows = `40px repeat(${rows.length}, 1fr)`;
+            
+            let html = '<div class="grid-cell grid-corner">×</div>';
+            
+            // Column headers
+            cols.forEach(c => {
+                html += `<div class="grid-cell grid-header">${c}</div>`;
+            });
+            
+            // Rows
+            rows.forEach((r, rIdx) => {
+                html += `<div class="grid-cell grid-header">${r}</div>`;
+                cols.forEach((c, cIdx) => {
+                    const expected = r * c;
+                    html += `<div class="grid-cell">
+                        <input type="number" class="grid-input" data-expected="${expected}" data-row="${rIdx}" data-col="${cIdx}" placeholder="?" inputmode="numeric" autocomplete="off">
+                    </div>`;
+                });
+            });
+            
+            areaGrid.innerHTML = html;
+            
+            // Reset and hide sum section
+            const sumInput = document.getElementById('sum-total');
+            sumInput.value = '';
+            sumInput.disabled = false;
+            sumInput.classList.remove('correct', 'wrong');
+            document.getElementById('sum-expression').textContent = '?';
+            sumSection.classList.add('hidden');
+            
+            checkGridBtn.textContent = "Check Grid";
+            checkGridBtn.onclick = () => checkGrid(step);
+            
+            // Auto-focus first input
+            const firstInput = areaGrid.querySelector('.grid-input');
+            if (firstInput) setTimeout(() => firstInput.focus(), 2100);
+        }
+
+        function checkGrid(step) {
+            if (STATE.gridPhase === 0) {
+                // Check grid cells
+                const inputs = areaGrid.querySelectorAll('.grid-input');
+                let allCorrect = true;
+                const partialProducts = [];
+                
+                inputs.forEach(inp => {
+                    const userVal = parseInt(inp.value);
+                    const expected = parseInt(inp.dataset.expected);
+                    
+                    if (userVal === expected) {
+                        inp.classList.add('correct');
+                        inp.disabled = true;
+                        partialProducts.push(expected);
+                    } else {
+                        inp.classList.add('wrong');
+                        allCorrect = false;
+                    }
+                });
+                
+                if (allCorrect) {
+                    playSound('success');
+                    STATE.gridPhase = 1;
+                    
+                    // Show sum section
+                    sumSection.classList.remove('hidden');
+                    
+                    // Clear and enable the sum input
+                    const sumInput = document.getElementById('sum-total');
+                    sumInput.value = '';
+                    sumInput.disabled = false;
+                    sumInput.classList.remove('correct', 'wrong');
+                    
+                    // Display partial products
+                    const products = Array.from(inputs).map(inp => parseInt(inp.value));
+                    const sumExpression = document.getElementById('sum-expression');
+                    
+                    if (products.length === 2) {
+                        // Simple 2 products: show them directly
+                        sumExpression.textContent = `${products[0]} + ${products[1]}`;
+                    } else if (products.length === 4) {
+                        // For 2x2 grid, show all 4 products being added
+                        sumExpression.textContent = `${products[0]} + ${products[1]} + ${products[2]} + ${products[3]}`;
+                    }
+                    
+                    checkGridBtn.textContent = "Check Answer";
+                    setTimeout(() => sumInput.focus(), 100);
+                } else {
+                    playSound('error');
+                    areaGrid.classList.add('shake');
+                    setTimeout(() => areaGrid.classList.remove('shake'), 300);
+                    showToast("Check your multiplications!");
+                    
+                    // Remove wrong class after a moment
+                    setTimeout(() => {
+                        inputs.forEach(inp => {
+                            if (inp.classList.contains('wrong')) {
+                                inp.classList.remove('wrong');
+                                inp.value = '';
+                            }
+                        });
+                    }, 1000);
+                }
+            } else {
+                // Check final sum
+                const userTotal = parseInt(document.getElementById('sum-total').value);
+                if (userTotal === step.answer) {
+                    playSound('success');
+                    document.getElementById('sum-total').classList.add('correct');
+                    document.getElementById('sum-total').disabled = true;
+                    showToast("Perfect!", true);
+                    setTimeout(() => showReflection(), 1000);
+                } else {
+                    playSound('error');
+                    document.getElementById('sum-total').classList.add('shake');
+                    setTimeout(() => document.getElementById('sum-total').classList.remove('shake'), 300);
+                    showToast("Check your addition!");
+                }
+            }
+        }
+
+        function renderDivisionMethod(step) {
+            STATE.divPhase = 0;
+            
+            const header = document.getElementById('busstop-header');
+            const working = document.getElementById('busstop-working');
+            const answerInput = document.getElementById('division-answer');
+            
+            // Reset
+            answerInput.value = '';
+            answerInput.disabled = false;
+            answerInput.classList.remove('correct', 'wrong', 'shake');
+            
+            // Show header
+            header.innerHTML = `
+                <div class="flex items-center justify-center gap-3 font-mono text-2xl">
+                    <span class="text-slate-400">${step.divisor}</span>
+                    <span class="text-3xl">|</span>
+                    <span class="text-green-600">${step.dividend}</span>
+                </div>
+            `;
+            
+            // Build interactive steps
+            let html = '';
+            const dividendStr = step.dividend.toString();
+            let currentNum = '';
+            let answerDigits = [];
+            
+            step.steps.forEach((s, idx) => {
+                const stepNum = idx + 1;
+                const isDecimal = s.decimal;
+                
+                html += `
+                    <div class="p-4 bg-slate-50 rounded-xl border-2 border-green-200" data-step="${idx}">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Step ${stepNum}${isDecimal ? ' (Decimal)' : ''}</div>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-2 text-lg">
+                                <span class="text-slate-600">${step.divisor} goes into</span>
+                                <span class="font-bold text-green-600">${s.current}</span>
+                                <span class="text-slate-600">=</span>
+                                <input type="number" 
+                                    class="step-input w-16 p-2 text-center text-xl font-bold border-2 border-green-300 rounded-lg focus:border-green-500 focus:outline-none" 
+                                    data-type="quotient" 
+                                    data-step="${idx}" 
+                                    data-expected="${s.quotient}"
+                                    placeholder="?" 
+                                    inputmode="numeric" 
+                                    autocomplete="off">
+                            </div>
+                            <div class="flex items-center gap-2 text-lg">
+                                <span class="text-slate-600">${step.divisor} ×</span>
+                                <span class="font-bold" id="quotient-${idx}">?</span>
+                                <span class="text-slate-600">=</span>
+                                <input type="number" 
+                                    class="step-input w-20 p-2 text-center text-xl font-bold border-2 border-green-300 rounded-lg focus:border-green-500 focus:outline-none" 
+                                    data-type="product" 
+                                    data-step="${idx}" 
+                                    data-expected="${s.product}"
+                                    placeholder="?" 
+                                    inputmode="numeric" 
+                                    autocomplete="off">
+                            </div>
+                            <div class="flex items-center gap-2 text-lg">
+                                <span class="font-bold text-green-600">${s.current}</span>
+                                <span class="text-slate-600">-</span>
+                                <span class="font-bold" id="product-${idx}">?</span>
+                                <span class="text-slate-600">=</span>
+                                <input type="number" 
+                                    class="step-input w-20 p-2 text-center text-xl font-bold border-2 border-green-300 rounded-lg focus:border-green-500 focus:outline-none" 
+                                    data-type="remainder" 
+                                    data-step="${idx}" 
+                                    data-expected="${s.remainder}"
+                                    placeholder="?" 
+                                    inputmode="numeric" 
+                                    autocomplete="off">
+                            </div>
+                            ${s.bringDown ? `
+                                <div class="text-sm text-green-600 font-bold">
+                                    Bring down ${s.bringDown} → <span id="next-${idx}">${s.remainder}${s.bringDown}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            working.innerHTML = html;
+            
+            // Add event listeners to inputs
+            const inputs = working.querySelectorAll('.step-input');
+            inputs.forEach(inp => {
+                inp.addEventListener('input', (e) => handleStepInput(e, step));
+                inp.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        const nextInput = Array.from(inputs).find(i => 
+                            i.dataset.step === inp.dataset.step && 
+                            i.dataset.type !== inp.dataset.type &&
+                            !i.value
+                        ) || Array.from(inputs).find(i => parseInt(i.dataset.step) > parseInt(inp.dataset.step));
+                        if (nextInput) nextInput.focus();
+                        else checkDivBtn.click();
+                    }
+                });
+            });
+            
+            // Setup check button
+            checkDivBtn.onclick = () => checkDivisionAnswer(step);
+            answerInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') checkDivBtn.click();
+            });
+            
+            // Focus first input
+            const firstInput = working.querySelector('.step-input');
+            if (firstInput) setTimeout(() => firstInput.focus(), 2100);
+        }
+        
+        function handleStepInput(e, step) {
+            const inp = e.target;
+            const type = inp.dataset.type;
+            const stepIdx = parseInt(inp.dataset.step);
+            const userVal = parseInt(inp.value);
+            const expected = parseInt(inp.dataset.expected);
+            
+            if (type === 'quotient' && !isNaN(userVal)) {
+                // Update product display
+                const productDisplay = document.getElementById(`product-${stepIdx}`);
+                if (productDisplay) {
+                    productDisplay.textContent = step.divisor * userVal;
+                }
+            }
+            
+            if (type === 'product' && !isNaN(userVal)) {
+                // Update remainder calculation hint
+                const current = step.steps[stepIdx].current;
+                const remainderDisplay = document.getElementById(`next-${stepIdx}`);
+                if (remainderDisplay && step.steps[stepIdx].bringDown) {
+                    const remainder = parseInt(current) - userVal;
+                    remainderDisplay.textContent = `${remainder}${step.steps[stepIdx].bringDown}`;
+                }
+            }
+            
+            // Check if correct
+            if (userVal === expected) {
+                inp.classList.add('correct');
+                inp.classList.remove('wrong');
+                playSound('pop');
+            } else if (inp.value && userVal !== expected) {
+                inp.classList.add('wrong');
+                inp.classList.remove('correct');
+            }
+        }
+        
+        function checkDivisionAnswer(step) {
+            // First check all step inputs
+            const stepInputs = document.querySelectorAll('.step-input');
+            let allStepsCorrect = true;
+            
+            stepInputs.forEach(inp => {
+                const userVal = parseInt(inp.value);
+                const expected = parseInt(inp.dataset.expected);
+                
+                if (userVal !== expected) {
+                    inp.classList.add('wrong', 'shake');
+                    allStepsCorrect = false;
+                } else {
+                    inp.classList.add('correct');
+                    inp.classList.remove('wrong');
+                }
+            });
+            
+            if (!allStepsCorrect) {
+                playSound('error');
+                setTimeout(() => {
+                    stepInputs.forEach(inp => {
+                        if (inp.classList.contains('wrong')) {
+                            inp.classList.remove('shake');
+                        }
+                    });
+                }, 500);
+                showToast("Check your working!");
+                return;
+            }
+            
+            // Then check final answer
+            const userAnswer = parseFloat(document.getElementById('division-answer').value);
+            const correctAnswer = step.answer;
+            
+            if (isNaN(userAnswer) || document.getElementById('division-answer').value.trim() === '') {
+                showToast("Enter the final answer!");
+                document.getElementById('division-answer').focus();
+                return;
+            }
+            
+            if (Math.abs(userAnswer - correctAnswer) < 0.01) {
+                playSound('success');
+                document.getElementById('division-answer').classList.add('correct');
+                document.getElementById('division-answer').disabled = true;
+                stepInputs.forEach(inp => inp.disabled = true);
+                showToast("Perfect!", true);
+                setTimeout(() => showReflection(), 1000);
+            } else {
+                playSound('error');
+                document.getElementById('division-answer').classList.add('shake', 'wrong');
+                setTimeout(() => {
+                    document.getElementById('division-answer').classList.remove('shake');
+                }, 500);
+                showToast("Check your final answer!");
+            }
+        }
+
+        function jumpToStep(i) {
+            if (i > STATE.maxStep) return;
+            STATE.step = i;
+            renderStep();
+        }
+
+        function showToast(msg, isSuccess = false) {
+            toast.textContent = msg;
+            toast.className = isSuccess ? 'active success' : 'active';
+            setTimeout(() => toast.className = '', 2000);
+        }
+
+        function showReflection() {
+            const step = STEPS[STATE.step];
+            if (!step.reflection) { nextStep(); return; }
+
+            document.body.classList.add('reflection-active');
+            reflectionModal.classList.add('active');
+            
+            document.getElementById('refl-question').textContent = step.reflection.q;
+            const optEl = document.getElementById('refl-options');
+            optEl.innerHTML = '';
+            
+            step.reflection.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    if (opt.correct) {
+                        btn.classList.add('selected');
+                        playSound('success');
+                        setTimeout(() => {
+                            reflectionModal.classList.remove('active');
+                            document.body.classList.remove('reflection-active');
+                            nextStep();
+                        }, 1000);
+                    } else {
+                        btn.classList.add('wrong');
+                        playSound('error');
+                    }
+                };
+                optEl.appendChild(btn);
+            });
+        }
+
+        function nextStep() {
+            STATE.step++;
+            if (STATE.step >= STEPS.length) {
+                document.getElementById('final-screen').classList.remove('hidden');
+                playSound('success');
+            } else {
+                renderStep();
+            }
+        }
+
+        function completeLesson() {
+            if (window.Course) {
+                Course.completeLesson('num_longops');
+            } else {
+                window.location.href = '../index.html';
+            }
+        }
+
+        window.nextStep = nextStep;
+        window.jumpToStep = jumpToStep;
+        window.completeLesson = completeLesson;
+
+        initLevel();
+    </script>
+</body>
+</html>

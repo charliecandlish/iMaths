@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Ratio Checkpoint 1</title>
+    <link rel="stylesheet" href="../assets/css/quiz.css">
+</head>
+<body data-quiz-theme="ratio">
+    <a class="quiz-exit" href="../index.html">↺</a>
+    <main id="quiz-app" class="quiz-app"></main>
+
+    <script src="../assets/js/course.js"></script>
+    <script>
+        window.quizConfig = {
+            key: 'quiz1',
+            theme: 'ratio',
+            title: 'Ratio Realm Recruit',
+            subtitle: 'Checkpoint 01',
+            description: 'Five rapid-fire checks on notation, simplification, and total parts.',
+            skillsLabel: 'Ratio Skills',
+            resultsCopy: 'Revisit any stories that felt uncertain, then retake the checkpoint when you are ready.',
+            questions: [
+                {
+                    prompt: 'What is the ratio of 2 Blue drops to 3 White drops?',
+                    options: ['2 : 3', '3 : 2', '1 : 1.5', '5 : 1'],
+                    answer: 0,
+                    hint: 'The first number always belongs to the first thing mentioned.',
+                    detail: 'Order matters: Blue is mentioned first, so 2 comes first. White is second, so 3 completes 2 : 3.',
+                    skill: 'Order & Language',
+                    tag: 'Basics'
+                },
+                {
+                    prompt: 'Which ratio is equivalent to 1 : 1?',
+                    options: ['2 : 3', '5 : 5', '10 : 1', '1 : 2'],
+                    answer: 1,
+                    hint: 'Equivalent ratios are scaled-up versions of the same recipe.',
+                    detail: '1 : 1 means equal parts. 5 : 5 is just 1 : 1 multiplied by 5.',
+                    skill: 'Equivalent Ratios',
+                    tag: 'Scaling'
+                },
+                {
+                    prompt: 'Simplify the ratio 10 : 5',
+                    options: ['1 : 2', '5 : 1', '2 : 1', '10 : 5'],
+                    answer: 2,
+                    hint: 'Find the highest common factor of both numbers.',
+                    detail: 'Divide both sides by 5. 10÷5 = 2 and 5÷5 = 1, so the simplest form is 2 : 1.',
+                    skill: 'Simplifying',
+                    tag: 'HCF'
+                },
+                {
+                    prompt: 'Simplify the ratio 8 : 12',
+                    options: ['4 : 6', '2 : 3', '3 : 4', '1 : 1.5'],
+                    answer: 1,
+                    hint: 'Look for a number that goes into both 8 and 12.',
+                    detail: 'The highest common factor is 4. 8÷4 = 2 and 12÷4 = 3 so the ratio becomes 2 : 3.',
+                    skill: 'Simplifying',
+                    tag: 'HCF'
+                },
+                {
+                    prompt: 'If you mix 1 part Red and 2 parts Yellow, how many parts are there in total?',
+                    options: ['2', '3', '12', '1'],
+                    answer: 1,
+                    hint: 'Add the parts together to find the total amount made.',
+                    detail: '1 part + 2 parts = 3 total parts. Ratios tell you instructions, not just a single number.',
+                    skill: 'Total Parts',
+                    tag: 'Applications'
+                }
+            ]
+        };
+    </script>
+    <script src="../assets/js/quiz.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Ratio Checkpoint 2</title>
+    <link rel="stylesheet" href="../assets/css/quiz.css">
+</head>
+<body data-quiz-theme="proportion">
+    <a class="quiz-exit" href="../index.html">↺</a>
+    <main id="quiz-app" class="quiz-app"></main>
+
+    <script src="../assets/js/course.js"></script>
+    <script>
+        window.quizConfig = {
+            key: 'quiz2',
+            theme: 'proportion',
+            title: 'Mid-Course Assessment',
+            subtitle: 'Checkpoint 02',
+            description: 'A multi-skill check on sharing, scaling, unitary method and inverse proportion.',
+            skillsLabel: 'Application Focus',
+            resultsCopy: 'Keep a note of any contexts that felt shaky and revisit those missions before moving on.',
+            questions: [
+                {
+                    prompt: 'Simplify 20 : 30',
+                    options: ['2 : 3', '20 : 3', '2 : 30', '1 : 1.5'],
+                    answer: 0,
+                    hint: 'Divide both numbers by the same factor.',
+                    detail: 'The highest common factor is 10. 20÷10 = 2 and 30÷10 = 3, so 2 : 3.',
+                    skill: 'Simplifying',
+                    tag: 'Refresh'
+                },
+                {
+                    prompt: 'Share £20 in the ratio 2 : 3',
+                    options: ['£8 and £12', '£10 and £10', '£6 and £14', '£2 and £3'],
+                    answer: 0,
+                    hint: 'Find the value of one part first.',
+                    detail: 'Total parts = 5. Each part is £4. Shares become 2×4 = £8 and 3×4 = £12.',
+                    skill: 'Ratio Sharing',
+                    tag: 'Splitter'
+                },
+                {
+                    prompt: 'Share 15 sweets in the ratio 1 : 2',
+                    options: ['5 and 10', '7 and 8', '1 and 14', '3 and 6'],
+                    answer: 0,
+                    hint: 'Total parts = 1+2.',
+                    detail: 'Three parts in total. 15÷3 = 5. First share = 1×5 = 5, second share = 2×5 = 10.',
+                    skill: 'Ratio Sharing',
+                    tag: 'Splitter'
+                },
+                {
+                    prompt: 'If 3 books cost £15, how much does 1 book cost?',
+                    options: ['£5', '£3', '£45', '£12'],
+                    answer: 0,
+                    hint: 'Move from 3 parts to 1 part.',
+                    detail: 'Use the unitary method: £15 ÷ 3 = £5 per book.',
+                    skill: 'Unitary Method',
+                    tag: 'Detective'
+                },
+                {
+                    prompt: 'The ratio of Boys to Girls is 2 : 3. If there are 10 Boys, how many Girls?',
+                    options: ['15', '10', '20', '30'],
+                    answer: 0,
+                    hint: 'Find the value of one part using the boys.',
+                    detail: 'If 2 parts = 10, then 1 part = 5. Girls are 3 parts, so 3×5 = 15.',
+                    skill: 'Scaling Up',
+                    tag: 'Detective'
+                },
+                {
+                    prompt: 'A map scale is 1 : 100. A road is 5 cm on the map. How long is it in real life?',
+                    options: ['500 cm', '105 cm', '20 cm', '5000 cm'],
+                    answer: 0,
+                    hint: 'Multiply the map distance by the scale factor.',
+                    detail: 'Real distance is 5 × 100 = 500 cm in reality.',
+                    skill: 'Direct Proportion',
+                    tag: 'Scale City'
+                },
+                {
+                    prompt: 'It takes 2 painters 4 days to paint a house. How long would 4 painters take?',
+                    options: ['2 days', '8 days', '1 day', '4 days'],
+                    answer: 0,
+                    hint: 'More workers = less time. Use inverse proportion.',
+                    detail: 'If you double the workforce, halve the time. 4 days ÷ 2 = 2 days.',
+                    skill: 'Inverse Proportion',
+                    tag: 'Inverse Island'
+                }
+            ]
+        };
+    </script>
+    <script src="../assets/js/quiz.js" defer></script>
+</body>
+</html>

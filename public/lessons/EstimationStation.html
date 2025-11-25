@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Estimation Station</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #8b5cf6; border-color: #c4b5fd; }
+
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #8b5cf6; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header { top: 0; height: 130px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 10px 0 12px; }
+        .instr-header h1 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+        .instr-header p { font-size: 1rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        @media (max-width: 640px) {
+            .instr-header { height: 110px; padding-top: 5px; }
+            .instr-header h1 { font-size: 0.8rem; margin-bottom: 0.1rem; }
+            .instr-header p { font-size: 0.9rem; -webkit-line-clamp: 2; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #game-board { transition: opacity 0.8s, transform 0.8s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #8b5cf6; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+        
+        body.reflection-active .instruction-container { opacity: 0; pointer-events: none; }
+        body.reflection-active #game-board { transform: translateY(-20vh) scale(0.8); transform-origin: center top; z-index: 40; }
+
+        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
+        .btn-choice:hover { border-color: #c4b5fd; background-color: #f5f3ff; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+        /* Estimation Specifics */
+        .calc-display {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 900;
+            color: #6d28d9;
+            background: white;
+            padding: 20px 30px;
+            border-radius: 20px;
+            border: 3px solid #ede9fe;
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.1);
+            text-align: center;
+        }
+        .calc-display .original { color: #6d28d9; }
+        .calc-display .approx { color: #a78bfa; font-size: 0.8em; }
+        .calc-display .arrow { color: #c4b5fd; margin: 0 8px; }
+
+        .rounding-box {
+            background: #f5f3ff;
+            border: 2px dashed #c4b5fd;
+            border-radius: 16px;
+            padding: 16px;
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+        }
+        .round-step {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0;
+            font-weight: 700;
+            color: #7c3aed;
+        }
+        .round-step .num { background: white; padding: 4px 12px; border-radius: 8px; }
+        .round-step .arrow { color: #a78bfa; }
+        .round-step .rounded { background: #ede9fe; padding: 4px 12px; border-radius: 8px; }
+
+        .input-field { width: 100%; max-width: 200px; padding: 16px; border-radius: 16px; border: 3px solid #e2e8f0; font-size: 1.8rem; font-weight: 800; text-align: center; color: #6d28d9; background: white; }
+        .input-field:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1); }
+
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        
+        .progress-dot { cursor: pointer; transition: all 0.2s; }
+        .progress-dot:hover { transform: scale(1.2); }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center text-center z-50">
+        <h1 class="text-4xl md:text-6xl font-black text-violet-500 mb-4">Estimation Expert!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You can estimate any calculation quickly.</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-violet-500 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Quick Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+    
+    <div id="toast">Check your estimate!</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[120px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full">
+        
+        <!-- Lesson View -->
+        <div id="lesson-view" class="hidden w-full max-w-2xl flex flex-col items-center gap-6 flex-1 justify-center min-h-0">
+             <div class="bg-white p-6 md:p-10 rounded-3xl shadow-sm border-2 border-violet-100 text-center w-full">
+                <div id="lesson-visual" class="text-5xl mb-4">🎯</div>
+                <div id="lesson-content" class="text-lg md:text-xl text-slate-700 leading-relaxed font-medium"></div>
+             </div>
+             <button onclick="nextStep()" class="bg-violet-500 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Continue</button>
+        </div>
+
+        <!-- Question View -->
+        <div id="question-view" class="hidden w-full flex flex-col items-center gap-4 flex-1 justify-start min-h-0 pt-4">
+            
+            <div class="calc-display" id="calc-display">
+                <!-- Calculation shown here -->
+            </div>
+
+            <div class="rounding-box" id="rounding-box">
+                <!-- Rounding steps shown here -->
+            </div>
+
+            <div class="flex flex-col items-center gap-2">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Your Estimate</p>
+                <input type="text" id="answer-input" class="input-field" placeholder="≈ ?" inputmode="decimal" autocomplete="off">
+            </div>
+
+            <button id="check-btn" class="bg-violet-500 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-lg hover:scale-105 transition">
+                Check Estimate
+            </button>
+        </div>
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, maxStep: 0, audioCtx: null };
+        const COACH_ACCENT = '#8b5cf6';
+        const COACH_BADGE = 'Estimation Coach';
+
+        const STEPS = [
+            {
+                type: 'learn',
+                title: "Why Estimate?",
+                content: "Estimation helps us:<br><br>• <b>Check</b> if our answer is sensible<br>• Do <b>quick mental maths</b><br>• Solve problems <b>without a calculator</b><br><br>We round numbers to 1 significant figure to make calculations easy.",
+                coach: "Estimation is about getting close, not exact!"
+            },
+            {
+                type: 'learn',
+                title: "Rounding to 1 SF",
+                content: "Round each number to <b>1 significant figure</b>:<br><br>23 → <b>20</b><br>187 → <b>200</b><br>4.7 → <b>5</b><br>0.038 → <b>0.04</b><br><br>Then calculate with the rounded numbers!",
+                coach: "1 SF means keep only the first non-zero digit."
+            },
+            {
+                title: "Simple Estimate",
+                desc: "Estimate: <b>48 × 21</b>",
+                expression: "48 × 21",
+                roundings: [{from: "48", to: "50"}, {from: "21", to: "20"}],
+                answer: 1000,
+                coach: "48 ≈ 50, 21 ≈ 20. So 50 × 20 = ?",
+                reflection: { q: "48 rounds to...", options: [{text: "50", correct: true}, {text: "40", correct: false}] }
+            },
+            {
+                title: "Division Estimate",
+                desc: "Estimate: <b>412 ÷ 19</b>",
+                expression: "412 ÷ 19",
+                roundings: [{from: "412", to: "400"}, {from: "19", to: "20"}],
+                answer: 20,
+                coach: "412 ≈ 400, 19 ≈ 20. So 400 ÷ 20 = ?",
+                reflection: { q: "When estimating, we round to...", options: [{text: "1 significant figure", correct: true}, {text: "The nearest 10", correct: false}] }
+            },
+            {
+                title: "Three Numbers",
+                desc: "Estimate: <b>32 × 48 ÷ 11</b>",
+                expression: "32 × 48 ÷ 11",
+                roundings: [{from: "32", to: "30"}, {from: "48", to: "50"}, {from: "11", to: "10"}],
+                answer: 150,
+                coach: "30 × 50 = 1500, then 1500 ÷ 10 = ?",
+                reflection: { q: "30 × 50 equals...", options: [{text: "1500", correct: true}, {text: "150", correct: false}] }
+            },
+            {
+                type: 'learn',
+                title: "Decimals & Estimation",
+                content: "Decimals work the same way:<br><br>3.8 → <b>4</b><br>0.52 → <b>0.5</b><br>0.089 → <b>0.09</b><br><br>Round to 1 SF, then calculate!",
+                coach: "The first significant figure is the first non-zero digit."
+            },
+            {
+                title: "Decimal Estimate",
+                desc: "Estimate: <b>4.8 × 2.1</b>",
+                expression: "4.8 × 2.1",
+                roundings: [{from: "4.8", to: "5"}, {from: "2.1", to: "2"}],
+                answer: 10,
+                coach: "4.8 ≈ 5, 2.1 ≈ 2. So 5 × 2 = ?",
+                reflection: { q: "4.8 to 1 SF is...", options: [{text: "5", correct: true}, {text: "4.8", correct: false}] }
+            },
+            {
+                title: "Mixed Estimate",
+                desc: "Estimate: <b>198 × 0.48</b>",
+                expression: "198 × 0.48",
+                roundings: [{from: "198", to: "200"}, {from: "0.48", to: "0.5"}],
+                answer: 100,
+                coach: "198 ≈ 200, 0.48 ≈ 0.5. So 200 × 0.5 = ?",
+                reflection: { q: "200 × 0.5 equals...", options: [{text: "100", correct: true}, {text: "1000", correct: false}] }
+            },
+            {
+                title: "Square Root Estimate",
+                desc: "Estimate: <b>√48</b>",
+                expression: "√48",
+                roundings: [{from: "48", to: "49"}],
+                answer: 7,
+                coach: "48 is close to 49, and √49 = 7.",
+                reflection: { q: "√49 equals...", options: [{text: "7", correct: true}, {text: "24.5", correct: false}] }
+            },
+            {
+                title: "GCSE Challenge",
+                desc: "Estimate: <b>(5.2 × 38.7) ÷ 0.49</b>",
+                expression: "(5.2 × 38.7) ÷ 0.49",
+                roundings: [{from: "5.2", to: "5"}, {from: "38.7", to: "40"}, {from: "0.49", to: "0.5"}],
+                answer: 400,
+                coach: "5 × 40 = 200, then 200 ÷ 0.5 = 400.",
+                reflection: { q: "You've mastered estimation!", options: [{text: "I'm ready!", correct: true}, {text: "Let me practice more", correct: false}] }
+            }
+        ];
+
+        // --- Audio System ---
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) { 
+            if (!STATE.audioCtx) return; 
+            const ctx = STATE.audioCtx; 
+            const t = ctx.currentTime; 
+            const osc = ctx.createOscillator(); 
+            const gain = ctx.createGain(); 
+            osc.connect(gain); 
+            gain.connect(ctx.destination); 
+            if (type === 'pop') { 
+                osc.frequency.setValueAtTime(600, t); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); 
+                osc.start(t); osc.stop(t+0.1); 
+            } else if (type === 'success') { 
+                osc.frequency.setValueAtTime(440, t); 
+                osc.frequency.exponentialRampToValueAtTime(880, t+0.2); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); 
+                osc.start(t); osc.stop(t+0.5); 
+            } else { 
+                osc.type = 'triangle'; 
+                osc.frequency.setValueAtTime(150, t); 
+                gain.gain.linearRampToValueAtTime(0, t+0.2); 
+                osc.start(t); osc.stop(t+0.2); 
+            } 
+        }
+
+        // --- DOM Elements ---
+        const container = document.getElementById('instruction-container');
+        const board = document.getElementById('game-board');
+        const titleEl = document.getElementById('level-title');
+        const descEl = document.getElementById('level-desc');
+        const dotsContainer = document.getElementById('progress-dots');
+        const toast = document.getElementById('toast');
+        const reflectionModal = document.getElementById('reflection-modal');
+        
+        const lessonView = document.getElementById('lesson-view');
+        const questionView = document.getElementById('question-view');
+        const lessonContent = document.getElementById('lesson-content');
+        const calcDisplay = document.getElementById('calc-display');
+        const roundingBox = document.getElementById('rounding-box');
+        const answerInput = document.getElementById('answer-input');
+        const checkBtn = document.getElementById('check-btn');
+
+        function initLevel() {
+            renderStep();
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        function renderStep() {
+            const step = STEPS[STATE.step];
+            STATE.maxStep = Math.max(STATE.maxStep || 0, STATE.step);
+            
+            container.className = "instruction-container instr-focus";
+            titleEl.textContent = step.title;
+            
+            lessonView.classList.add('hidden');
+            questionView.classList.add('hidden');
+
+            dotsContainer.innerHTML = STEPS.map((_, i) => {
+                const accessible = i <= STATE.maxStep;
+                const current = i === STATE.step;
+                let bg = 'bg-slate-200';
+                if (current) bg = 'bg-violet-500 scale-125';
+                else if (i < STATE.step) bg = 'bg-violet-300';
+                
+                return `<div 
+                    onclick="${accessible ? `jumpToStep(${i})` : ''}" 
+                    class="progress-dot w-2 h-2 rounded-full transition-all ${bg} ${accessible ? 'cursor-pointer' : 'cursor-default opacity-50'}">
+                </div>`
+            }).join('');
+
+            if (step.type === 'learn') {
+                lessonView.classList.remove('hidden');
+                lessonContent.innerHTML = step.content;
+                descEl.innerHTML = "";
+            } else {
+                descEl.innerHTML = step.desc;
+                questionView.classList.remove('hidden');
+                
+                calcDisplay.innerHTML = `<span class="original">${step.expression}</span>`;
+                
+                // Show rounding steps
+                roundingBox.innerHTML = step.roundings.map(r => 
+                    `<div class="round-step">
+                        <span class="num">${r.from}</span>
+                        <span class="arrow">→</span>
+                        <span class="rounded">${r.to}</span>
+                    </div>`
+                ).join('');
+                
+                answerInput.value = '';
+            }
+
+            board.className = "board-hidden flex-1 flex flex-col pt-[120px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full";
+
+            if (window.LessonCoach) {
+                LessonCoach.set(step.coach, { accent: COACH_ACCENT, badge: COACH_BADGE });
+            }
+
+            setTimeout(() => {
+                container.className = "instruction-container instr-header";
+                board.className = "board-visible flex-1 flex flex-col pt-[120px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full";
+                if (step.type !== 'learn') answerInput.focus();
+            }, 2500);
+        }
+
+        function jumpToStep(i) {
+            if (i > STATE.maxStep) return;
+            STATE.step = i;
+            renderStep();
+        }
+
+        checkBtn.onclick = () => {
+            const step = STEPS[STATE.step];
+            const userAnswer = parseFloat(answerInput.value);
+            
+            if (isNaN(userAnswer)) {
+                showToast("Enter an estimate!");
+                return;
+            }
+
+            if (userAnswer === step.answer) {
+                playSound('success');
+                showReflection();
+            } else {
+                playSound('error');
+                showToast("Check your estimate!");
+            }
+        };
+
+        answerInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') checkBtn.click();
+        });
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 2000);
+        }
+
+        function showReflection() {
+            const step = STEPS[STATE.step];
+            if (!step.reflection) { nextStep(); return; }
+
+            document.body.classList.add('reflection-active');
+            reflectionModal.classList.add('active');
+            
+            document.getElementById('refl-question').textContent = step.reflection.q;
+            const optEl = document.getElementById('refl-options');
+            optEl.innerHTML = '';
+            
+            step.reflection.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    if (opt.correct) {
+                        btn.classList.add('selected');
+                        playSound('success');
+                        setTimeout(() => {
+                            reflectionModal.classList.remove('active');
+                            document.body.classList.remove('reflection-active');
+                            nextStep();
+                        }, 1000);
+                    } else {
+                        btn.classList.add('wrong');
+                        playSound('error');
+                    }
+                };
+                optEl.appendChild(btn);
+            });
+        }
+
+        function nextStep() {
+            STATE.step++;
+            if (STATE.step >= STEPS.length) {
+                document.getElementById('final-screen').classList.remove('hidden');
+                playSound('success');
+            } else {
+                renderStep();
+            }
+        }
+
+        function completeLesson() {
+            if (window.Course) {
+                Course.completeLesson('num_estimate');
+            } else {
+                window.location.href = '../index.html';
+            }
+        }
+
+        window.nextStep = nextStep;
+        window.jumpToStep = jumpToStep;
+        window.completeLesson = completeLesson;
+
+        initLevel();
+    </script>
+</body>
+</html>
+

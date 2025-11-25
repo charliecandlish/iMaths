@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Venn Vault</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #9333ea; border-color: #d8b4fe; }
+
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #7e22ce; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header { top: 0; height: 130px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 10px 0 12px; }
+        .instr-header h1 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+        .instr-header p { font-size: 1rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        @media (max-width: 640px) {
+            .instr-header { height: 110px; padding-top: 5px; }
+            .instr-header h1 { font-size: 0.8rem; margin-bottom: 0.1rem; }
+            .instr-header p { font-size: 0.9rem; -webkit-line-clamp: 2; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #game-board { transition: opacity 0.8s, transform 0.8s; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #7e22ce; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+        
+        body.reflection-active .instruction-container { opacity: 0; pointer-events: none; }
+        body.reflection-active #game-board { transform: translateY(-20vh) scale(0.8); transform-origin: center top; z-index: 40; }
+        body.reflection-active #controls { opacity: 0; pointer-events: none; }
+
+        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
+        .btn-choice:hover { border-color: #d8b4fe; background-color: #faf5ff; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+        /* Venn Vault Specifics */
+        .venn-container {
+            width: 300px; height: 200px; position: relative; margin-bottom: 20px;
+        }
+        .venn-circle {
+            width: 160px; height: 160px; border-radius: 50%; position: absolute; top: 20px;
+            border: 3px solid; opacity: 0.6; display: flex; align-items: flex-start; justify-content: center; padding-top: 20px;
+            font-weight: 900; color: #334155; font-size: 1.2rem;
+        }
+        .circle-a { left: 10px; border-color: #a855f7; background: rgba(168, 85, 247, 0.1); }
+        .circle-b { right: 10px; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        
+        .venn-label { position: absolute; font-weight: 800; font-size: 0.8rem; color: #64748b; }
+        .label-a { top: 0; left: 40px; color: #a855f7; }
+        .label-b { top: 0; right: 40px; color: #3b82f6; }
+
+        /* Highlight zones for teaching */
+        .zone-highlight { 
+            position: absolute; border-radius: 50%; pointer-events: none; opacity: 0; transition: opacity 0.3s;
+        }
+        .zone-highlight.active { opacity: 0.5; background: #22c55e; }
+        /* Note: pure CSS Venn highlights are tricky without SVG paths. We'll use logic/descriptions instead or SVG */
+
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center text-center z-50">
+        <h1 class="text-4xl md:text-6xl font-black text-purple-600 mb-4">Set Solved!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You unlocked the intersection.</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-purple-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Logic Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+    
+    <div id="toast">Think about the sets.</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full">
+        <div class="w-full max-w-4xl flex flex-col items-center gap-8 flex-1 justify-center min-h-0">
+            
+            <div class="venn-container" id="venn-area">
+                <div class="venn-label label-a" id="label-a">Set A</div>
+                <div class="venn-label label-b" id="label-b">Set B</div>
+                <div class="venn-circle circle-a"></div>
+                <div class="venn-circle circle-b"></div>
+                <!-- Numbers injected via JS -->
+            </div>
+
+            <div id="choice-grid" class="grid grid-cols-1 gap-4 w-full max-w-md">
+                <!-- Choices injected -->
+            </div>
+
+        </div>
+
+        <div id="controls" class="w-full flex flex-col items-center gap-4 mb-8 max-w-md shrink-0 min-h-[60px] justify-end pb-safe">
+        </div>
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, audioCtx: null };
+        const COACH_ACCENT = '#7e22ce';
+        const COACH_BADGE = 'Set Master';
+
+        const STEPS = [
+            {
+                title: "The Intersection",
+                desc: "The middle part where circles overlap represents <b>A AND B</b> (A ∩ B). <br>Which number is in both sets?",
+                venn: { a: [2, 4], b: [3, 9], mid: [6] },
+                labels: ["Evens", "Multiples of 3"],
+                task: "Find the Intersection",
+                options: ["6", "2", "9"],
+                correct: 0,
+                coach: "Look for the number inside BOTH circles.",
+                reflection: { q: "The symbol for Intersection (AND) is...", options: [{text: "∩", correct: true}, {text: "∪", correct: false}] }
+            },
+            {
+                title: "The Union",
+                desc: "The Union (A ∪ B) is everything in A <b>OR</b> B (or both). <br>How many numbers are in the Union?",
+                venn: { a: [1, 5], b: [8, 10], mid: [2] },
+                labels: ["Odd", "Even"], // Just abstract sets
+                task: "Count the Union",
+                options: ["5", "1", "3"], // 1,5,2,8,10 -> 5 numbers
+                correct: 0,
+                coach: "Count every number inside any circle.",
+                reflection: { q: "Union means...", options: [{text: "Everything in either set", correct: true}, {text: "Only the middle", correct: false}] }
+            },
+            {
+                title: "Mutually Exclusive",
+                desc: "Set A: Even Numbers. Set B: Odd Numbers. <br>Is there any overlap?",
+                venn: { a: [2, 4, 6], b: [1, 3, 5], mid: [] },
+                labels: ["Evens", "Odds"],
+                task: "Check Overlap",
+                options: ["No Overlap", "Yes Overlap"],
+                correct: 0,
+                coach: "A number cannot be both even and odd. The circles do not touch/overlap.",
+                reflection: { q: "If two events cannot happen at the same time, they are...", options: [{text: "Mutually Exclusive", correct: true}, {text: "Independent", correct: false}] }
+            },
+            {
+                title: "Probability from Venn",
+                desc: "Total items = 10. <br>Items in A = 3. Items in B = 4. Items in Both = 2. <br>Outside = 1. <br>P(A) = ?",
+                venn: { a: [1], b: [2, 3], mid: [4, 5] }, // Visual abstraction, numbers don't match description exactly, let's use text mode for clarity? 
+                // Let's stick to simple visual: 
+                // A has 1 item unique. B has 2 unique. Mid has 2. Outside has 1.
+                // Total = 1+2+2+? Wait description says total 10.
+                // Let's simplify.
+                // Visual: A(3) - Mid(2) - B(4). Outside(1). Total = 3+2+4+1 = 10.
+                // P(A) includes the middle! So A has 3+2 = 5 items.
+                // 5/10 = 0.5.
+                textMode: true,
+                display: "Total: 10<br>In A only: 3<br>In B only: 4<br>In Both: 2<br>Outside: 1",
+                task: "Calculate P(A)",
+                options: ["5/10 (0.5)", "3/10 (0.3)", "2/10 (0.2)"],
+                correct: 0,
+                coach: "Set A includes 'A only' AND 'Both'. 3 + 2 = 5.",
+                reflection: { q: "P(A) includes...", options: [{text: "Everything in circle A", correct: true}, {text: "Only the part not in B", correct: false}] }
+            }
+        ];
+
+        // --- Audio System ---
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) { 
+            if (!STATE.audioCtx) return; 
+            const ctx = STATE.audioCtx; 
+            const t = ctx.currentTime; 
+            const osc = ctx.createOscillator(); 
+            const gain = ctx.createGain(); 
+            osc.connect(gain); 
+            gain.connect(ctx.destination); 
+            if (type === 'pop') { 
+                osc.frequency.setValueAtTime(600, t); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); 
+                osc.start(t); osc.stop(t+0.1); 
+            } else if (type === 'success') { 
+                osc.frequency.setValueAtTime(440, t); 
+                osc.frequency.exponentialRampToValueAtTime(880, t+0.2); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); 
+                osc.start(t); osc.stop(t+0.5); 
+            } else { 
+                osc.type = 'triangle'; 
+                osc.frequency.setValueAtTime(150, t); 
+                gain.gain.linearRampToValueAtTime(0, t+0.2); 
+                osc.start(t); osc.stop(t+0.2); 
+            } 
+        }
+
+        // --- Core Logic ---
+        const container = document.getElementById('instruction-container');
+        const board = document.getElementById('game-board');
+        const titleEl = document.getElementById('level-title');
+        const descEl = document.getElementById('level-desc');
+        const dotsContainer = document.getElementById('progress-dots');
+        const toast = document.getElementById('toast');
+        const reflectionModal = document.getElementById('reflection-modal');
+        
+        const vennArea = document.getElementById('venn-area');
+        const labelA = document.getElementById('label-a');
+        const labelB = document.getElementById('label-b');
+        const choiceGrid = document.getElementById('choice-grid');
+
+        function initLevel() {
+            dotsContainer.innerHTML = STEPS.map((_, i) => `<div class="w-2 h-2 rounded-full transition-colors ${i === 0 ? 'bg-purple-500' : 'bg-slate-200'}"></div>`).join('');
+            renderStep();
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        function renderStep() {
+            const step = STEPS[STATE.step];
+            
+            container.className = "instruction-container instr-focus";
+            titleEl.textContent = step.title;
+            descEl.innerHTML = step.desc;
+            board.className = "board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+            
+            // Setup Visual
+            vennArea.innerHTML = `
+                <div class="venn-label label-a" id="label-a"></div>
+                <div class="venn-label label-b" id="label-b"></div>
+                <div class="venn-circle circle-a"></div>
+                <div class="venn-circle circle-b"></div>
+            `;
+            const cA = vennArea.querySelector('.circle-a');
+            const cB = vennArea.querySelector('.circle-b');
+            const lA = vennArea.querySelector('#label-a');
+            const lB = vennArea.querySelector('#label-b');
+            
+            if (step.textMode) {
+                vennArea.innerHTML = `<div class="text-center font-bold text-slate-700 text-lg leading-loose">${step.display}</div>`;
+                vennArea.style.height = 'auto';
+            } else {
+                lA.textContent = step.labels[0];
+                lB.textContent = step.labels[1];
+                
+                // Populate numbers
+                // Simple positioning
+                // A only
+                step.venn.a.forEach((n, i) => {
+                    const el = document.createElement('div');
+                    el.textContent = n;
+                    el.style.position = 'absolute';
+                    el.style.left = '40px';
+                    el.style.top = `${60 + (i*20)}px`;
+                    el.style.fontWeight = '900';
+                    vennArea.appendChild(el);
+                });
+                // B only
+                step.venn.b.forEach((n, i) => {
+                    const el = document.createElement('div');
+                    el.textContent = n;
+                    el.style.position = 'absolute';
+                    el.style.right = '40px';
+                    el.style.top = `${60 + (i*20)}px`;
+                    el.style.fontWeight = '900';
+                    vennArea.appendChild(el);
+                });
+                // Mid
+                step.venn.mid.forEach((n, i) => {
+                    const el = document.createElement('div');
+                    el.textContent = n;
+                    el.style.position = 'absolute';
+                    el.style.left = '140px';
+                    el.style.top = `${80 + (i*20)}px`;
+                    el.style.fontWeight = '900';
+                    vennArea.appendChild(el);
+                });
+            }
+
+            // Choices
+            choiceGrid.innerHTML = '';
+            step.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(idx === step.correct, btn);
+                choiceGrid.appendChild(btn);
+            });
+
+            // Update Dots
+            Array.from(dotsContainer.children).forEach((dot, i) => {
+                dot.className = `w-2 h-2 rounded-full transition-colors ${i <= STATE.step ? 'bg-purple-500' : 'bg-slate-200'}`;
+            });
+
+            if (window.LessonCoach) {
+                LessonCoach.set(step.coach, { accent: COACH_ACCENT, badge: COACH_BADGE });
+            }
+
+            // Auto-transition
+            setTimeout(() => {
+                container.className = "instruction-container instr-header";
+                board.className = "board-visible flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+            }, 2500);
+        }
+
+        function checkAnswer(isCorrect, btn) {
+            if (isCorrect) {
+                btn.classList.add('selected');
+                playSound('success');
+                setTimeout(showReflection, 1000);
+            } else {
+                btn.classList.add('wrong');
+                playSound('error');
+                showToast("Check the diagram.");
+                btn.classList.add('wiggle');
+            }
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 2000);
+        }
+
+        function showReflection() {
+            const step = STEPS[STATE.step];
+            if (!step.reflection) {
+                nextStep();
+                return;
+            }
+
+            document.body.classList.add('reflection-active');
+            reflectionModal.classList.add('active');
+            
+            const qEl = document.getElementById('refl-question');
+            const optEl = document.getElementById('refl-options');
+            
+            qEl.textContent = step.reflection.q;
+            optEl.innerHTML = '';
+            
+            step.reflection.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    if (opt.correct) {
+                        btn.classList.add('selected');
+                        playSound('success');
+                        setTimeout(() => {
+                            reflectionModal.classList.remove('active');
+                            document.body.classList.remove('reflection-active');
+                            nextStep();
+                        }, 1000);
+                    } else {
+                        btn.classList.add('wrong');
+                        playSound('error');
+                        btn.classList.add('wiggle');
+                    }
+                };
+                optEl.appendChild(btn);
+            });
+        }
+
+        function nextStep() {
+            STATE.step++;
+            if (STATE.step >= STEPS.length) {
+                document.getElementById('final-screen').classList.remove('hidden');
+                document.getElementById('final-screen').classList.add('flex');
+                playSound('success');
+            } else {
+                renderStep();
+            }
+        }
+
+        function completeLesson() {
+            if (window.Course) {
+                Course.completeLesson('stats_venn');
+            } else {
+                window.location.href = '../index.html';
+            }
+        }
+
+        initLevel();
+
+    </script>
+</body>
+</html>
