@@ -220,27 +220,32 @@
             board.className = "board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
             
             // Render SVG Pie
-            // Simple implementation for segments
             // Convert percentages to SVG paths
+            const radius = 1;
+            const centerX = 0;
+            const centerY = 0;
             let cumulativePercent = 0;
             let svgContent = '';
             
             step.slices.forEach((percent, i) => {
-                const startX = Math.cos(2 * Math.PI * cumulativePercent);
-                const startY = Math.sin(2 * Math.PI * cumulativePercent);
-                cumulativePercent += percent / 100;
-                const endX = Math.cos(2 * Math.PI * cumulativePercent);
-                const endY = Math.sin(2 * Math.PI * cumulativePercent);
+                const startAngle = (cumulativePercent / 100) * 2 * Math.PI - Math.PI / 2; // Start at top (-90deg)
+                cumulativePercent += percent;
+                const endAngle = (cumulativePercent / 100) * 2 * Math.PI - Math.PI / 2;
+                
+                const startX = centerX + radius * Math.cos(startAngle);
+                const startY = centerY + radius * Math.sin(startAngle);
+                const endX = centerX + radius * Math.cos(endAngle);
+                const endY = centerY + radius * Math.sin(endAngle);
                 
                 const largeArcFlag = percent > 50 ? 1 : 0;
                 
-                // Assuming center is 0,0 and radius 1. ViewBox -1 -1 2 2
-                const d = `M 0 0 L ${startX} ${startY} A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY} Z`;
+                // Create path: Move to center, line to start, arc to end, close path
+                const d = `M ${centerX} ${centerY} L ${startX} ${startY} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY} Z`;
                 
-                svgContent += `<path d="${d}" fill="${step.colors[i]}" class="pie-segment" />`;
+                svgContent += `<path d="${d}" fill="${step.colors[i]}" class="pie-segment" stroke="white" stroke-width="0.05" />`;
             });
             
-            pieChart.innerHTML = `<svg viewBox="-1.1 -1.1 2.2 2.2" class="pie-svg">${svgContent}</svg>`;
+            pieChart.innerHTML = `<svg viewBox="-1.1 -1.1 2.2 2.2" class="pie-svg" style="width: 100%; height: 100%;">${svgContent}</svg>`;
 
             // Render Legend
             legendBox.innerHTML = '';

@@ -6,13 +6,20 @@
     // --- Auth Logic ---
     function checkAuth() {
         const storedUser = localStorage.getItem('mathMaster_currentUser');
+        const authModal = document.getElementById('auth-modal');
+        const mainContent = document.querySelector('main');
+        
         if (storedUser) {
             currentUser = storedUser;
-            document.getElementById('auth-modal').classList.add('hidden');
+            authModal.classList.add('hidden');
+            mainContent.classList.remove('hidden');
             updateUserUI();
             loadUserData();
         } else {
-            document.getElementById('auth-modal').classList.remove('hidden');
+            authModal.classList.remove('hidden');
+            // Hide main content when showing login modal
+            mainContent.classList.add('hidden');
+            loadFreePreview();
         }
     }
 
@@ -68,7 +75,18 @@
         localStorage.removeItem('ratioCourseData');
         progress = {};
 
-        document.getElementById('auth-modal').classList.add('hidden');
+        const authModal = document.getElementById('auth-modal');
+        const mainContent = document.querySelector('main');
+        
+        authModal.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+        
+        // Reset hero section
+        const heroTitle = document.getElementById('hero-title');
+        const heroDesc = document.getElementById('hero-desc');
+        if (heroTitle) heroTitle.textContent = 'Welcome Back!';
+        if (heroDesc) heroDesc.textContent = 'Ready to crush some math problems? Pick a topic below to get started.';
+        
         updateUserUI();
         loadUserData();
     }
@@ -158,7 +176,7 @@
     }
 
     // --- UI Rendering ---
-    function createRow(module, href, index, isNextUp) {
+    function createRow(module, href, index, isNextUp, isFreePreview = false) {
         const isComplete = progress[module.key];
         const score = isComplete && module.isQuiz ? progress[module.key + '_score'] : null;
         const isQuiz = module.isQuiz;
@@ -191,10 +209,12 @@
         
         const nextUpClasses = isNextUp ? "border-2 border-indigo-500 shadow-lg transform scale-[1.02] z-10 ring-4 ring-indigo-50" : "border border-transparent hover:border-slate-200 hover:shadow-sm";
         const nextBadge = isNextUp ? `<div class="absolute -top-3 -right-3 bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md animate-bounce">NEXT UP</div>` : '';
+        const freeBadge = isFreePreview ? `<div class="absolute -top-3 -right-3 bg-emerald-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md">FREE PREVIEW</div>` : '';
         
         return `
-            <a href="${href}" onclick="saveUserData()" class="course-row group no-underline block rounded-xl bg-white px-3 py-3 mb-2 transition-all relative ${nextUpClasses}">
+            <a href="${href}" onclick="${isFreePreview ? '' : 'saveUserData()'}" class="course-row group no-underline block rounded-xl bg-white px-3 py-3 mb-2 transition-all relative ${nextUpClasses}">
                 ${nextBadge}
+                ${freeBadge}
                 <div class="flex items-center gap-4">
                     <!-- Number Badge -->
                     <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-black shrink-0 border border-slate-200">
@@ -223,15 +243,49 @@
         `;
     }
 
-    function renderGrid(gridId, modules, nextUpKey) {
+    function renderGrid(gridId, modules, nextUpKey, isFreePreview = false) {
         const grid = document.getElementById(gridId);
         if (!grid) return;
         
+        // If free preview, only show the first exercise
+        const modulesToShow = isFreePreview ? [modules[0]] : modules;
+        
         // Since public/index.html is in public/, lessons are at lessons/ relative to it
-        grid.innerHTML = modules.map((module, index) => {
+        grid.innerHTML = modulesToShow.map((module, index) => {
             const href = module.href ? `lessons/${module.href}` : '#'; 
-            return createRow(module, href, index, module.key === nextUpKey);
+            return createRow(module, href, isFreePreview ? 0 : index, module.key === nextUpKey, isFreePreview);
         }).join('');
+    }
+    
+    function loadFreePreview() {
+        if (!window.Course || !window.Course.modules) {
+            setTimeout(loadFreePreview, 50);
+            return;
+        }
+        
+        // Update hero section for logged out users
+        const heroTitle = document.getElementById('hero-title');
+        const heroDesc = document.getElementById('hero-desc');
+        if (heroTitle) heroTitle.textContent = 'Try Math Master Free!';
+        if (heroDesc) heroDesc.innerHTML = 'Sign in to unlock all lessons and track your progress. <span class="text-emerald-600 font-bold">Try the free preview exercises below!</span>';
+        
+        // Show only the first exercise of each topic as free preview
+        renderGrid('number-grid', Course.modules.number, null, true);
+        renderGrid('ratio-prop-grid', Course.modules.ratio, null, true);
+        renderGrid('alg-grid', Course.modules.algebra, null, true);
+        renderGrid('geo-grid', Course.modules.geometry, null, true);
+        renderGrid('stats-grid', Course.modules.stats, null, true);
+        
+        // Update progress displays to show "Free Preview"
+        const progressDisplays = ['number-progress', 'ratio-prop-progress', 'alg-progress', 'geo-progress', 'stats-progress'];
+        progressDisplays.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = 'Free Preview Available';
+        });
+        
+        // Update total progress
+        const totalProgress = document.getElementById('total-progress-text');
+        if (totalProgress) totalProgress.textContent = 'Free Preview';
     }
 
     function updateProgress() {

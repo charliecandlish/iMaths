@@ -12,25 +12,26 @@
 
     <!-- Auth Modal -->
     <div id="auth-modal">
-        <div class="auth-box" id="login-view">
+        <form class="auth-box" id="login-view" autocomplete="off" onsubmit="event.preventDefault(); handleLogin(); return false;">
             <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-6 shadow-sm rotate-3"><i class="fa-solid fa-robot"></i></div>
             <h2 class="text-2xl font-black text-slate-800 mb-2 tracking-tight">Welcome Back</h2>
-            <p class="text-slate-500 mb-6 text-sm font-medium">Sign in to your learning dashboard.</p>
-            <input type="text" id="login-username" class="auth-input" placeholder="Username">
-            <input type="password" id="login-password" class="auth-input" placeholder="Password">
-            <button onclick="handleLogin()" class="auth-btn">Sign In</button>
+            <p class="text-slate-500 mb-6 text-sm font-medium">Sign in to access all lessons and track your progress.</p>
+            <p class="text-xs text-emerald-600 mb-4 font-medium bg-emerald-50 p-2 rounded-lg">✨ Try the free preview exercises below after signing in!</p>
+            <input type="text" id="login-username" name="username" class="auth-input" placeholder="Username" autocomplete="off" data-lpignore="true" data-form-type="other">
+            <input type="password" id="login-password" name="password" class="auth-input" placeholder="Password" autocomplete="new-password" data-lpignore="true" data-form-type="other">
+            <button type="submit" class="auth-btn">Sign In</button>
             <div class="auth-toggle" onclick="toggleAuth('signup')">New student? Create account</div>
-        </div>
+        </form>
 
-        <div class="auth-box hidden" id="signup-view">
+        <form class="auth-box hidden" id="signup-view" autocomplete="off" onsubmit="event.preventDefault(); handleSignup(); return false;">
             <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-6 shadow-sm -rotate-3"><i class="fa-solid fa-rocket"></i></div>
             <h2 class="text-2xl font-black text-slate-800 mb-2 tracking-tight">Join the Squad</h2>
             <p class="text-slate-500 mb-6 text-sm font-medium">Create a profile to start tracking.</p>
-            <input type="text" id="signup-username" class="auth-input" placeholder="Pick a Username">
-            <input type="password" id="signup-password" class="auth-input" placeholder="Create Password">
-            <button onclick="handleSignup()" class="auth-btn bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20">Create Account</button>
+            <input type="text" id="signup-username" name="username" class="auth-input" placeholder="Pick a Username" autocomplete="off" data-lpignore="true" data-form-type="other">
+            <input type="password" id="signup-password" name="password" class="auth-input" placeholder="Create Password" autocomplete="new-password" data-lpignore="true" data-form-type="other">
+            <button type="submit" class="auth-btn bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20">Create Account</button>
             <div class="auth-toggle" onclick="toggleAuth('login')">Already have an account? Sign In</div>
-        </div>
+        </form>
     </div>
 
     <header>
@@ -91,7 +92,7 @@
         </div>
     </div>
 
-    <main class="max-w-3xl mx-auto p-6 space-y-8">
+    <main class="max-w-3xl mx-auto p-6 space-y-8 hidden" id="main-content">
 
         <!-- Engaging Hero Section with Mascot -->
         <div class="bg-white rounded-3xl p-8 shadow-xl shadow-slate-200 border border-slate-100 relative overflow-hidden flex flex-col sm:flex-row items-center gap-8">
@@ -115,8 +116,8 @@
 
             <!-- Hero Text & Progress -->
             <div class="flex-1 text-center sm:text-left z-10">
-                <h2 class="text-2xl font-black text-slate-800 mb-2">Welcome Back!</h2>
-                <p class="text-slate-500 text-sm font-medium mb-6">Ready to crush some math problems? Pick a topic below to get started.</p>
+                <h2 class="text-2xl font-black text-slate-800 mb-2" id="hero-title">Welcome Back!</h2>
+                <p class="text-slate-500 text-sm font-medium mb-6" id="hero-desc">Ready to crush some math problems? Pick a topic below to get started.</p>
                 
                 <!-- Progress Pill -->
                 <div class="inline-flex items-center bg-slate-50 rounded-full border border-slate-100 p-1 pr-4 gap-3">
