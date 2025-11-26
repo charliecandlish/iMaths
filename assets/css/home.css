@@ -723,7 +723,7 @@ body.intro-active header {
 }
 
 #intro-triangle {
-    width: min(400px, 70vw);
+    width: min(133px, 30vw);
     height: auto;
     transform-origin: center;
     z-index: 1;

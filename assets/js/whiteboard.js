@@ -138,20 +138,30 @@
     }
 
     function getCoordinates(e) {
-        const rect = canvas.getBoundingClientRect();
-        let clientX, clientY;
-
+        // For touch events, use the touch point
         if (e.touches && e.touches.length > 0) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-        } else {
-            clientX = e.clientX;
-            clientY = e.clientY;
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            // Use page coordinates and subtract canvas position for accuracy
+            return {
+                x: touch.pageX - rect.left - window.pageXOffset,
+                y: touch.pageY - rect.top - window.pageYOffset
+            };
         }
 
+        // For mouse events, try offsetX/offsetY first (most accurate)
+        if (e.offsetX !== undefined && e.offsetY !== undefined) {
+            return {
+                x: e.offsetX,
+                y: e.offsetY
+            };
+        }
+
+        // Fallback to clientX/clientY with getBoundingClientRect
+        const rect = canvas.getBoundingClientRect();
         return {
-            x: clientX - rect.left,
-            y: clientY - rect.top
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
         };
     }
 

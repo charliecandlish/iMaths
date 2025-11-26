@@ -173,39 +173,51 @@ body.bg-pink {
 
 /* Lesson Page Layout Fixes - Ensure everything fits on screen */
 body {
-    position: fixed;
+    position: relative;
     width: 100vw;
-    height: 100vh;
-    overflow: hidden !important;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Ensure exit button is always visible */
+#exit-btn {
+    position: fixed !important;
+    z-index: 99999 !important;
+}
+
+/* Instruction container sizing */
+.instr-header {
+    min-height: 100px !important;
+    max-height: 150px !important;
 }
 
 #game-board {
-    max-height: 100vh;
+    max-height: calc(100vh - 160px);
     overflow-y: auto;
-    padding-bottom: 20px !important;
-    /* Reduced from larger values */
+    display: flex;
+    flex-direction: column;
 }
 
+/* Make continue/check buttons sticky at bottom */
 #controls {
-    padding-bottom: 20px !important;
-    /* Ensure buttons are visible */
-    margin-bottom: 0 !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    background: linear-gradient(to top, rgba(248, 250, 252, 1) 80%, rgba(248, 250, 252, 0) 0%) !important;
+    padding: 16px 0 24px !important;
+    margin-top: auto !important;
+    z-index: 50 !important;
 }
 
-/* Ensure modals and overlays fit properly */
+/* Ensure modals fit properly */
 #reflection-modal {
-    max-height: 70vh !important;
+    max-height: 75vh !important;
     overflow-y: auto;
 }
 
 /* Safe area for mobile devices */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
-    #game-board {
-        padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
-    }
-
     #controls {
-        padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+        padding-bottom: max(24px, env(safe-area-inset-bottom)) !important;
     }
 }
 
