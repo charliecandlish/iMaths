@@ -1,3 +1,13 @@
+// Load Font Awesome for icons (if not already loaded)
+(function () {
+    if (!document.querySelector('link[href*="font-awesome"]')) {
+        const faLink = document.createElement('link');
+        faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css';
+        faLink.rel = 'stylesheet';
+        document.head.appendChild(faLink);
+    }
+})();
+
 (() => {
     const queue = [];
     let isReady = false;
@@ -106,32 +116,54 @@
     };
 })();
 
-// Load calculator toolbar on all lesson pages
-(function() {
-    if (document.getElementById('math-toolbar')) return; // Already loaded
-    
+// Load calculator and whiteboard on all pages
+(function () {
+    'use strict';
+
     // Detect correct path based on current page location
     const isLessonPage = window.location.pathname.includes('/lessons/');
-    const scriptPath = isLessonPage ? '../assets/js/calculator.js' : 'assets/js/calculator.js';
-    
-    const script = document.createElement('script');
-    script.src = scriptPath;
-    script.async = true;
-    document.head.appendChild(script);
-})();
+    const basePath = isLessonPage ? '../assets/js/' : 'assets/js/';
 
-// Load whiteboard on all lesson pages
-(function() {
-    if (document.getElementById('whiteboard-overlay')) return;
-    
-    const isLessonPage = window.location.pathname.includes('/lessons/');
-    const scriptPath = isLessonPage ? '../assets/js/whiteboard.js' : 'assets/js/whiteboard.js';
-    
-    if (document.querySelector(`script[src="${scriptPath}"]`)) return;
-    
-    const script = document.createElement('script');
-    script.src = scriptPath;
-    script.async = true;
-    document.head.appendChild(script);
-})();
+    // Load calculator
+    function loadCalculator() {
+        // Check if already loaded by looking for the actual element
+        if (document.getElementById('math-calculator-root')) {
+            return;
+        }
 
+        const calcScript = document.createElement('script');
+        calcScript.src = basePath + 'calculator.js';
+        calcScript.async = false; // Load synchronously to ensure proper order
+        document.head.appendChild(calcScript);
+    }
+
+    // Load whiteboard
+    function loadWhiteboard() {
+        // Check if already loaded by looking for the actual element or existing script
+        if (document.getElementById('whiteboard-overlay')) {
+            return;
+        }
+
+        // Check if script is already in the DOM
+        const scriptPath = basePath + 'whiteboard.js';
+        if (document.querySelector(`script[src="${scriptPath}"]`)) {
+            return;
+        }
+
+        const wbScript = document.createElement('script');
+        wbScript.src = scriptPath;
+        wbScript.async = false; // Load synchronously to ensure proper order
+        document.head.appendChild(wbScript);
+    }
+
+    // Load immediately if DOM is ready, otherwise wait
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCalculator();
+            loadWhiteboard();
+        });
+    } else {
+        loadCalculator();
+        loadWhiteboard();
+    }
+})();

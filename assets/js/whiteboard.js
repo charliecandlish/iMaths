@@ -122,8 +122,8 @@
         canvas.addEventListener('mouseleave', stopDrawing);
 
         // Touch events
-        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
         canvas.addEventListener('touchend', stopDrawing);
 
         // Resize
@@ -137,31 +137,31 @@
         });
     }
 
-    function handleTouchStart(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousedown', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-    }
+    function getCoordinates(e) {
+        const rect = canvas.getBoundingClientRect();
+        let clientX, clientY;
 
-    function handleTouchMove(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousemove', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
     }
 
     function startDrawing(e) {
+        if (e.type === 'touchstart') e.preventDefault();
+
         isDrawing = true;
-        const rect = canvas.getBoundingClientRect();
-        lastX = e.clientX - rect.left;
-        lastY = e.clientY - rect.top;
+        const coords = getCoordinates(e);
+        lastX = coords.x;
+        lastY = coords.y;
 
         // Draw a dot at start
         ctx.beginPath();
@@ -171,10 +171,11 @@
 
     function draw(e) {
         if (!isDrawing) return;
+        if (e.type === 'touchmove') e.preventDefault();
 
-        const rect = canvas.getBoundingClientRect();
-        const currentX = e.clientX - rect.left;
-        const currentY = e.clientY - rect.top;
+        const coords = getCoordinates(e);
+        const currentX = coords.x;
+        const currentY = coords.y;
 
         ctx.beginPath();
         ctx.moveTo(lastX, lastY);
@@ -209,6 +210,56 @@
         ctx.putImageData(imageData, 0, 0);
     }
 
+    // Create Toggle Button
+    function createToggleButton() {
+        if (document.getElementById('whiteboard-toggle-btn')) return;
+
+        const btn = document.createElement('button');
+        btn.id = 'whiteboard-toggle-btn';
+        btn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
+        btn.title = "Open Whiteboard";
+
+        btn.style.cssText = `
+            position: fixed;
+            bottom: 90px; /* Above calculator */
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 20px;
+            background: white;
+            color: #475569;
+            border: 4px solid #e2e8f0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 100000;
+        `;
+
+        btn.addEventListener('mouseenter', () => {
+            btn.style.transform = 'scale(1.1) rotate(5deg)';
+            btn.style.borderColor = '#cbd5e1';
+        });
+
+        btn.addEventListener('mouseleave', () => {
+            btn.style.transform = 'scale(1)';
+            btn.style.borderColor = '#e2e8f0';
+        });
+
+        btn.addEventListener('click', () => {
+            if (isWhiteboardOpen) {
+                closeWhiteboard();
+            } else {
+                openWhiteboard();
+            }
+        });
+
+        document.body.appendChild(btn);
+    }
+
     function openWhiteboard() {
         if (!canvas) createWhiteboard();
 
@@ -219,6 +270,15 @@
             document.body.style.overflow = 'hidden';
             setupDrawingSettings(); // Refresh color based on current theme
             clearCanvas(); // Start fresh
+
+            // Update button state
+            const btn = document.getElementById('whiteboard-toggle-btn');
+            if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                btn.style.background = '#ef4444';
+                btn.style.color = 'white';
+                btn.style.borderColor = '#fca5a5';
+            }
         }
     }
 
@@ -228,38 +288,27 @@
             overlay.style.display = 'none';
             isWhiteboardOpen = false;
             document.body.style.overflow = '';
-        }
-    }
 
-    // Double-click/tap to open
-    let lastTapTime = 0;
-    function handleDoubleTap(e) {
-        const currentTime = Date.now();
-        const tapLength = currentTime - lastTapTime;
-
-        // Ignore if clicking on interactive elements
-        if (e.target.closest('button, input, a, select, textarea, canvas')) {
-            return;
-        }
-
-        if (tapLength < 300 && tapLength > 0) {
-            e.preventDefault();
-            openWhiteboard();
-            lastTapTime = 0;
-        } else {
-            lastTapTime = currentTime;
+            // Update button state
+            const btn = document.getElementById('whiteboard-toggle-btn');
+            if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
+                btn.style.background = 'white';
+                btn.style.color = '#475569';
+                btn.style.borderColor = '#e2e8f0';
+            }
         }
     }
 
     // Initialize
-    document.addEventListener('click', handleDoubleTap);
-    document.addEventListener('touchend', handleDoubleTap);
-
-    // Create whiteboard on load
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', createWhiteboard);
+        document.addEventListener('DOMContentLoaded', () => {
+            createWhiteboard();
+            createToggleButton();
+        });
     } else {
         createWhiteboard();
+        createToggleButton();
     }
 
     // Global access

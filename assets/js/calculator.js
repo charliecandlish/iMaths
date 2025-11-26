@@ -9,7 +9,7 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            z-index: 9999;
+            z-index: 100001;
             font-family: 'Inter', sans-serif;
             pointer-events: none; /* Let clicks pass through container area */
         }
