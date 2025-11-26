@@ -1,118 +1,438 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Transformation Station</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/coach.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
 
-        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
-        #exit-btn:hover { background: #f1f5f9; color: #8b5cf6; border-color: #c4b5fd; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            overflow: hidden;
+            user-select: none;
+            height: 100vh;
+            height: -webkit-fill-available;
+        }
 
-        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
-        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
-        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #7c3aed; opacity: 0; animation: fadeIn 0.5s forwards; }
-        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
-        .instr-header { top: 0; height: 130px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 10px 0 12px; }
-        .instr-header h1 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
-        .instr-header p { font-size: 1rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        
+        #exit-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #e2e8f0;
+            color: #94a3b8;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        #exit-btn:hover {
+            background: #f1f5f9;
+            color: #7c3aed;
+            border-color: #c4b5fd;
+        }
+
+        .instruction-container {
+            position: absolute;
+            width: 100%;
+            padding: 0 20px;
+            z-index: 60;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.8s;
+            transform-origin: top center;
+        }
+
+        .instr-focus {
+            top: 0;
+            height: 100%;
+            background-color: #f8fafc;
+        }
+
+        .instr-focus h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #7c3aed;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .instr-focus p {
+            font-size: 1.4rem;
+            line-height: 1.4;
+            color: #1e293b;
+            text-align: center;
+            max-width: 900px;
+        }
+
+        .instr-header {
+            top: 0;
+            height: 130px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid #e2e8f0;
+            padding: 10px 0 12px;
+        }
+
+        .instr-header h1 {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.2rem;
+        }
+
+        .instr-header p {
+            font-size: 1rem;
+            color: #475569;
+            max-width: 800px;
+            text-align: center;
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
         @media (max-width: 640px) {
-            .instr-header { height: 110px; padding-top: 5px; }
-            .instr-header h1 { font-size: 0.8rem; margin-bottom: 0.1rem; }
-            .instr-header p { font-size: 0.9rem; -webkit-line-clamp: 2; }
+            .instr-header {
+                height: 110px;
+                padding-top: 5px;
+            }
+
+            .instr-header h1 {
+                font-size: 0.8rem;
+                margin-bottom: 0.1rem;
+            }
+
+            .instr-header p {
+                font-size: 0.9rem;
+                -webkit-line-clamp: 2;
+            }
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
 
-        #game-board { transition: opacity 0.8s, transform 0.8s; }
-        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
-        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
-
-        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #7c3aed; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
-        #reflection-modal.active { display: flex; transform: translateY(0); }
-        
-        body.reflection-active .instruction-container { opacity: 0; pointer-events: none; }
-        body.reflection-active #game-board { transform: translateY(-20vh) scale(0.8); transform-origin: center top; z-index: 40; }
-        body.reflection-active #controls { opacity: 0; pointer-events: none; }
-
-        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
-        .btn-choice:hover { border-color: #c4b5fd; background-color: #f5f3ff; }
-        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
-        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
-
-        /* Transformation Station Specifics */
-        .grid-box {
-            width: 300px; height: 300px; border: 2px solid #94a3b8; position: relative;
-            background-image: linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
-            background-size: 30px 30px; margin-bottom: 20px; overflow: hidden;
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
+
+        #game-board {
+            transition: opacity 0.8s, transform 0.8s;
+        }
+
+        .board-hidden {
+            opacity: 0;
+            transform: translateY(100px) scale(0.95);
+            pointer-events: none;
+        }
+
+        .board-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        #reflection-modal {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border-top: 4px solid #7c3aed;
+            border-radius: 24px 24px 0 0;
+            padding: 24px 20px 40px;
+            transform: translateY(110%);
+            transition: transform 0.4s;
+            z-index: 80;
+            box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.15);
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        #reflection-modal.active {
+            display: flex;
+            transform: translateY(0);
+        }
+
+        body.reflection-active .instruction-container {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        body.reflection-active #game-board {
+            transform: translateY(-20vh) scale(0.8);
+            transform-origin: center top;
+            z-index: 40;
+        }
+
+        body.reflection-active #controls {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .btn-choice {
+            width: 100%;
+            padding: 0.8rem;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.75rem;
+            text-align: center;
+            font-weight: 700;
+            color: #475569;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        .btn-choice:hover {
+            border-color: #c4b5fd;
+            background-color: #f5f3ff;
+        }
+
+        .btn-choice.selected {
+            background: #22c55e;
+            border-color: #22c55e;
+            color: white;
+        }
+
+        .btn-choice.wrong {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #ef4444;
+        }
+
+        /* Interactive Grid */
+        .grid-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            background-image:
+                linear-gradient(#e2e8f0 1px, transparent 1px),
+                linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
+            background-size: 30px 30px;
+            border: 2px solid #94a3b8;
+            background-color: white;
+            touch-action: none;
+            overflow: hidden;
+        }
+
         .shape {
-            position: absolute; width: 60px; height: 60px; background: rgba(139, 92, 246, 0.5); border: 2px solid #7c3aed;
-            transition: all 0.8s ease-in-out; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #5b21b6;
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(124, 58, 237, 0.2);
+            border: 2px solid #7c3aed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #7c3aed;
+            font-weight: 800;
+            cursor: move;
+            user-select: none;
+            box-sizing: border-box;
+            transform-origin: center center;
+            z-index: 10;
         }
-        
-        .mirror-line {
-            position: absolute; background: #ef4444;
-        }
-        .mirror-x { top: 50%; left: 0; width: 100%; height: 4px; }
-        .mirror-y { left: 50%; top: 0; width: 4px; height: 100%; }
 
-        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; }
-        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .shape.dragging {
+            opacity: 0.8;
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
+            z-index: 20;
+        }
+
+        .shape.correct {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+
+        .mirror-line {
+            position: absolute;
+            background: #ef4444;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .mirror-x {
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            transform: translateY(-50%);
+        }
+
+        .mirror-y {
+            left: 50%;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            transform: translateX(-50%);
+        }
+
+        /* Controls handles */
+        .resize-handle {
+            position: absolute;
+            bottom: -6px;
+            right: -6px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border: 2px solid #7c3aed;
+            border-radius: 50%;
+            cursor: nwse-resize;
+            display: none;
+        }
+
+        .rotate-handle {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 24px;
+            background: white;
+            border: 2px solid #7c3aed;
+            border-radius: 50%;
+            cursor: grab;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #7c3aed;
+        }
+
+        .shape.mode-scale .resize-handle {
+            display: block;
+        }
+
+        .shape.mode-rotate .rotate-handle {
+            display: flex;
+        }
+
+        #toast {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: #ef4444;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 1rem;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 100;
+            transition: all 0.3s;
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+            text-align: center;
+            width: max-content;
+        }
+
+        #toast.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        #toast.success {
+            background: #22c55e;
+            box-shadow: 0 10px 25px rgba(34, 197, 94, 0.4);
+        }
+
+        .ghost-shape {
+            position: absolute;
+            border: 2px dashed #cbd5e1;
+            background: transparent;
+            pointer-events: none;
+            z-index: 1;
+        }
     </style>
 </head>
+
 <body class="h-screen w-full flex flex-col items-center overflow-hidden">
 
     <a href="../index.html" id="exit-btn">✕</a>
     <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
 
-    <div id="final-screen" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center text-center z-50">
-        <h1 class="text-4xl md:text-6xl font-black text-violet-600 mb-4">Transformed!</h1>
-        <p class="text-xl text-slate-500 mb-8 max-w-md">You can move shapes anywhere.</p>
+    <div id="final-screen"
+        class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center text-center z-50">
+        <h1 class="text-4xl md:text-6xl font-black text-violet-600 mb-4">Master of Shapes!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You can move, flip, turn, and resize anything.</p>
         <div class="flex gap-4">
-            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
-            <button onclick="completeLesson()" class="bg-violet-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+            <button onclick="location.reload()"
+                class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()"
+                class="bg-violet-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next
+                Mission</button>
         </div>
     </div>
 
     <div id="reflection-modal">
         <div class="max-w-3xl w-full text-center">
             <div class="flex justify-center mb-2">
-                <div class="bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Movement Check</div>
+                <div
+                    class="bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">
+                    Concept Check</div>
             </div>
             <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
             <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
         </div>
     </div>
-    
-    <div id="toast">Watch the movement.</div>
+
+    <div id="toast">Try again!</div>
 
     <div id="instruction-container" class="instruction-container instr-focus">
         <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
-        <p id="level-desc" class="font-medium px-4"></p>
+        <p id="level-desc" class="font-medium px-4 mb-8"></p>
+        <button id="start-step-btn"
+            class="bg-white text-violet-600 px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition-transform animate-bounce">Start</button>
     </div>
 
-    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full">
+    <div id="game-board"
+        class="board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full">
         <div class="w-full max-w-4xl flex flex-col items-center gap-8 flex-1 justify-center min-h-0">
-            
-            <div class="grid-box" id="grid-area">
-                <!-- Shape injected -->
+
+            <div class="grid-container" id="grid-area">
+                <!-- Shapes injected here -->
             </div>
 
-            <div id="choice-grid" class="grid grid-cols-1 gap-4 w-full max-w-md">
-                <!-- Choices injected -->
+            <div class="flex flex-col items-center gap-2">
+                <p id="task-hint" class="text-slate-500 font-medium text-sm text-center max-w-xs"></p>
             </div>
 
         </div>
 
-        <div id="controls" class="w-full flex flex-col items-center gap-4 mb-8 max-w-md shrink-0 min-h-[60px] justify-end pb-safe">
-            <button id="anim-btn" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-800 transition">Show Move</button>
+        <div id="controls"
+            class="w-full flex flex-col items-center gap-4 mb-8 max-w-md shrink-0 min-h-[60px] justify-end pb-safe">
+            <button id="check-btn"
+                class="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-800 transition w-full max-w-xs text-lg">Check
+                Answer</button>
         </div>
     </div>
 
@@ -122,80 +442,78 @@
         const STATE = { step: 0, audioCtx: null };
         const COACH_ACCENT = '#7c3aed';
         const COACH_BADGE = 'Shape Shifter';
+        const GRID_SIZE = 30; // px per unit
 
         const STEPS = [
             {
                 title: "Translation",
-                desc: "Translation means <b>Movement</b>. <br>Move the shape 3 units Right and 2 units Down.",
+                desc: "Translation means <b>sliding</b> the shape.<br><br>Drag the shape <b>3 units Right</b> and <b>2 units Down</b>.",
                 type: "trans",
-                start: {x: 60, y: 60},
-                end: {x: 150, y: 120}, // 30px per unit -> +90, +60
-                options: ["Turn", "Resize", "Slide"],
-                correct: 2,
-                coach: "It doesn't turn or change size. It just slides.",
-                reflection: { q: "A translation vector looks like...", options: [{text: "(x, y)", correct: true}, {text: "Angle°", correct: false}] }
+                start: { x: 2, y: 2, w: 2, h: 2 }, // Grid units
+                target: { x: 5, y: 4 }, // +3, +2
+                coach: "Grab the shape and drag it. Count the squares!",
+                hint: "Drag the shape to the new position.",
+                reflection: { q: "Did the shape turn or change size?", options: [{ text: "No, just moved", correct: true }, { text: "Yes, it changed", correct: false }] }
             },
             {
                 title: "Reflection",
-                desc: "Reflection is a <b>Flip</b> over a mirror line. <br>Flip over the vertical line.",
+                desc: "Reflection is a <b>flip</b> over a mirror line.<br><br>Drag the shape to where it would be if reflected over the <b>Red Line</b>.",
                 type: "reflect",
-                start: {x: 30, y: 120},
-                end: {x: 210, y: 120}, // Flip across center (150)
-                mirror: "y",
-                options: ["Slide", "Flip", "Spin"],
-                correct: 1,
-                coach: "Like looking in a mirror. Left becomes Right.",
-                reflection: { q: "In a reflection, the shape is...", options: [{text: "Flipped", correct: true}, {text: "Rotated", correct: false}] }
+                mirror: "y", // Vertical line at x=5
+                mirrorPos: 5,
+                start: { x: 1, y: 3, w: 2, h: 2 },
+                target: { x: 7, y: 3 }, // Reflected across x=5 (distance 2 -> distance 2)
+                coach: "The reflection is the same distance from the mirror line, on the other side.",
+                hint: "Drag the shape to the other side of the line.",
+                reflection: { q: "In a reflection, left becomes...", options: [{ text: "Right", correct: true }, { text: "Up", correct: false }] }
             },
             {
                 title: "Rotation",
-                desc: "Rotation is a <b>Turn</b> around a point. <br>Rotate 90° Clockwise.",
+                desc: "Rotation is a <b>turn</b>.<br><br>Use the handle to rotate the shape <b>90° Clockwise</b>.",
                 type: "rotate",
-                start: {x: 120, y: 60},
-                end: {x: 180, y: 120, rot: 90}, // Visual approximation
-                options: ["Turn", "Flip", "Slide"],
-                correct: 0,
-                coach: "The shape turns around a center point.",
-                reflection: { q: "To describe a rotation, you need...", options: [{text: "Angle, Direction, Center", correct: true}, {text: "Vector", correct: false}] }
+                start: { x: 4, y: 3, w: 2, h: 2, r: 0 },
+                target: { r: 90 },
+                coach: "Use the top handle to spin the shape.",
+                hint: "Drag the circle handle to rotate.",
+                reflection: { q: "A 90° turn is a...", options: [{ text: "Quarter turn", correct: true }, { text: "Half turn", correct: false }] }
             },
             {
                 title: "Enlargement",
-                desc: "Enlargement changes the <b>Size</b>. <br>Scale Factor 2 means it gets twice as big.",
+                desc: "Enlargement changes the <b>size</b>.<br><br>Use the corner handle to make the shape <b>twice as big</b> (Scale Factor 2).",
                 type: "scale",
-                start: {x: 120, y: 120, w: 60},
-                end: {x: 90, y: 90, w: 120}, // Grow from center roughly
-                options: ["Get Bigger/Smaller", "Move Only"],
-                correct: 0,
-                coach: "All side lengths are multiplied by the Scale Factor.",
-                reflection: { q: "If Scale Factor is 0.5, the shape...", options: [{text: "Gets Smaller", correct: true}, {text: "Gets Bigger", correct: false}] }
+                start: { x: 3, y: 3, w: 2, h: 2 },
+                target: { w: 4, h: 4 }, // Scale factor 2
+                coach: "Drag the corner to stretch it. Make it 4 squares wide.",
+                hint: "Drag the bottom-right corner.",
+                reflection: { q: "If Scale Factor is 2, the area gets...", options: [{ text: "4x bigger", correct: true }, { text: "2x bigger", correct: false }] }
             }
         ];
 
         // --- Audio System ---
         function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
-        function playSound(type) { 
-            if (!STATE.audioCtx) return; 
-            const ctx = STATE.audioCtx; 
-            const t = ctx.currentTime; 
-            const osc = ctx.createOscillator(); 
-            const gain = ctx.createGain(); 
-            osc.connect(gain); 
-            gain.connect(ctx.destination); 
-            if (type === 'pop') { 
-                osc.frequency.setValueAtTime(600, t); 
-                gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); 
-                osc.start(t); osc.stop(t+0.1); 
-            } else if (type === 'success') { 
-                osc.frequency.setValueAtTime(440, t); 
-                osc.frequency.exponentialRampToValueAtTime(880, t+0.2); 
-                gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); 
-                osc.start(t); osc.stop(t+0.5); 
-            } else { 
-                osc.type = 'triangle'; 
-                osc.frequency.setValueAtTime(150, t); 
-                gain.gain.linearRampToValueAtTime(0, t+0.2); 
-                osc.start(t); osc.stop(t+0.2); 
-            } 
+        function playSound(type) {
+            if (!STATE.audioCtx) return;
+            const ctx = STATE.audioCtx;
+            const t = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            if (type === 'pop') {
+                osc.frequency.setValueAtTime(600, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                osc.start(t); osc.stop(t + 0.1);
+            } else if (type === 'success') {
+                osc.frequency.setValueAtTime(440, t);
+                osc.frequency.exponentialRampToValueAtTime(880, t + 0.2);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                osc.start(t); osc.stop(t + 0.5);
+            } else {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, t);
+                gain.gain.linearRampToValueAtTime(0, t + 0.2);
+                osc.start(t); osc.stop(t + 0.2);
+            }
         }
 
         // --- Core Logic ---
@@ -206,73 +524,114 @@
         const dotsContainer = document.getElementById('progress-dots');
         const toast = document.getElementById('toast');
         const reflectionModal = document.getElementById('reflection-modal');
-        
+        const startStepBtn = document.getElementById('start-step-btn');
+
         const gridArea = document.getElementById('grid-area');
-        const choiceGrid = document.getElementById('choice-grid');
-        const animBtn = document.getElementById('anim-btn');
+        const checkBtn = document.getElementById('check-btn');
+        const taskHint = document.getElementById('task-hint');
+
+        let currentShape = null;
+        let isDragging = false;
+        let startX, startY;
+        let initialLeft, initialTop;
+        let initialWidth, initialHeight;
+        let initialRotation = 0;
+        let interactionMode = 'move'; // move, rotate, scale
 
         function initLevel() {
             dotsContainer.innerHTML = STEPS.map((_, i) => `<div class="w-2 h-2 rounded-full transition-colors ${i === 0 ? 'bg-violet-500' : 'bg-slate-200'}"></div>`).join('');
             renderStep();
             document.addEventListener('click', initAudio, { once: true });
+
+            // Global event listeners for drag end
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+            document.addEventListener('mousemove', handleDrag);
+            document.addEventListener('touchmove', handleDrag, { passive: false });
         }
 
         function renderStep() {
             const step = STEPS[STATE.step];
-            
+
             container.className = "instruction-container instr-focus";
+            startStepBtn.classList.remove('hidden');
+
             titleEl.textContent = step.title;
             descEl.innerHTML = step.desc;
+
             board.className = "board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
-            
+
             // Setup Grid
             gridArea.innerHTML = '';
-            if (step.mirror === 'x') gridArea.innerHTML += `<div class="mirror-line mirror-x"></div>`;
-            if (step.mirror === 'y') gridArea.innerHTML += `<div class="mirror-line mirror-y"></div>`;
-            
-            const shape = document.createElement('div');
-            shape.className = 'shape';
-            shape.textContent = "A";
-            shape.style.left = `${step.start.x}px`;
-            shape.style.top = `${step.start.y}px`;
-            if(step.start.w) {
-                shape.style.width = `${step.start.w}px`;
-                shape.style.height = `${step.start.w}px`;
-            }
-            gridArea.appendChild(shape);
 
-            // Animation Logic
-            animBtn.onclick = () => {
-                shape.style.left = `${step.end.x}px`;
-                shape.style.top = `${step.end.y}px`;
-                if (step.end.rot) shape.style.transform = `rotate(${step.end.rot}deg)`;
-                if (step.end.w) {
-                    shape.style.width = `${step.end.w}px`;
-                    shape.style.height = `${step.end.w}px`;
+            // Add mirror line if needed
+            if (step.mirror) {
+                const line = document.createElement('div');
+                line.className = `mirror-line mirror-${step.mirror}`;
+                if (step.mirror === 'y') {
+                    line.style.left = `${step.mirrorPos * GRID_SIZE}px`;
+                } else {
+                    line.style.top = `${step.mirrorPos * GRID_SIZE}px`;
                 }
-                playSound('pop');
-                
-                // Reset after 2s
-                setTimeout(() => {
-                    shape.style.left = `${step.start.x}px`;
-                    shape.style.top = `${step.start.y}px`;
-                    shape.style.transform = `rotate(0deg)`;
-                    if (step.start.w) {
-                        shape.style.width = `${step.start.w}px`;
-                        shape.style.height = `${step.start.w}px`;
-                    }
-                }, 2000);
-            };
+                gridArea.appendChild(line);
+            }
 
-            // Choices
-            choiceGrid.innerHTML = '';
-            step.options.forEach((opt, idx) => {
-                const btn = document.createElement('button');
-                btn.className = 'btn-choice';
-                btn.textContent = opt;
-                btn.onclick = () => checkAnswer(idx === step.correct, btn);
-                choiceGrid.appendChild(btn);
-            });
+            // Add Ghost Shape (Target) for visual aid in some modes? 
+            // No, let's keep it challenging. Maybe just start position ghost.
+            const ghost = document.createElement('div');
+            ghost.className = 'ghost-shape';
+            ghost.style.left = `${step.start.x * GRID_SIZE}px`;
+            ghost.style.top = `${step.start.y * GRID_SIZE}px`;
+            ghost.style.width = `${step.start.w * GRID_SIZE}px`;
+            ghost.style.height = `${step.start.h * GRID_SIZE}px`;
+            gridArea.appendChild(ghost);
+
+            // Create Interactive Shape
+            const shape = document.createElement('div');
+            shape.className = `shape mode-${step.type}`;
+            shape.textContent = "A";
+
+            // Initial Position
+            shape.style.left = `${step.start.x * GRID_SIZE}px`;
+            shape.style.top = `${step.start.y * GRID_SIZE}px`;
+            shape.style.width = `${step.start.w * GRID_SIZE}px`;
+            shape.style.height = `${step.start.h * GRID_SIZE}px`;
+            shape.dataset.x = step.start.x;
+            shape.dataset.y = step.start.y;
+            shape.dataset.w = step.start.w;
+            shape.dataset.h = step.start.h;
+            shape.dataset.r = step.start.r || 0;
+            shape.style.transform = `rotate(${shape.dataset.r}deg)`;
+
+            // Add Handles
+            if (step.type === 'scale') {
+                const handle = document.createElement('div');
+                handle.className = 'resize-handle';
+                handle.onmousedown = (e) => startInteraction(e, 'scale');
+                handle.ontouchstart = (e) => startInteraction(e, 'scale');
+                shape.appendChild(handle);
+            }
+
+            if (step.type === 'rotate') {
+                const handle = document.createElement('div');
+                handle.className = 'rotate-handle';
+                handle.innerHTML = '<i class="fa-solid fa-rotate-right"></i>';
+                handle.onmousedown = (e) => startInteraction(e, 'rotate');
+                handle.ontouchstart = (e) => startInteraction(e, 'rotate');
+                shape.appendChild(handle);
+            }
+
+            // Drag Events
+            shape.onmousedown = (e) => startInteraction(e, 'move');
+            shape.ontouchstart = (e) => startInteraction(e, 'move');
+
+            gridArea.appendChild(shape);
+            currentShape = shape;
+
+            taskHint.textContent = step.hint;
+            checkBtn.onclick = validateStep;
+            checkBtn.textContent = "Check Answer";
+            checkBtn.className = "bg-slate-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-800 transition w-full max-w-xs text-lg";
 
             // Update Dots
             Array.from(dotsContainer.children).forEach((dot, i) => {
@@ -283,28 +642,164 @@
                 LessonCoach.set(step.coach, { accent: COACH_ACCENT, badge: COACH_BADGE });
             }
 
-            // Auto-transition
-            setTimeout(() => {
+            // Manual Transition Handler
+            startStepBtn.onclick = () => {
+                startStepBtn.classList.add('hidden');
                 container.className = "instruction-container instr-header";
                 board.className = "board-visible flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
-            }, 2500);
+            };
         }
 
-        function checkAnswer(isCorrect, btn) {
-            if (isCorrect) {
-                btn.classList.add('selected');
-                playSound('success');
-                setTimeout(showReflection, 1000);
-            } else {
-                btn.classList.add('wrong');
-                playSound('error');
-                showToast("Watch the animation.");
-                btn.classList.add('wiggle');
+        // --- Interaction Logic ---
+        function startInteraction(e, mode) {
+            if (e.target.closest('.btn-choice')) return; // Ignore if clicking buttons
+            e.preventDefault();
+            e.stopPropagation();
+
+            isDragging = true;
+            interactionMode = mode;
+            currentShape.classList.add('dragging');
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            startX = clientX;
+            startY = clientY;
+
+            initialLeft = parseFloat(currentShape.style.left);
+            initialTop = parseFloat(currentShape.style.top);
+            initialWidth = parseFloat(currentShape.style.width);
+            initialHeight = parseFloat(currentShape.style.height);
+            initialRotation = parseFloat(currentShape.dataset.r || 0);
+
+            playSound('pop');
+        }
+
+        function handleDrag(e) {
+            if (!isDragging || !currentShape) return;
+            e.preventDefault();
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const deltaX = clientX - startX;
+            const deltaY = clientY - startY;
+
+            if (interactionMode === 'move') {
+                let newLeft = initialLeft + deltaX;
+                let newTop = initialTop + deltaY;
+
+                // Bounds checking (0 to 300 - width/height)
+                const maxLeft = 300 - parseFloat(currentShape.style.width);
+                const maxTop = 300 - parseFloat(currentShape.style.height);
+
+                newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                newTop = Math.max(0, Math.min(newTop, maxTop));
+
+                currentShape.style.left = `${newLeft}px`;
+                currentShape.style.top = `${newTop}px`;
+            }
+            else if (interactionMode === 'scale') {
+                let newSize = Math.max(30, initialWidth + deltaX); // Min size 30px
+                newSize = Math.min(newSize, 300 - initialLeft); // Constrain to grid width
+
+                // Keep aspect ratio 1:1 for simplicity
+                currentShape.style.width = `${newSize}px`;
+                currentShape.style.height = `${newSize}px`;
+            }
+            else if (interactionMode === 'rotate') {
+                // Simple rotation based on x-movement
+                let newRot = initialRotation + (deltaX * 2);
+                // Snap to 90 degrees visually
+                currentShape.style.transform = `rotate(${newRot}deg)`;
+                currentShape.dataset.tempRot = newRot;
             }
         }
 
-        function showToast(msg) {
+        function stopDrag() {
+            if (!isDragging) return;
+            isDragging = false;
+            currentShape.classList.remove('dragging');
+
+            // Snap to Grid Logic
+            if (interactionMode === 'move') {
+                const left = parseFloat(currentShape.style.left);
+                const top = parseFloat(currentShape.style.top);
+
+                const snappedX = Math.round(left / GRID_SIZE);
+                const snappedY = Math.round(top / GRID_SIZE);
+
+                currentShape.style.left = `${snappedX * GRID_SIZE}px`;
+                currentShape.style.top = `${snappedY * GRID_SIZE}px`;
+
+                currentShape.dataset.x = snappedX;
+                currentShape.dataset.y = snappedY;
+                playSound('pop');
+            }
+            else if (interactionMode === 'scale') {
+                const width = parseFloat(currentShape.style.width);
+                const snappedW = Math.round(width / GRID_SIZE);
+
+                currentShape.style.width = `${snappedW * GRID_SIZE}px`;
+                currentShape.style.height = `${snappedW * GRID_SIZE}px`;
+
+                currentShape.dataset.w = snappedW;
+                currentShape.dataset.h = snappedW;
+                playSound('pop');
+            }
+            else if (interactionMode === 'rotate') {
+                let rot = parseFloat(currentShape.dataset.tempRot || currentShape.dataset.r);
+                // Snap to nearest 90
+                const snappedRot = Math.round(rot / 90) * 90;
+
+                currentShape.style.transform = `rotate(${snappedRot}deg)`;
+                currentShape.dataset.r = snappedRot;
+                playSound('pop');
+            }
+        }
+
+        function validateStep() {
+            const step = STEPS[STATE.step];
+            const shape = currentShape;
+
+            let isCorrect = false;
+
+            if (step.type === 'trans' || step.type === 'reflect') {
+                // Check position
+                const x = parseInt(shape.dataset.x);
+                const y = parseInt(shape.dataset.y);
+                if (x === step.target.x && y === step.target.y) isCorrect = true;
+            }
+            else if (step.type === 'rotate') {
+                // Check rotation (normalize to 0-360)
+                let r = parseInt(shape.dataset.r) % 360;
+                if (r < 0) r += 360;
+                if (r === step.target.r) isCorrect = true;
+            }
+            else if (step.type === 'scale') {
+                // Check size
+                const w = parseInt(shape.dataset.w);
+                if (w === step.target.w) isCorrect = true;
+            }
+
+            if (isCorrect) {
+                shape.classList.add('correct');
+                playSound('success');
+                showToast("Perfect!", "success");
+                checkBtn.textContent = "Correct!";
+                checkBtn.className = "bg-green-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition w-full max-w-xs text-lg";
+                setTimeout(showReflection, 1000);
+            } else {
+                playSound('error');
+                showToast("Not quite. Try again!");
+                shape.classList.add('wiggle');
+                setTimeout(() => shape.classList.remove('wiggle'), 500);
+            }
+        }
+
+        function showToast(msg, type = 'error') {
             toast.textContent = msg;
+            toast.className = type === 'success' ? 'success' : '';
             toast.classList.add('active');
             setTimeout(() => toast.classList.remove('active'), 2000);
         }
@@ -318,13 +813,13 @@
 
             document.body.classList.add('reflection-active');
             reflectionModal.classList.add('active');
-            
+
             const qEl = document.getElementById('refl-question');
             const optEl = document.getElementById('refl-options');
-            
+
             qEl.textContent = step.reflection.q;
             optEl.innerHTML = '';
-            
+
             step.reflection.options.forEach(opt => {
                 const btn = document.createElement('button');
                 btn.className = 'btn-choice';
@@ -371,4 +866,5 @@
 
     </script>
 </body>
+
 </html>
