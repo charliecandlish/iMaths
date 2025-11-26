@@ -8,40 +8,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/home.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="assets/js/sound-manager.js"></script>
 </head>
 
-<body class="text-slate-800 pb-20 antialiased cursor-classic intro-active">
+<body class="text-slate-800 pb-20 antialiased cursor-classic">
 
-    <!-- Intro Neon Triangle Overlay -->
-    <div id="intro-overlay">
-        <div class="intro-bg-glow"></div>
-        <svg id="intro-triangle" viewBox="0 0 200 200">
-            <defs>
-                <!-- Strong cyan glow around a near-white core stroke -->
-                <filter id="triGlow" x="-80%" y="-80%" width="260%" height="260%">
-                    <feGaussianBlur stdDeviation="7" result="blur" />
-                    <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.15
-                                           0 0 0 0 0.82
-                                           0 0 0 0 1.00
-                                           0 0 0 0.95 0" result="glow" />
-                    <feMerge>
-                        <feMergeNode in="glow" />
-                        <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                </filter>
-            </defs>
-            <polygon id="intro-triangle-path" points="100,20 180,180 20,180" fill="none" stroke="#e9fdff"
-                stroke-width="8" stroke-linejoin="round" stroke-linecap="round" filter="url(#triGlow)" />
-        </svg>
-        <div id="intro-tagline">
-            <span class="tagline-label">Brought to you by</span>
-            <span class="tagline-brand">iMaths</span>
-        </div>
-    </div>
-
-
-
-    <header>
+    <header class="animate-enter">
         <div class="max-w-3xl mx-auto w-full flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <!-- Logo -->
@@ -119,7 +92,7 @@
 
         <!-- Engaging Hero Section with Mascot -->
         <div
-            class="bg-white rounded-3xl p-8 shadow-xl shadow-slate-200 border border-slate-100 relative overflow-hidden flex flex-col sm:flex-row items-center gap-8">
+            class="bg-white rounded-3xl p-8 shadow-xl shadow-slate-200 border border-slate-100 relative overflow-hidden flex flex-col sm:flex-row items-center gap-8 animate-enter delay-100">
             <!-- Decor Blobs -->
             <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-10 -mt-10"></div>
             <div class="absolute bottom-0 left-0 w-24 h-24 bg-purple-50 rounded-full -ml-8 -mb-8"></div>
@@ -159,7 +132,7 @@
         <!-- Topics Grid Container -->
         <div class="topics-grid-container">
             <!-- Number Section -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2 animate-enter delay-200">
                 <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row"
                     onclick="toggleSection('number-content', 'number-chevron')" data-section="number">
                     <div class="flex items-center gap-4">
@@ -184,7 +157,7 @@
             </div>
 
             <!-- Ratio & Proportion Section -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2 animate-enter delay-300">
                 <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row"
                     onclick="toggleSection('ratio-prop-content', 'ratio-prop-chevron')" data-section="ratioprop">
                     <div class="flex items-center gap-4">
@@ -212,7 +185,7 @@
             </div>
 
             <!-- Algebra Section -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2 animate-enter delay-400">
                 <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row"
                     onclick="toggleSection('alg-content', 'alg-chevron')" data-section="algebra">
                     <div class="flex items-center gap-4">
@@ -240,7 +213,7 @@
             </div>
 
             <!-- Geometry Section -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2 animate-enter delay-500">
                 <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row"
                     onclick="toggleSection('geo-content', 'geo-chevron')" data-section="geometry">
                     <div class="flex items-center gap-4">
@@ -268,7 +241,7 @@
             </div>
 
             <!-- Statistics Section -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2 animate-enter delay-600">
                 <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row"
                     onclick="toggleSection('stats-content', 'stats-chevron')" data-section="stats">
                     <div class="flex items-center gap-4">
@@ -302,115 +275,16 @@
     <script src="assets/js/course.js"></script>
     <script src="assets/js/home.js"></script>
     <script>
-        // Netflix-style sound effect using Web Audio API
-        function playIntroSound() {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const now = audioContext.currentTime;
-
-            // Create oscillators for the two-note "ta-dum" sound
-            const osc1 = audioContext.createOscillator();
-            const osc2 = audioContext.createOscillator();
-            const osc3 = audioContext.createOscillator();
-
-            const gain1 = audioContext.createGain();
-            const gain2 = audioContext.createGain();
-            const gain3 = audioContext.createGain();
-
-            const masterGain = audioContext.createGain();
-
-            // Connect nodes
-            osc1.connect(gain1);
-            osc2.connect(gain2);
-            osc3.connect(gain3);
-            gain1.connect(masterGain);
-            gain2.connect(masterGain);
-            gain3.connect(masterGain);
-            masterGain.connect(audioContext.destination);
-
-            // First note (TA) - lower pitch
-            osc1.type = 'sine';
-            osc1.frequency.setValueAtTime(110, now); // Low A
-            gain1.gain.setValueAtTime(0, now);
-            gain1.gain.linearRampToValueAtTime(0.3, now + 0.05);
-            gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-
-            // Bass support for first note
-            osc2.type = 'sine';
-            osc2.frequency.setValueAtTime(55, now); // Lower octave
-            gain2.gain.setValueAtTime(0, now);
-            gain2.gain.linearRampToValueAtTime(0.2, now + 0.05);
-            gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-
-            // Second note (DUM) - higher pitch with more impact
-            osc3.type = 'sine';
-            osc3.frequency.setValueAtTime(220, now + 0.45); // Higher A
-            gain3.gain.setValueAtTime(0, now);
-            gain3.gain.setValueAtTime(0, now + 0.45);
-            gain3.gain.linearRampToValueAtTime(0.5, now + 0.55);
-            gain3.gain.exponentialRampToValueAtTime(0.01, now + 1.8);
-
-            // Master volume control
-            masterGain.gain.setValueAtTime(0.4, now);
-
-            // Start and stop
-            osc1.start(now);
-            osc2.start(now);
-            osc3.start(now + 0.45);
-
-            osc1.stop(now + 0.5);
-            osc2.stop(now + 0.5);
-            osc3.stop(now + 2);
-        }
-
-        // Neon triangle intro sequencing
+        // Trigger sound on load (if allowed)
         window.addEventListener('load', () => {
-            const overlay = document.getElementById('intro-overlay');
-            const mainContent = document.getElementById('main-content');
-            const header = document.querySelector('header');
-            if (!overlay) return;
-
-            // Start drawing + glow + text sequence
-            overlay.classList.add('intro-play');
-
-            // Play sound when triangle starts drawing (slight delay for visual sync)
             setTimeout(() => {
-                try {
-                    playIntroSound();
-                } catch (e) {
-                    console.log('Audio playback not available');
+                if (window.SoundManager) {
+                    SoundManager.playIntro().catch(() => {
+                        // Autoplay blocked, will play on first interaction
+                    });
                 }
             }, 200);
-
-            const baseDuration = 4000; // ms, keep roughly in sync with CSS timings
-
-            // Fade out overlay after text has appeared
-            setTimeout(() => {
-                overlay.classList.add('intro-fade-out');
-            }, baseDuration);
-
-            // Fade in main content
-            setTimeout(() => {
-                if (mainContent) mainContent.style.opacity = '1';
-                if (header) header.style.opacity = '1';
-            }, baseDuration + 300);
-
-            // Cleanup
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                document.body.classList.remove('intro-active');
-            }, baseDuration + 900);
         });
-
-        // iOS Audio Unlock
-        document.addEventListener('touchstart', function () {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (AudioContext) {
-                const ctx = new AudioContext();
-                ctx.resume().then(() => {
-                    ctx.close();
-                });
-            }
-        }, { once: true });
     </script>
 
     <script src="assets/js/calculator.js"></script>

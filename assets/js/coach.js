@@ -81,11 +81,13 @@
         dismiss.addEventListener('click', () => {
             card.classList.add('hidden');
             fab.classList.add('visible');
+            if (window.SoundManager) SoundManager.playClick();
         });
 
         fab.addEventListener('click', () => {
             card.classList.remove('hidden');
             fab.classList.remove('visible');
+            if (window.SoundManager) SoundManager.playClick();
         });
 
         // Mobile Toolbar Integration
@@ -96,18 +98,27 @@
             // Let's create a small icon button for the hint.
 
             const hintBtn = document.createElement('button');
-            hintBtn.className = 'bg-white text-indigo-600 w-12 h-12 rounded-xl font-bold shadow-md hover:bg-indigo-50 transition flex items-center justify-center text-xl shrink-0 mr-2';
+            hintBtn.className = 'bg-white text-indigo-600 w-12 h-12 rounded-xl font-bold shadow-md hover:bg-indigo-50 transition flex items-center justify-center text-xl shrink-0 mr-3';
             hintBtn.innerHTML = '<i class="fa-solid fa-lightbulb"></i>';
             hintBtn.onclick = () => {
                 card.classList.remove('hidden');
                 fab.classList.remove('visible');
+                if (window.SoundManager) SoundManager.playClick();
             };
 
             // Insert before the first child (usually the main action button)
             controls.insertBefore(hintBtn, controls.firstChild);
 
-            // Ensure controls is a row
-            controls.classList.add('flex-row');
+            // Ensure controls is a row and centered
+            controls.classList.remove('flex-col', 'items-center', 'justify-end');
+            controls.classList.add('flex-row', 'items-end', 'justify-center');
+
+            // Adjust the existing button (usually the second child now) to play nice
+            const mainBtn = controls.children[1];
+            if (mainBtn) {
+                mainBtn.classList.remove('w-full');
+                mainBtn.classList.add('flex-1');
+            }
         }
 
         elements = { shell, card, fab, avatar, badge, text, status };

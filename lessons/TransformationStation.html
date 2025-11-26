@@ -797,11 +797,12 @@
             }
         }
 
-        function showToast(msg, type = 'error') {
+        function showToast(msg, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-24 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-xl shadow-xl font-bold text-white z-50 animate-enter ${type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'}`;
             toast.textContent = msg;
-            toast.className = type === 'success' ? 'success' : '';
-            toast.classList.add('active');
-            setTimeout(() => toast.classList.remove('active'), 2000);
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
         }
 
         function showReflection() {
