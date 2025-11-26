@@ -1,50 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Math Master</title>
+    <title>Math Learning Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/home.css">
 </head>
-<body class="text-slate-800 pb-20 antialiased cursor-classic">
 
-    <!-- Auth Modal -->
-    <div id="auth-modal">
-        <form class="auth-box" id="login-view" autocomplete="off" onsubmit="event.preventDefault(); handleLogin(); return false;">
-            <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-6 shadow-sm rotate-3"><i class="fa-solid fa-robot"></i></div>
-            <h2 class="text-2xl font-black text-slate-800 mb-2 tracking-tight">Welcome Back</h2>
-            <p class="text-slate-500 mb-6 text-sm font-medium">Sign in to access all lessons and track your progress.</p>
-            <p class="text-xs text-emerald-600 mb-4 font-medium bg-emerald-50 p-2 rounded-lg">✨ Try the free preview exercises below after signing in!</p>
-            <input type="text" id="login-username" name="username" class="auth-input" placeholder="Username" autocomplete="off" data-lpignore="true" data-form-type="other">
-            <input type="password" id="login-password" name="password" class="auth-input" placeholder="Password" autocomplete="new-password" data-lpignore="true" data-form-type="other">
-            <button type="submit" class="auth-btn">Sign In</button>
-            <div class="auth-toggle" onclick="toggleAuth('signup')">New student? Create account</div>
-        </form>
+<body class="text-slate-800 pb-20 antialiased cursor-classic intro-active">
 
-        <form class="auth-box hidden" id="signup-view" autocomplete="off" onsubmit="event.preventDefault(); handleSignup(); return false;">
-            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-6 shadow-sm -rotate-3"><i class="fa-solid fa-rocket"></i></div>
-            <h2 class="text-2xl font-black text-slate-800 mb-2 tracking-tight">Join the Squad</h2>
-            <p class="text-slate-500 mb-6 text-sm font-medium">Create a profile to start tracking.</p>
-            <input type="text" id="signup-username" name="username" class="auth-input" placeholder="Pick a Username" autocomplete="off" data-lpignore="true" data-form-type="other">
-            <input type="password" id="signup-password" name="password" class="auth-input" placeholder="Create Password" autocomplete="new-password" data-lpignore="true" data-form-type="other">
-            <button type="submit" class="auth-btn bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20">Create Account</button>
-            <div class="auth-toggle" onclick="toggleAuth('login')">Already have an account? Sign In</div>
-        </form>
+    <!-- Intro Neon Triangle Overlay -->
+    <div id="intro-overlay">
+        <div class="intro-bg-glow"></div>
+        <svg id="intro-triangle" viewBox="0 0 200 200">
+            <defs>
+                <!-- Strong cyan glow around a near-white core stroke -->
+                <filter id="triGlow" x="-80%" y="-80%" width="260%" height="260%">
+                    <feGaussianBlur stdDeviation="7" result="blur" />
+                    <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.15
+                                           0 0 0 0 0.82
+                                           0 0 0 0 1.00
+                                           0 0 0 0.95 0" result="glow" />
+                    <feMerge>
+                        <feMergeNode in="glow" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
+            <polygon id="intro-triangle-path" points="100,20 180,180 20,180" fill="none" stroke="#e9fdff"
+                stroke-width="8" stroke-linejoin="round" stroke-linecap="round" filter="url(#triGlow)" />
+        </svg>
+        <div id="intro-tagline">
+            <span class="tagline-label">Brought to you by</span>
+            <span class="tagline-brand">iMaths</span>
+        </div>
     </div>
+
+
 
     <header>
         <div class="max-w-3xl mx-auto w-full flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <!-- Small Brand Icon -->
-                <div class="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center font-black shadow-md shadow-indigo-200">M</div>
-                <h1 class="text-lg font-bold tracking-tight text-slate-900">Math Master</h1>
+                <!-- Neon Triangle Brand Icon -->
+                <div id="brand-logo" class="brand-logo">
+                    <svg viewBox="0 0 200 200">
+                        <polygon points="100,20 180,180 20,180" fill="none" stroke="#e9fdff" stroke-width="16"
+                            stroke-linejoin="round" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <h1 class="text-lg font-bold tracking-tight text-slate-900">Math Learning Hub</h1>
             </div>
-        <div class="flex items-center gap-4">
-                <button onclick="toggleThemeModal()" class="text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors" title="Change Theme"><i class="fa-solid fa-palette text-lg"></i></button>
-                <span id="user-badge" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full hidden">Guest</span>
-                <button onclick="handleLogout()" class="hidden text-xs font-bold text-slate-400 hover:text-red-500 transition-colors" id="logout-btn"><i class="fa-solid fa-power-off text-lg"></i></button>
+            <div class="flex items-center gap-4">
+                <button onclick="toggleThemeModal()"
+                    class="text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors"
+                    title="Change Theme"><i class="fa-solid fa-palette text-lg"></i></button>
             </div>
         </div>
     </header>
@@ -54,20 +66,27 @@
         <div class="theme-box">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-black text-slate-800">Choose Your Vibe</h2>
-                <button onclick="toggleThemeModal()" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <button onclick="toggleThemeModal()" class="text-slate-400 hover:text-red-500 transition-colors"><i
+                        class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <p class="text-slate-500 text-sm font-medium mb-6">Set your background world and cursor buddy.</p>
-            
+
             <div class="theme-section">
                 <h3>Background Worlds</h3>
                 <div class="theme-grid">
                     <div class="theme-btn preview-default" data-theme="" onclick="setTheme('')">Default</div>
-                    <div class="theme-btn preview-ocean" data-theme="bg-ocean" onclick="setTheme('bg-ocean')">Ocean</div>
-                    <div class="theme-btn preview-sunrise" data-theme="bg-sunrise" onclick="setTheme('bg-sunrise')">Sunrise</div>
-                    <div class="theme-btn preview-football" data-theme="bg-football" onclick="setTheme('bg-football')">Pitch</div>
-                    <div class="theme-btn preview-boxing" data-theme="bg-boxing" onclick="setTheme('bg-boxing')">Arena</div>
-                    <div class="theme-btn preview-car" data-theme="bg-car" onclick="setTheme('bg-car')">Night Drive</div>
-                    <div class="theme-btn preview-forest" data-theme="bg-forest" onclick="setTheme('bg-forest')">Forest</div>
+                    <div class="theme-btn preview-ocean" data-theme="bg-ocean" onclick="setTheme('bg-ocean')">Ocean
+                    </div>
+                    <div class="theme-btn preview-sunrise" data-theme="bg-sunrise" onclick="setTheme('bg-sunrise')">
+                        Sunrise</div>
+                    <div class="theme-btn preview-football" data-theme="bg-football" onclick="setTheme('bg-football')">
+                        Pitch</div>
+                    <div class="theme-btn preview-boxing" data-theme="bg-boxing" onclick="setTheme('bg-boxing')">Arena
+                    </div>
+                    <div class="theme-btn preview-car" data-theme="bg-car" onclick="setTheme('bg-car')">Night Drive
+                    </div>
+                    <div class="theme-btn preview-forest" data-theme="bg-forest" onclick="setTheme('bg-forest')">Forest
+                    </div>
                     <div class="theme-btn preview-pink" data-theme="bg-pink" onclick="setTheme('bg-pink')">Preppy</div>
                 </div>
             </div>
@@ -75,34 +94,44 @@
             <div class="theme-section">
                 <h3>Cursor Buddies</h3>
                 <div class="cursor-grid">
-                    <div class="cursor-btn preview-cursor-classic" data-cursor="cursor-classic" onclick="setCursorType('cursor-classic')">
+                    <div class="cursor-btn preview-cursor-classic" data-cursor="cursor-classic"
+                        onclick="setCursorType('cursor-classic')">
                         <span>Plus Buddy</span>
                     </div>
-                    <div class="cursor-btn preview-cursor-astro" data-cursor="cursor-astro" onclick="setCursorType('cursor-astro')">
+                    <div class="cursor-btn preview-cursor-astro" data-cursor="cursor-astro"
+                        onclick="setCursorType('cursor-astro')">
                         <span>π Pilot</span>
                     </div>
-                    <div class="cursor-btn preview-cursor-robot" data-cursor="cursor-robot" onclick="setCursorType('cursor-robot')">
+                    <div class="cursor-btn preview-cursor-robot" data-cursor="cursor-robot"
+                        onclick="setCursorType('cursor-robot')">
                         <span>Σ Sage</span>
                     </div>
-                    <div class="cursor-btn preview-cursor-star" data-cursor="cursor-star" onclick="setCursorType('cursor-star')">
+                    <div class="cursor-btn preview-cursor-star" data-cursor="cursor-star"
+                        onclick="setCursorType('cursor-star')">
                         <span>Δ Dash</span>
+                    </div>
+                    <div class="cursor-btn preview-cursor-heart" data-cursor="cursor-heart"
+                        onclick="setCursorType('cursor-heart')">
+                        <span>♥ Heartbeat</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <main class="max-w-3xl mx-auto p-6 space-y-8 hidden" id="main-content">
+    <main class="max-w-7xl mx-auto p-6 space-y-8" id="main-content">
 
         <!-- Engaging Hero Section with Mascot -->
-        <div class="bg-white rounded-3xl p-8 shadow-xl shadow-slate-200 border border-slate-100 relative overflow-hidden flex flex-col sm:flex-row items-center gap-8">
+        <div
+            class="bg-white rounded-3xl p-8 shadow-xl shadow-slate-200 border border-slate-100 relative overflow-hidden flex flex-col sm:flex-row items-center gap-8">
             <!-- Decor Blobs -->
             <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-10 -mt-10"></div>
             <div class="absolute bottom-0 left-0 w-24 h-24 bg-purple-50 rounded-full -ml-8 -mb-8"></div>
-            
+
             <!-- Mascot -->
             <div class="mascot-container relative z-10 shrink-0">
-                <div class="w-24 h-24 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl shadow-lg shadow-indigo-300 flex items-center justify-center text-white text-4xl transform rotate-6 border-4 border-white">
+                <div
+                    class="w-24 h-24 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl shadow-lg shadow-indigo-300 flex items-center justify-center text-white text-4xl transform rotate-6 border-4 border-white">
                     <div class="mascot-eyes space-x-2">
                         <div class="w-2 h-2 bg-white rounded-full inline-block"></div>
                         <div class="w-2 h-2 bg-white rounded-full inline-block"></div>
@@ -110,138 +139,206 @@
                     <div class="absolute bottom-6 w-4 h-2 bg-white/20 rounded-full"></div>
                 </div>
                 <!-- Floating Elements -->
-                <i class="fa-solid fa-plus absolute -top-4 -right-4 text-yellow-400 text-xl animate-bounce" style="animation-delay: 0.5s"></i>
-                <i class="fa-solid fa-percent absolute -bottom-2 -left-4 text-emerald-400 text-lg animate-bounce" style="animation-delay: 1s"></i>
-                    </div>
+                <i class="fa-solid fa-plus absolute -top-4 -right-4 text-yellow-400 text-xl animate-bounce"
+                    style="animation-delay: 0.5s"></i>
+                <i class="fa-solid fa-percent absolute -bottom-2 -left-4 text-emerald-400 text-lg animate-bounce"
+                    style="animation-delay: 1s"></i>
+            </div>
 
             <!-- Hero Text & Progress -->
             <div class="flex-1 text-center sm:text-left z-10">
                 <h2 class="text-2xl font-black text-slate-800 mb-2" id="hero-title">Welcome Back!</h2>
-                <p class="text-slate-500 text-sm font-medium mb-6" id="hero-desc">Ready to crush some math problems? Pick a topic below to get started.</p>
-                
+                <p class="text-slate-500 text-sm font-medium mb-6" id="hero-desc">Ready to crush some math problems?
+                    Pick a topic below to get started.</p>
+
                 <!-- Progress Pill -->
                 <div class="inline-flex items-center bg-slate-50 rounded-full border border-slate-100 p-1 pr-4 gap-3">
-                    <div class="bg-white shadow-sm border border-slate-100 rounded-full px-3 py-1 text-xs font-black text-indigo-600" id="total-progress-text">0%</div>
+                    <div class="bg-white shadow-sm border border-slate-100 rounded-full px-3 py-1 text-xs font-black text-indigo-600"
+                        id="total-progress-text">0%</div>
                     <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">Overall Completion</span>
                 </div>
             </div>
         </div>
 
-        <!-- Number Section -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
-            <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row" onclick="toggleSection('number-content', 'number-chevron')" data-section="number">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-calculator"></i></div>
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-900">Number</h2>
-                        <p class="text-xs text-slate-500 font-medium" id="number-progress">0/0 Complete</p>
+        <!-- Topics Grid Container -->
+        <div class="topics-grid-container">
+            <!-- Number Section -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
+                <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row"
+                    onclick="toggleSection('number-content', 'number-chevron')" data-section="number">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-calculator"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Number</h2>
+                            <p class="text-xs text-slate-500 font-medium" id="number-progress">0/0 Complete</p>
+                        </div>
                     </div>
+                    <i id="number-chevron"
+                        class="fa-solid fa-plus text-slate-300 group-hover:text-indigo-600 transition-colors"></i>
                 </div>
-                <i id="number-chevron" class="fa-solid fa-minus text-slate-300 group-hover:text-indigo-600 transition-colors"></i>
-            </div>
-            
-            <div id="number-content" class="section-content px-2">
-                <div class="pt-4 pb-2 space-y-1" id="number-grid">
-                    <!-- Generated by JS -->
-                </div>
-            </div>
-        </div>
 
-        <!-- Ratio & Proportion Section -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
-            <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row" onclick="toggleSection('ratio-prop-content', 'ratio-prop-chevron')" data-section="ratioprop">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-scale-balanced"></i></div>
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-900">Ratio & Proportion</h2>
-                        <p class="text-xs text-slate-500 font-medium flex flex-wrap items-center gap-1">
-                            <span id="ratio-prop-progress">0/0 Complete</span>
-                            <span class="opacity-70">• Sharing, Percentages, Recipes</span>
-                        </p>
+                <div id="number-content" class="section-content collapsed px-2">
+                    <div class="pt-4 pb-2 space-y-1" id="number-grid">
+                        <!-- Generated by JS -->
                     </div>
                 </div>
-                <i id="ratio-prop-chevron" class="fa-solid fa-minus text-slate-300 group-hover:text-indigo-600 transition-colors"></i>
             </div>
-            
-            <div id="ratio-prop-content" class="section-content px-2">
-                <div class="pt-4 pb-2 space-y-1" id="ratio-prop-grid">
-                    <!-- Generated by JS -->
-                </div>
-            </div>
-        </div>
 
-        <!-- Algebra Section -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
-             <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row" onclick="toggleSection('alg-content', 'alg-chevron')" data-section="algebra">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-square-root-variable"></i></div>
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-900">Algebra</h2>
-                        <p class="text-xs text-slate-500 font-medium flex flex-wrap items-center gap-1">
-                            <span id="alg-progress">0/0 Complete</span>
-                            <span class="opacity-70">• Solve for X and beyond</span>
-                        </p>
+            <!-- Ratio & Proportion Section -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
+                <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row"
+                    onclick="toggleSection('ratio-prop-content', 'ratio-prop-chevron')" data-section="ratioprop">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Ratio & Proportion</h2>
+                            <p class="text-xs text-slate-500 font-medium flex flex-wrap items-center gap-1">
+                                <span id="ratio-prop-progress">0/0 Complete</span>
+                                <span class="opacity-70">• Sharing, Percentages, Recipes</span>
+                            </p>
+                        </div>
                     </div>
+                    <i id="ratio-prop-chevron"
+                        class="fa-solid fa-plus text-slate-300 group-hover:text-indigo-600 transition-colors"></i>
                 </div>
-                <i id="alg-chevron" class="fa-solid fa-minus text-slate-300 group-hover:text-indigo-600 transition-colors"></i>
-            </div>
-            
-            <div id="alg-content" class="section-content px-2">
-                <div class="pt-4 pb-2 space-y-1" id="alg-grid">
-                    <!-- Generated by JS -->
-                </div>
-            </div>
-        </div>
 
-        <!-- Geometry Section -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
-             <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row" onclick="toggleSection('geo-content', 'geo-chevron')" data-section="geometry">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-shapes"></i></div>
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-900">Geometry</h2>
-                        <p class="text-xs text-slate-500 font-medium flex flex-wrap items-center gap-1">
-                            <span id="geo-progress">0/0 Complete</span>
-                            <span class="opacity-70">• Angles, Area, & Volume</span>
-                        </p>
+                <div id="ratio-prop-content" class="section-content collapsed px-2">
+                    <div class="pt-4 pb-2 space-y-1" id="ratio-prop-grid">
+                        <!-- Generated by JS -->
                     </div>
                 </div>
-                <i id="geo-chevron" class="fa-solid fa-minus text-slate-300 group-hover:text-indigo-600 transition-colors"></i>
             </div>
-            
-            <div id="geo-content" class="section-content px-2">
-                <div class="pt-4 pb-2 space-y-1" id="geo-grid">
-                    <!-- Generated by JS -->
-                </div>
-            </div>
-        </div>
 
-        <!-- Statistics Section -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
-             <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row" onclick="toggleSection('stats-content', 'stats-chevron')" data-section="stats">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-teal-100 text-teal-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-chart-pie"></i></div>
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-900">Statistics</h2>
-                        <p class="text-xs text-slate-500 font-medium flex flex-wrap items-center gap-1">
-                            <span id="stats-progress">0/0 Complete</span>
-                            <span class="opacity-70">• Data, Averages, & Probability</span>
-                        </p>
+            <!-- Algebra Section -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
+                <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row"
+                    onclick="toggleSection('alg-content', 'alg-chevron')" data-section="algebra">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-square-root-variable"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Algebra</h2>
+                            <p class="text-xs text-slate-500 font-medium flex flex-wrap items-center gap-1">
+                                <span id="alg-progress">0/0 Complete</span>
+                                <span class="opacity-70">• Solve for X and beyond</span>
+                            </p>
+                        </div>
+                    </div>
+                    <i id="alg-chevron"
+                        class="fa-solid fa-plus text-slate-300 group-hover:text-indigo-600 transition-colors"></i>
+                </div>
+
+                <div id="alg-content" class="section-content collapsed px-2">
+                    <div class="pt-4 pb-2 space-y-1" id="alg-grid">
+                        <!-- Generated by JS -->
                     </div>
                 </div>
-                <i id="stats-chevron" class="fa-solid fa-minus text-slate-300 group-hover:text-indigo-600 transition-colors"></i>
             </div>
-            
-            <div id="stats-content" class="section-content px-2">
-                <div class="pt-4 pb-2 space-y-1" id="stats-grid">
-                    <!-- Generated by JS -->
+
+            <!-- Geometry Section -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
+                <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row"
+                    onclick="toggleSection('geo-content', 'geo-chevron')" data-section="geometry">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-shapes"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Geometry</h2>
+                            <p class="text-xs text-slate-500 font-medium flex flex-wrap items-center gap-1">
+                                <span id="geo-progress">0/0 Complete</span>
+                                <span class="opacity-70">• Angles, Area, & Volume</span>
+                            </p>
+                        </div>
+                    </div>
+                    <i id="geo-chevron"
+                        class="fa-solid fa-plus text-slate-300 group-hover:text-indigo-600 transition-colors"></i>
+                </div>
+
+                <div id="geo-content" class="section-content collapsed px-2">
+                    <div class="pt-4 pb-2 space-y-1" id="geo-grid">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-2">
+                <div class="cursor-pointer flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors group section-header-row"
+                    onclick="toggleSection('stats-content', 'stats-chevron')" data-section="stats">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-teal-100 text-teal-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Statistics</h2>
+                            <p class="text-xs text-slate-500 font-medium flex flex-wrap items-center gap-1">
+                                <span id="stats-progress">0/0 Complete</span>
+                                <span class="opacity-70">• Data, Averages, & Probability</span>
+                            </p>
+                        </div>
+                    </div>
+                    <i id="stats-chevron"
+                        class="fa-solid fa-plus text-slate-300 group-hover:text-indigo-600 transition-colors"></i>
+                </div>
+
+                <div id="stats-content" class="section-content collapsed px-2">
+                    <div class="pt-4 pb-2 space-y-1" id="stats-grid">
+                        <!-- Generated by JS -->
+                    </div>
                 </div>
             </div>
         </div>
+        <!-- End Topics Grid Container -->
 
     </main>
 
     <script src="assets/js/course.js"></script>
     <script src="assets/js/home.js"></script>
+    <script>
+        // Neon triangle intro sequencing (only once per week per device)
+        window.addEventListener('load', () => {
+            const overlay = document.getElementById('intro-overlay');
+            const mainContent = document.getElementById('main-content');
+            const header = document.querySelector('header');
+            if (!overlay) return;
+
+            // Start drawing + glow + text sequence
+            overlay.classList.add('intro-play');
+
+            const baseDuration = 4000; // ms, keep roughly in sync with CSS timings
+
+            // Fade out overlay after text has appeared
+            setTimeout(() => {
+                overlay.classList.add('intro-fade-out');
+            }, baseDuration);
+
+            // Fade in main content
+            setTimeout(() => {
+                if (mainContent) mainContent.style.opacity = '1';
+                if (header) header.style.opacity = '1';
+            }, baseDuration + 300);
+
+            // Cleanup
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                document.body.classList.remove('intro-active');
+            }, baseDuration + 900);
+        });
+    </script>
+
+    <script src="assets/js/calculator.js"></script>
+    <script src="assets/js/whiteboard.js"></script>
 </body>
+
 </html>

@@ -106,3 +106,32 @@
     };
 })();
 
+// Load calculator toolbar on all lesson pages
+(function() {
+    if (document.getElementById('math-toolbar')) return; // Already loaded
+    
+    // Detect correct path based on current page location
+    const isLessonPage = window.location.pathname.includes('/lessons/');
+    const scriptPath = isLessonPage ? '../assets/js/calculator.js' : 'assets/js/calculator.js';
+    
+    const script = document.createElement('script');
+    script.src = scriptPath;
+    script.async = true;
+    document.head.appendChild(script);
+})();
+
+// Load whiteboard on all lesson pages
+(function() {
+    if (document.getElementById('whiteboard-overlay')) return;
+    
+    const isLessonPage = window.location.pathname.includes('/lessons/');
+    const scriptPath = isLessonPage ? '../assets/js/whiteboard.js' : 'assets/js/whiteboard.js';
+    
+    if (document.querySelector(`script[src="${scriptPath}"]`)) return;
+    
+    const script = document.createElement('script');
+    script.src = scriptPath;
+    script.async = true;
+    document.head.appendChild(script);
+})();
+

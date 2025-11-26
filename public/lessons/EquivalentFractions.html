@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Equivalent Fractions Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/coach.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; user-select: none; height: 100vh; height: -webkit-fill-available; }
+
+        #exit-btn { position: absolute; top: 20px; left: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; color: #94a3b8; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        #exit-btn:hover { background: #f1f5f9; color: #d946ef; border-color: #f0abfc; }
+
+        .instruction-container { position: absolute; width: 100%; padding: 0 20px; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.8s; transform-origin: top center; }
+        .instr-focus { top: 0; height: 100%; background-color: #f8fafc; }
+        .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #a21caf; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
+        .instr-header { top: 0; height: 130px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 10px 0 12px; }
+        .instr-header h1 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+        .instr-header p { font-size: 1rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+        @media (max-width: 640px) {
+            .instr-header { height: 110px; padding-top: 5px; }
+            .instr-header h1 { font-size: 0.8rem; margin-bottom: 0.1rem; }
+            .instr-header p { font-size: 0.9rem; -webkit-line-clamp: 2; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #game-board { transition: opacity 0.8s, transform 0.8s; padding-top: 110px !important; padding-bottom: 48px !important; }
+        .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
+        .board-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        #reflection-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-top: 4px solid #a21caf; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; transform: translateY(110%); transition: transform 0.4s; z-index: 80; box-shadow: 0 -20px 50px rgba(0,0,0,0.15); flex-direction: column; align-items: center; gap: 16px; max-height: 60vh; overflow-y: auto; }
+        #reflection-modal.active { display: flex; transform: translateY(0); }
+
+        body.reflection-active .instruction-container { opacity: 0; pointer-events: none; }
+        body.reflection-active #game-board { transform: translateY(-20vh) scale(0.8); transform-origin: center top; z-index: 40; }
+        body.reflection-active #controls { opacity: 0; pointer-events: none; }
+
+        .btn-choice { width: 100%; padding: 0.8rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; text-align: center; font-weight: 700; color: #475569; transition: all 0.2s; font-size: 1rem; }
+        .btn-choice:hover { border-color: #d946ef; background-color: #fdf4ff; }
+        .btn-choice.selected { background: #22c55e; border-color: #22c55e; color: white; }
+        .btn-choice.wrong { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+        .shape-wrapper { width: min(260px, 65vw); aspect-ratio: 1/1; position: relative; }
+        .shape-wrapper svg { width: 100%; height: 100%; }
+        .fraction-panel { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+        .fraction-display { font-size: 2rem; font-weight: 800; color: #111827; line-height: 1; }
+        .fraction-display span { display: inline-block; min-width: 60px; text-align: center; }
+        .fraction-display .bar { display: block; height: 2px; width: 100%; background: #111827; margin: 4px 0; }
+
+        #options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; width: 100%; }
+        #options-grid button { min-width: unset; }
+
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; }
+        #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        @media (max-width: 768px) {
+            .shape-wrapper { width: min(220px, 70vw); }
+            .fraction-display { font-size: 1.6rem; }
+            .fraction-display span { min-width: 50px; }
+            .fraction-panel { gap: 4px; }
+            #game-board { padding-top: 100px !important; }
+        }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center overflow-hidden">
+
+    <a href="../index.html" id="exit-btn">✕</a>
+    <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+
+    <div id="final-screen" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center text-center z-50">
+        <div class="text-6xl mb-4">🎉</div>
+        <h1 class="text-4xl md:text-6xl font-black text-purple-600 mb-4">Equivalent Expert!</h1>
+        <p class="text-xl text-slate-500 mb-8 max-w-md">You can scale fractions up and down with confidence.</p>
+        <div class="flex gap-4">
+            <button onclick="location.reload()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">Replay</button>
+            <button onclick="completeLesson()" class="bg-purple-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">Next Mission</button>
+        </div>
+    </div>
+
+    <div id="reflection-modal">
+        <div class="max-w-3xl w-full text-center">
+            <div class="flex justify-center mb-2">
+                <div class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">Quick Check</div>
+            </div>
+            <h1 id="refl-question" class="text-xl md:text-3xl font-extrabold text-slate-800 mb-6 leading-tight"></h1>
+            <div id="refl-options" class="flex flex-col md:flex-row gap-3 justify-center w-full"></div>
+        </div>
+    </div>
+
+    <div id="toast">Try again!</div>
+
+    <div id="instruction-container" class="instruction-container instr-focus">
+        <h1 id="level-title" class="font-extrabold px-4 text-center"></h1>
+        <p id="level-desc" class="font-medium px-4"></p>
+    </div>
+
+    <div id="game-board" class="board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full">
+
+        <div class="w-full max-w-4xl flex flex-col items-center gap-6 flex-1 justify-center min-h-0 content-stack">
+            <div class="shape-wrapper" id="shape-display"></div>
+
+            <div class="fraction-panel">
+                <div class="text-xs font-bold tracking-[0.3em] text-slate-400 uppercase">Start</div>
+                <div class="fraction-display">
+                    <span id="base-num">6</span>
+                    <span class="bar"></span>
+                    <span id="base-den">18</span>
+                </div>
+                <div class="text-xs font-bold tracking-[0.3em] text-slate-400 uppercase mt-4">Result</div>
+                <div class="fraction-display">
+                    <span id="result-num">?</span>
+                    <span class="bar"></span>
+                    <span id="result-den">?</span>
+                </div>
+            </div>
+
+            <div id="options-grid" class="w-full max-w-md"></div>
+        </div>
+
+        <div id="controls" class="w-full flex flex-col items-center gap-4 mb-8 max-w-md shrink-0 min-h-[60px] justify-end pb-safe">
+            <button id="check-btn" class="w-full bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:scale-105 hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                Check Answer <span class="text-xl">→</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="../assets/js/course.js"></script>
+    <script src="../assets/js/coach.js"></script>
+    <script>
+        const STATE = { step: 0, chosen: null, audioCtx: null };
+        const COACH_ACCENT = '#a21caf';
+        const COACH_BADGE = 'Fraction Coach';
+
+        const STEPS = [
+            {
+                title: "See the Fraction",
+                desc: "Each hexagon is split into <b>18 equal pieces</b>. <br>The purple part shows <b>6/18</b> of the shape.",
+                total: 18,
+                filled: 6,
+                type: "info",
+                coach: "Count the slices—6 out of 18 are shaded. That’s our starting fraction."
+            },
+            {
+                title: "Scale Up",
+                desc: "Make a fraction that is equivalent to <b>6/18</b>. <br>Choose a number to multiply the numerator and denominator by.",
+                total: 18,
+                filled: 6,
+                type: "multiply",
+                options: [2, 3, 4],
+                correct: [2,3,4], // any works
+                coach: "Whatever you multiply the top by, multiply the bottom by the same amount.",
+                reflection: { q: "Multiplying top and bottom by 5 gives...", options: [{text: "An equivalent fraction", correct: true}, {text: "A different amount", correct: false}] }
+            },
+            {
+                title: "Simplify Down",
+                desc: "Which number can we divide <b>12</b> and <b>18</b> by to get <b>2/3</b>?",
+                total: 18,
+                filled: 12,
+                type: "divide",
+                options: [2, 3, 6],
+                correct: [6],
+                target: { num: 2, den: 3 },
+                coach: "Think of the highest common factor of 12 and 18.",
+                reflection: { q: "Dividing top & bottom by the same number is called...", options: [{text: "Simplifying", correct: true}, {text: "Estimating", correct: false}] }
+            },
+            {
+                title: "Choose the Match",
+                desc: "Which of these fractions is equivalent to <b>3/9</b>?",
+                total: 9,
+                filled: 3,
+                type: "select",
+                choices: [
+                    { num: 1, den: 3, correct: true },
+                    { num: 4, den: 9, correct: false },
+                    { num: 6, den: 18, correct: true }
+                ],
+                coach: "If they simplify to the same simplest form, they’re equivalent.",
+                reflection: { q: "All equivalent fractions have the same...", options: [{text: "Value", correct: true}, {text: "Numerator", correct: false}] }
+            }
+        ];
+
+        function initAudio() { if (!STATE.audioCtx) { STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume(); }
+        function playSound(type) {
+            if (!STATE.audioCtx) return;
+            const ctx = STATE.audioCtx; const t = ctx.currentTime;
+            const osc = ctx.createOscillator(); const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            if (type === 'pop') { osc.frequency.setValueAtTime(600, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); osc.start(t); osc.stop(t+0.1); }
+            else if (type === 'success') { osc.frequency.setValueAtTime(440, t); osc.frequency.exponentialRampToValueAtTime(880, t+0.2); gain.gain.exponentialRampToValueAtTime(0.01, t+0.5); osc.start(t); osc.stop(t+0.5); }
+            else { osc.type = 'triangle'; osc.frequency.setValueAtTime(150, t); gain.gain.linearRampToValueAtTime(0, t+0.2); osc.start(t); osc.stop(t+0.2); }
+        }
+
+        const container = document.getElementById('instruction-container');
+        const board = document.getElementById('game-board');
+        const titleEl = document.getElementById('level-title');
+        const descEl = document.getElementById('level-desc');
+        const dotsContainer = document.getElementById('progress-dots');
+        const toast = document.getElementById('toast');
+        const reflectionModal = document.getElementById('reflection-modal');
+        const shapeDisplay = document.getElementById('shape-display');
+        const optionsGrid = document.getElementById('options-grid');
+        const baseNum = document.getElementById('base-num');
+        const baseDen = document.getElementById('base-den');
+        const resultNum = document.getElementById('result-num');
+        const resultDen = document.getElementById('result-den');
+        const checkBtn = document.getElementById('check-btn');
+
+        function initLevel() {
+            dotsContainer.innerHTML = STEPS.map((_, i) => `<div class="w-2 h-2 rounded-full transition-colors ${i === 0 ? 'bg-purple-500' : 'bg-slate-200'}"></div>`).join('');
+            renderStep();
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        function renderStep() {
+            const step = STEPS[STATE.step];
+
+            container.className = "instruction-container instr-focus";
+            titleEl.textContent = step.title;
+            descEl.innerHTML = step.desc;
+            board.className = "board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+
+            renderShape(step.total, step.filled);
+            baseNum.textContent = step.type === 'divide' ? 12 : step.filled;
+            baseDen.textContent = step.type === 'divide' ? 18 : step.total;
+            resultNum.textContent = '?';
+            resultDen.textContent = '?';
+            STATE.chosen = null;
+
+            renderOptions(step);
+            updateDots();
+
+            if (window.LessonCoach) {
+                LessonCoach.set(step.coach, { accent: COACH_ACCENT, badge: COACH_BADGE });
+            }
+
+            setTimeout(() => {
+                container.className = "instruction-container instr-header";
+                board.className = "board-visible flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+            }, 2200);
+        }
+
+        function renderShape(total, filled) {
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("viewBox", "-1.1 -1.1 2.2 2.2");
+
+            for (let i = 0; i < total; i++) {
+                const startAngle = (i / total) * Math.PI * 2 - Math.PI / 2;
+                const endAngle = ((i + 1) / total) * Math.PI * 2 - Math.PI / 2;
+                const largeArc = 0;
+                const x1 = Math.cos(startAngle);
+                const y1 = Math.sin(startAngle);
+                const x2 = Math.cos(endAngle);
+                const y2 = Math.sin(endAngle);
+
+                const path = document.createElementNS(svgNS, "path");
+                path.setAttribute("d", `M0 0 L${x1} ${y1} A1 1 0 ${largeArc} 1 ${x2} ${y2} Z`);
+                path.setAttribute("stroke", "white");
+                path.setAttribute("stroke-width", "0.02");
+                path.setAttribute("fill", i < filled ? "#c084fc" : "#f8fafc");
+                svg.appendChild(path);
+            }
+            shapeDisplay.innerHTML = '';
+            shapeDisplay.appendChild(svg);
+        }
+
+        function renderOptions(step) {
+            optionsGrid.innerHTML = '';
+            if (step.type === 'info') {
+                optionsGrid.innerHTML = `<div class="text-sm text-slate-500 text-center">Tap Next when you're ready.</div>`;
+                checkBtn.textContent = "Next →";
+                STATE.chosen = true;
+                return;
+            }
+
+            if (step.type === 'select') {
+                step.choices.forEach((choice, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-choice';
+                    btn.innerHTML = `<div class="text-2xl font-black">${choice.num}<span style="display:block;height:2px;background:#1f2937;margin:6px 0;"></span>${choice.den}</div>`;
+                    btn.onclick = () => {
+                        STATE.chosen = choice;
+                        Array.from(optionsGrid.children).forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        resultNum.textContent = choice.num;
+                        resultDen.textContent = choice.den;
+                    };
+                    optionsGrid.appendChild(btn);
+                });
+                checkBtn.textContent = "Check Answer";
+                return;
+            }
+
+            step.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = step.type === 'multiply' ? `× ${opt}` : `÷ ${opt}`;
+                btn.onclick = () => {
+                    STATE.chosen = opt;
+                    Array.from(optionsGrid.children).forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    if (step.type === 'multiply') {
+                        resultNum.textContent = step.filled * opt;
+                        resultDen.textContent = step.total * opt;
+                    } else {
+                        resultNum.textContent = 12 / opt;
+                        resultDen.textContent = 18 / opt;
+                    }
+                };
+                optionsGrid.appendChild(btn);
+            });
+            checkBtn.textContent = "Check Answer";
+        }
+
+        function updateDots() {
+            Array.from(dotsContainer.children).forEach((dot, i) => {
+                dot.className = `w-2 h-2 rounded-full transition-colors ${i <= STATE.step ? 'bg-purple-500 scale-110' : 'bg-slate-200'}`;
+            });
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 2000);
+        }
+
+        checkBtn.onclick = () => {
+            const step = STEPS[STATE.step];
+            if (!STATE.chosen) {
+                showToast("Choose an option first!");
+                return;
+            }
+
+            if (step.type === 'info') {
+                nextStep();
+                return;
+            }
+
+            let correct = false;
+            if (step.type === 'multiply') {
+                correct = STATE.chosen && STATE.chosen > 1;
+            } else if (step.type === 'divide') {
+                correct = step.correct.includes(STATE.chosen);
+            } else if (step.type === 'select') {
+                correct = STATE.chosen.correct;
+            }
+
+            if (correct) {
+                playSound('success');
+                showReflection();
+            } else {
+                playSound('error');
+                showToast("Try again!");
+            }
+        };
+
+        function showReflection() {
+            const step = STEPS[STATE.step];
+            if (!step.reflection) {
+                nextStep();
+                return;
+            }
+
+            document.body.classList.add('reflection-active');
+            reflectionModal.classList.add('active');
+
+            const qEl = document.getElementById('refl-question');
+            const optEl = document.getElementById('refl-options');
+
+            qEl.textContent = step.reflection.q;
+            optEl.innerHTML = '';
+
+            step.reflection.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    if (opt.correct) {
+                        btn.classList.add('selected');
+                        playSound('success');
+                        setTimeout(() => {
+                            reflectionModal.classList.remove('active');
+                            document.body.classList.remove('reflection-active');
+                            nextStep();
+                        }, 800);
+                    } else {
+                        btn.classList.add('wrong');
+                        playSound('error');
+                    }
+                };
+                optEl.appendChild(btn);
+            });
+        }
+
+        function nextStep() {
+            STATE.step++;
+            if (STATE.step >= STEPS.length) {
+                document.getElementById('final-screen').classList.remove('hidden');
+                document.getElementById('final-screen').classList.add('flex');
+                playSound('success');
+            } else {
+                renderStep();
+            }
+        }
+
+        function completeLesson() {
+            if (window.Course) {
+                Course.completeLesson('num_equiv');
+            } else {
+                window.location.href = '../index.html';
+            }
+        }
+
+        initLevel();
+    </script>
+</body>
+</html>
+

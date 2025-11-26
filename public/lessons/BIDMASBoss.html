@@ -18,6 +18,20 @@
         .instr-focus h1 { font-size: 2rem; margin-bottom: 1rem; color: #7c3aed; opacity: 0; animation: fadeIn 0.5s forwards; }
         .instr-focus p { font-size: 1.4rem; line-height: 1.4; color: #1e293b; text-align: center; max-width: 900px; }
         .instr-header { top: 0; height: 110px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; padding: 8px 0 10px; }
+        
+        @media (max-width: 640px) {
+            #progress-bar-container {
+                top: 60px;
+                width: 95%;
+                padding: 10px 12px;
+            }
+            #progress-bar-container .progress-text {
+                font-size: 0.75rem;
+            }
+            #progress-bar-container .progress-text .current {
+                font-size: 0.9rem;
+            }
+        }
         .instr-header h1 { font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem; }
         .instr-header p { font-size: 0.95rem; color: #475569; max-width: 800px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
@@ -28,6 +42,10 @@
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Word-by-word animation */
+        .word-reveal { opacity: 0.1; filter: blur(4px); transition: opacity 0.3s ease, filter 0.3s ease; }
+        .word-reveal.visible { opacity: 1; filter: blur(0); }
 
         #game-board { transition: opacity 0.8s, transform 0.8s; }
         .board-hidden { opacity: 0; transform: translateY(100px) scale(0.95); pointer-events: none; }
@@ -92,6 +110,49 @@
         .progress-dot { cursor: pointer; transition: all 0.2s; }
         .progress-dot:hover { transform: scale(1.2); }
         .hidden { display: none !important; }
+
+        /* Progress Bar */
+        #progress-bar-container {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            z-index: 50;
+            background: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 2px solid #ede9fe;
+        }
+        #progress-bar-container .progress-text {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #64748b;
+        }
+        #progress-bar-container .progress-text .current {
+            color: #7c3aed;
+            font-size: 1rem;
+        }
+        #progress-bar-container .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        #progress-bar-container .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7c3aed, #a855f7);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
 
         /* Working Steps Display */
         .working-box {
@@ -217,6 +278,16 @@
 
     <a href="../index.html" id="exit-btn">✕</a>
     <div class="absolute top-4 right-4 z-50 flex gap-1.5" id="progress-dots"></div>
+    
+    <div id="progress-bar-container">
+        <div class="progress-text">
+            <span>Progress</span>
+            <span><span class="current" id="progress-current">0</span> of <span id="progress-total">0</span></span>
+        </div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+    </div>
 
     <div id="final-screen" class="hidden absolute inset-0 bg-gradient-to-br from-violet-50 to-purple-50 flex flex-col items-center justify-center text-center z-50">
         <div class="text-6xl mb-4">🏆</div>
@@ -289,6 +360,7 @@
 
     <script src="../assets/js/course.js"></script>
     <script src="../assets/js/coach.js"></script>
+    <script src="../assets/js/calculator.js"></script>
     <script>
         const STATE = { step: 0, maxStep: 0, audioCtx: null };
         const COACH_ACCENT = '#7c3aed';
@@ -300,33 +372,64 @@
             // ========================================
             {
                 type: 'learn',
-                title: "Welcome to BIDMAS!",
+                title: "Welcome to Order of Operations!",
                 content: `
-                    <h2>🎯 Why Do We Need BIDMAS?</h2>
-                    <p>Without rules, <b>3 + 4 × 2</b> could mean:</p>
+                    <h2>🎯 Why Do We Need Rules?</h2>
+                    <p>Look at this expression: <b>3 + 4 × 2</b></p>
+                    <p>Without rules, people could get different answers!</p>
+                `,
+                coach: "Math needs rules so everyone gets the same answer!"
+            },
+            {
+                type: 'learn',
+                title: "Two Different Answers",
+                content: `
+                    <h2>Which is Correct?</h2>
                     <div class="example">
                         <div class="wrong">❌ (3 + 4) × 2 = 7 × 2 = 14</div>
                         <div class="right">✅ 3 + (4 × 2) = 3 + 8 = 11</div>
                     </div>
-                    <p><b>BIDMAS</b> is the agreed order so everyone gets the <b>same answer</b>!</p>
+                    <p>We need a rule to decide!</p>
+                `,
+                coach: "BIDMAS tells us which way is correct!"
+            },
+            {
+                type: 'learn',
+                title: "BIDMAS is the Rule",
+                content: `
+                    <h2>The Agreed Order</h2>
+                    <p><b>BIDMAS</b> is the rule everyone follows.</p>
+                    <p>It ensures we all get the <b>same answer</b>!</p>
                 `,
                 coach: "BIDMAS is also called BODMAS or PEMDAS in other countries. Same rules!"
             },
             {
                 type: 'learn',
-                title: "The BIDMAS Order",
+                title: "What BIDMAS Stands For",
                 content: `
-                    <h2>📋 The Order of Operations</h2>
+                    <h2>📋 The Letters</h2>
+                    <p>Each letter stands for an operation:</p>
                     <div style="text-align: left; padding: 12px; background: #f8fafc; border-radius: 12px; margin: 12px 0;">
-                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #fee2e2; color: #dc2626; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">B</span> <b>Brackets</b> — do these first!</div>
-                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #fef3c7; color: #d97706; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">I</span> <b>Indices</b> — powers like 3² or √9</div>
-                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #dcfce7; color: #16a34a; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">D</span> <b>Division</b> — same level as multiply</div>
-                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #dbeafe; color: #2563eb; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">M</span> <b>Multiplication</b> — same level as divide</div>
-                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #f3e8ff; color: #9333ea; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">A</span> <b>Addition</b> — same level as subtract</div>
-                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #fce7f3; color: #db2777; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">S</span> <b>Subtraction</b> — same level as add</div>
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #fee2e2; color: #dc2626; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">B</span> <b>Brackets</b></div>
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #fef3c7; color: #d97706; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">I</span> <b>Indices</b></div>
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #dcfce7; color: #16a34a; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">D</span> <b>Division</b></div>
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #dbeafe; color: #2563eb; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">M</span> <b>Multiplication</b></div>
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #f3e8ff; color: #9333ea; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">A</span> <b>Addition</b></div>
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 28px; height: 28px; background: #fce7f3; color: #db2777; border-radius: 6px; text-align: center; line-height: 28px; font-weight: 800; margin-right: 8px;">S</span> <b>Subtraction</b></div>
                     </div>
                 `,
-                coach: "Think of it as a priority list. Higher priority operations get done first!"
+                coach: "Think of it as a priority list!"
+            },
+            {
+                type: 'learn',
+                title: "The Order Matters",
+                content: `
+                    <h2>Higher Priority First</h2>
+                    <p>Operations at the top are done <b>first</b>.</p>
+                    <p>Brackets come before everything else!</p>
+                    <p>Then Indices, then Division and Multiplication, then Addition and Subtraction.</p>
+                `,
+                coach: "Higher priority operations get done first!"
             },
 
             // ========================================
@@ -335,16 +438,38 @@
             // ========================================
             {
                 type: 'learn',
-                title: "⚠️ Misconception #1: Left to Right",
+                title: "⚠️ The Most Common Mistake",
                 content: `
-                    <h2>The Most Common Mistake!</h2>
-                    <p>Many students read <b>left to right</b> like a sentence. This is <b>WRONG</b>!</p>
+                    <h2>Reading Left to Right</h2>
+                    <p>Many students read math like a sentence.</p>
+                    <p>They go from <b>left to right</b>.</p>
+                    <p>This is <b>WRONG</b> for order of operations!</p>
+                `,
+                coach: "Math doesn't always work left to right!"
+            },
+            {
+                type: 'learn',
+                title: "Why Left to Right Fails",
+                content: `
+                    <h2>Look at This Example</h2>
+                    <p>Expression: <b>3 + 4 × 2</b></p>
                     <div class="example">
-                        <div><b>3 + 4 × 2</b></div>
-                        <div class="wrong">❌ WRONG: 3 + 4 = 7, then 7 × 2 = <b>14</b></div>
-                        <div class="right">✅ RIGHT: 4 × 2 = 8, then 3 + 8 = <b>11</b></div>
+                        <div class="wrong">❌ WRONG: 3 + 4 = 7, then 7 × 2 = 14</div>
                     </div>
-                    <p>Multiplication <b>ALWAYS</b> comes before addition, no matter where it appears!</p>
+                    <p>This is what happens if you go left to right!</p>
+                `,
+                coach: "But this gives the wrong answer!"
+            },
+            {
+                type: 'learn',
+                title: "The Correct Way",
+                content: `
+                    <h2>Multiplication Comes First</h2>
+                    <p>Expression: <b>3 + 4 × 2</b></p>
+                    <div class="example">
+                        <div class="right">✅ RIGHT: 4 × 2 = 8, then 3 + 8 = 11</div>
+                    </div>
+                    <p>Multiplication <b>ALWAYS</b> comes before addition!</p>
                 `,
                 coach: "Scan the WHOLE expression for × and ÷ before doing + and −"
             },
@@ -404,18 +529,36 @@
             // ========================================
             {
                 type: 'learn',
-                title: "Division Has Same Priority as ×",
+                title: "Division Has Same Priority",
                 content: `
-                    <h2>Division Also Comes First!</h2>
+                    <h2>Division and Multiplication</h2>
                     <p>Division and multiplication are at the <b>same level</b>.</p>
-                    <p>Both come BEFORE addition and subtraction.</p>
+                    <p>They work together!</p>
+                `,
+                coach: "Think: × and ÷ are 'stronger' than + and −"
+            },
+            {
+                type: 'learn',
+                title: "Division Before Addition",
+                content: `
+                    <h2>Division Comes First Too!</h2>
+                    <p>Both division and multiplication come BEFORE addition and subtraction.</p>
+                    <p>Look at: <b>10 + 8 ÷ 2</b></p>
+                `,
+                coach: "Division is just as important as multiplication!"
+            },
+            {
+                type: 'learn',
+                title: "Division Example",
+                content: `
+                    <h2>The Correct Order</h2>
                     <div class="example">
                         <div><b>10 + 8 ÷ 2</b></div>
-                        <div class="right">✅ 8 ÷ 2 = 4, then 10 + 4 = <b>14</b></div>
+                        <div class="right">✅ 8 ÷ 2 = 4, then 10 + 4 = 14</div>
                         <div class="wrong">❌ NOT 18 ÷ 2 = 9</div>
                     </div>
                 `,
-                coach: "Think: × and ÷ are 'stronger' than + and −"
+                coach: "Always do division before addition!"
             },
             {
                 title: "Division Before Addition",
@@ -463,17 +606,26 @@
             // ========================================
             {
                 type: 'learn',
-                title: "Brackets Change Everything!",
+                title: "Brackets Are the Boss!",
                 content: `
-                    <h2>Brackets Are the BOSS! 👑</h2>
-                    <p>Brackets override ALL other rules. Always do them first!</p>
+                    <h2>👑 The Most Important Rule</h2>
+                    <p>Brackets override ALL other rules.</p>
+                    <p>Always do them first!</p>
+                `,
+                coach: "Brackets are like a VIP pass - they always get priority!"
+            },
+            {
+                type: 'learn',
+                title: "Brackets Change the Answer",
+                content: `
+                    <h2>See the Difference</h2>
                     <div class="example">
-                        <div><b>Without brackets:</b> 3 + 4 × 2 = 3 + 8 = <b>11</b></div>
-                        <div><b>With brackets:</b> (3 + 4) × 2 = 7 × 2 = <b>14</b></div>
+                        <div><b>Without brackets:</b> 3 + 4 × 2 = 11</div>
+                        <div><b>With brackets:</b> (3 + 4) × 2 = 14</div>
                     </div>
                     <p>The brackets <b>force</b> us to add first!</p>
                 `,
-                coach: "Brackets are like a VIP pass - they always get priority!"
+                coach: "Brackets completely change the order!"
             },
             {
                 title: "Brackets First",
@@ -531,19 +683,38 @@
             // ========================================
             {
                 type: 'learn',
-                title: "⚠️ Misconception #2: Same Priority",
+                title: "When Operations Are Equal",
                 content: `
-                    <h2>When Operations Are Equal</h2>
-                    <p>× and ÷ have <b>equal priority</b>.<br>+ and − have <b>equal priority</b>.</p>
-                    <p>When equal, work <b>LEFT to RIGHT</b>!</p>
+                    <h2>Same Priority</h2>
+                    <p>× and ÷ have <b>equal priority</b>.</p>
+                    <p>+ and − have <b>equal priority</b>.</p>
+                    <p>When they're equal, what do we do?</p>
+                `,
+                coach: "When operations are equal, we need another rule!"
+            },
+            {
+                type: 'learn',
+                title: "Left to Right Rule",
+                content: `
+                    <h2>The Solution</h2>
+                    <p>When operations have equal priority, work <b>LEFT to RIGHT</b>!</p>
+                    <p>This is the only time left to right is correct!</p>
+                `,
+                coach: "Only use left-to-right for SAME priority operations!"
+            },
+            {
+                type: 'learn',
+                title: "Example: Division and Multiply",
+                content: `
+                    <h2>Try This</h2>
                     <div class="example">
                         <div><b>12 ÷ 3 × 2</b></div>
-                        <div class="right">✅ Left to right: 12 ÷ 3 = 4, then 4 × 2 = <b>8</b></div>
+                        <div class="right">✅ Left to right: 12 ÷ 3 = 4, then 4 × 2 = 8</div>
                         <div class="wrong">❌ NOT 12 ÷ 6 = 2</div>
                     </div>
                     <p><b>Common mistake:</b> Thinking × always comes before ÷!</p>
                 `,
-                coach: "Only use left-to-right for SAME priority operations!"
+                coach: "Go left to right when they're equal!"
             },
             {
                 title: "Division then Multiply",
@@ -591,18 +762,37 @@
             // ========================================
             {
                 type: 'learn',
-                title: "Indices (Powers)",
+                title: "What Are Indices?",
                 content: `
-                    <h2>What Are Indices?</h2>
-                    <p>Indices (also called powers or exponents) are repeated multiplication:</p>
-                    <div class="example">
-                        <div>3² = 3 × 3 = <b>9</b></div>
-                        <div>2³ = 2 × 2 × 2 = <b>8</b></div>
-                        <div>5² = 5 × 5 = <b>25</b></div>
-                    </div>
-                    <p>In BIDMAS, indices come AFTER brackets but BEFORE × ÷ + −</p>
+                    <h2>Powers and Exponents</h2>
+                    <p>Indices are also called powers or exponents.</p>
+                    <p>They show repeated multiplication.</p>
                 `,
-                coach: "The small number (exponent) tells you how many times to multiply!"
+                coach: "The small number tells you how many times to multiply!"
+            },
+            {
+                type: 'learn',
+                title: "Examples of Indices",
+                content: `
+                    <h2>How They Work</h2>
+                    <div class="example">
+                        <div>3² = 3 × 3 = 9</div>
+                        <div>2³ = 2 × 2 × 2 = 8</div>
+                        <div>5² = 5 × 5 = 25</div>
+                    </div>
+                `,
+                coach: "The number on top tells you how many times to multiply!"
+            },
+            {
+                type: 'learn',
+                title: "Where Indices Fit",
+                content: `
+                    <h2>In BIDMAS Order</h2>
+                    <p>Indices come AFTER brackets.</p>
+                    <p>But BEFORE × ÷ + −</p>
+                    <p>They're very important!</p>
+                `,
+                coach: "Indices are high priority in BIDMAS!"
             },
             {
                 title: "Power Before Add",
@@ -650,21 +840,38 @@
             // ========================================
             {
                 type: 'learn',
-                title: "⚠️ Misconception #3: Brackets & Powers",
+                title: "⚠️ Brackets and Powers",
                 content: `
                     <h2>These Are DIFFERENT!</h2>
-                    <p>Watch out! Brackets change when we square:</p>
+                    <p>Watch out! Brackets change everything when we square.</p>
+                    <p>This is a common mistake!</p>
+                `,
+                coach: "Brackets and powers work together in a special way!"
+            },
+            {
+                type: 'learn',
+                title: "With Brackets",
+                content: `
+                    <h2>Brackets First, Then Square</h2>
                     <div class="example">
-                        <div><b>(2 + 3)²</b> = 5² = <b>25</b></div>
-                        <div style="color: #64748b; font-size: 0.9em;">(brackets first, then square the result)</div>
+                        <div><b>(2 + 3)²</b> = 5² = 25</div>
+                        <div style="color: #64748b; font-size: 0.9em;">Brackets first, then square the result</div>
                     </div>
+                `,
+                coach: "The bracket makes us add BEFORE squaring!"
+            },
+            {
+                type: 'learn',
+                title: "Without Brackets",
+                content: `
+                    <h2>Square First, Then Add</h2>
                     <div class="example">
-                        <div><b>2² + 3²</b> = 4 + 9 = <b>13</b></div>
-                        <div style="color: #64748b; font-size: 0.9em;">(square each number, then add)</div>
+                        <div><b>2² + 3²</b> = 4 + 9 = 13</div>
+                        <div style="color: #64748b; font-size: 0.9em;">Square each number, then add</div>
                     </div>
                     <p>The bracket groups things together!</p>
                 `,
-                coach: "The bracket makes us add BEFORE squaring. Without it, we square first!"
+                coach: "Without brackets, we square first!"
             },
             {
                 title: "Brackets with Power",
@@ -714,19 +921,38 @@
                 type: 'learn',
                 title: "Putting It All Together",
                 content: `
-                    <h2>Step-by-Step Approach</h2>
-                    <p>For complex expressions, work through BIDMAS carefully:</p>
+                    <h2>Complex Expressions</h2>
+                    <p>For complex expressions, work through BIDMAS carefully.</p>
+                    <p>Take it one step at a time!</p>
+                `,
+                coach: "Take it one step at a time. Write out each step!"
+            },
+            {
+                type: 'learn',
+                title: "Step-by-Step Example",
+                content: `
+                    <h2>Follow the Order</h2>
+                    <p>Expression: <b>3 + (4 × 2)² ÷ 4</b></p>
+                    <p>Let's work through it step by step.</p>
+                `,
+                coach: "We'll do brackets first, then indices, then division, then addition!"
+            },
+            {
+                type: 'learn',
+                title: "The Steps",
+                content: `
+                    <h2>Each Step</h2>
                     <div class="example" style="text-align: left;">
                         <div><b>3 + (4 × 2)² ÷ 4</b></div>
                         <div style="margin-top: 8px;">
                             <span style="color: #dc2626;">B</span>: 4 × 2 = 8<br>
                             <span style="color: #d97706;">I</span>: 8² = 64<br>
                             <span style="color: #16a34a;">D</span>: 64 ÷ 4 = 16<br>
-                            <span style="color: #9333ea;">A</span>: 3 + 16 = <b>19</b>
+                            <span style="color: #9333ea;">A</span>: 3 + 16 = 19
                         </div>
                     </div>
                 `,
-                coach: "Take it one step at a time. Write out each step!"
+                coach: "Follow BIDMAS order exactly!"
             },
             {
                 title: "Full BIDMAS",
@@ -766,20 +992,38 @@
                 type: 'learn',
                 title: "BIDMAS with Negatives",
                 content: `
-                    <h2>Negative Numbers Still Follow BIDMAS!</h2>
-                    <p>The rules don't change with negative numbers:</p>
+                    <h2>Negative Numbers</h2>
+                    <p>The rules don't change with negative numbers!</p>
+                    <p>BIDMAS still works the same way.</p>
+                `,
+                coach: "BIDMAS works exactly the same with negative numbers!"
+            },
+            {
+                type: 'learn',
+                title: "Example with Negative Start",
+                content: `
+                    <h2>Negative at the Start</h2>
                     <div class="example">
                         <div><b>-3 + 4 × 2</b></div>
                         <div>Multiply first: 4 × 2 = 8</div>
-                        <div>Then add: -3 + 8 = <b>5</b></div>
+                        <div>Then add: -3 + 8 = 5</div>
                     </div>
+                `,
+                coach: "Still multiply first, then add!"
+            },
+            {
+                type: 'learn',
+                title: "Negative Result",
+                content: `
+                    <h2>Answers Can Be Negative</h2>
                     <div class="example">
                         <div><b>3 - 5 × 2</b></div>
                         <div>Multiply first: 5 × 2 = 10</div>
-                        <div>Then subtract: 3 - 10 = <b>-7</b></div>
+                        <div>Then subtract: 3 - 10 = -7</div>
                     </div>
+                    <p>The answer CAN be negative!</p>
                 `,
-                coach: "BIDMAS works exactly the same with negative numbers!"
+                coach: "Don't be surprised if the answer is negative!"
             },
             {
                 title: "Negative Start",
@@ -820,16 +1064,34 @@
                 title: "GCSE Exam Tips",
                 content: `
                     <h2>What Examiners Look For</h2>
-                    <p>In GCSE exams, BIDMAS questions often:</p>
-                    <ul style="text-align: left; margin: 12px auto; max-width: 300px;">
-                        <li>• Have <b>negative numbers</b></li>
-                        <li>• Use <b>fractions</b> as division</li>
-                        <li>• Have <b>nested brackets</b></li>
-                        <li>• Mix <b>all operations</b></li>
-                    </ul>
-                    <p><b>Always show your working step by step!</b></p>
+                    <p>In GCSE exams, BIDMAS questions often have tricky parts.</p>
+                    <p>Let's see what to watch for!</p>
                 `,
                 coach: "Examiners love to test common misconceptions!"
+            },
+            {
+                type: 'learn',
+                title: "Common Exam Features",
+                content: `
+                    <h2>What to Expect</h2>
+                    <ul style="text-align: left; margin: 12px auto; max-width: 300px;">
+                        <li>• Negative numbers</li>
+                        <li>• Fractions as division</li>
+                        <li>• Nested brackets</li>
+                        <li>• All operations mixed</li>
+                    </ul>
+                `,
+                coach: "These are the things examiners like to test!"
+            },
+            {
+                type: 'learn',
+                title: "Show Your Working",
+                content: `
+                    <h2>Important Tip</h2>
+                    <p><b>Always show your working step by step!</b></p>
+                    <p>This helps you get marks even if the final answer is wrong.</p>
+                `,
+                coach: "Step-by-step working is crucial in exams!"
             },
             {
                 title: "Division as Fraction",
@@ -928,6 +1190,9 @@
         const dotsContainer = document.getElementById('progress-dots');
         const toast = document.getElementById('toast');
         const reflectionModal = document.getElementById('reflection-modal');
+        const progressCurrent = document.getElementById('progress-current');
+        const progressTotal = document.getElementById('progress-total');
+        const progressBarFill = document.getElementById('progress-bar-fill');
         
         const lessonView = document.getElementById('lesson-view');
         const questionView = document.getElementById('question-view');
@@ -943,16 +1208,69 @@
             document.addEventListener('click', initAudio, { once: true });
         }
 
-        function renderStep() {
+        async function animateSequence(titleHtml, descHtml) {
+            container.className = 'instruction-container instr-focus';
+            board.className = 'board-hidden flex-1 flex flex-col pt-[100px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full gap-3';
+            titleEl.innerHTML = titleHtml;
+            descEl.innerHTML = descHtml;
+            
+            // Word-by-word reveal
+            const wrapWords = (node) => {
+                if (node.nodeType === 3) {
+                    const text = node.nodeValue;
+                    if (!text.trim()) return;
+                    const words = text.split(/(\s+)/);
+                    const fragment = document.createDocumentFragment();
+                    words.forEach(word => {
+                        if (word.trim().length > 0) {
+                            const span = document.createElement('span');
+                            span.className = 'word-reveal';
+                            span.textContent = word;
+                            fragment.appendChild(span);
+                        } else fragment.appendChild(document.createTextNode(word));
+                    });
+                    node.parentNode.replaceChild(fragment, node);
+                } else if (node.nodeType === 1) {
+                    Array.from(node.childNodes).forEach(wrapWords);
+                }
+            };
+            
+            wrapWords(descEl);
+            await new Promise(r => setTimeout(r, 600));
+            
+            const words = descEl.querySelectorAll('.word-reveal');
+            initAudio();
+            for (let i = 0; i < words.length; i++) {
+                const isShort = words[i].textContent.length <= 3;
+                const delay = isShort ? 100 : 200; // Reading pace
+                words[i].classList.add('visible');
+                await new Promise(r => setTimeout(r, delay));
+            }
+            
+            await new Promise(r => setTimeout(r, 800));
+            
+            container.classList.remove('instr-focus');
+            container.classList.add('instr-header');
+            board.classList.remove('board-hidden');
+            board.classList.add('board-visible');
+        }
+
+        async function renderStep() {
             const step = STEPS[STATE.step];
             STATE.maxStep = Math.max(STATE.maxStep || 0, STATE.step);
-            
-            container.className = "instruction-container instr-focus";
-            titleEl.textContent = step.title;
             
             lessonView.classList.add('hidden');
             questionView.classList.add('hidden');
             workingDisplay.classList.add('hidden');
+
+            // Update progress bar
+            const totalSteps = STEPS.length;
+            const currentStep = STATE.step + 1;
+            const progressPercent = (currentStep / totalSteps) * 100;
+            
+            progressCurrent.textContent = currentStep;
+            progressTotal.textContent = totalSteps;
+            progressBarFill.style.width = `${progressPercent}%`;
 
             dotsContainer.innerHTML = STEPS.map((_, i) => {
                 const accessible = i <= STATE.maxStep;
@@ -969,21 +1287,54 @@
 
             if (step.type === 'learn') {
                 lessonView.classList.remove('hidden');
+                const titleHtml = `<span class="text-violet-500 text-lg block mb-1 uppercase tracking-widest">Lesson</span>${step.title}`;
+                await animateSequence(titleHtml, "");
+                
+                // Animate lesson content word-by-word
                 lessonContent.innerHTML = step.content;
-                descEl.innerHTML = "";
+                const wrapWords = (node) => {
+                    if (node.nodeType === 3) {
+                        const text = node.nodeValue;
+                        if (!text.trim()) return;
+                        const words = text.split(/(\s+)/);
+                        const fragment = document.createDocumentFragment();
+                        words.forEach(word => {
+                            if (word.trim().length > 0) {
+                                const span = document.createElement('span');
+                                span.className = 'word-reveal';
+                                span.textContent = word;
+                                fragment.appendChild(span);
+                            } else fragment.appendChild(document.createTextNode(word));
+                        });
+                        node.parentNode.replaceChild(fragment, node);
+                    } else if (node.nodeType === 1) {
+                        Array.from(node.childNodes).forEach(wrapWords);
+                    }
+                };
+                wrapWords(lessonContent);
+                await new Promise(r => setTimeout(r, 400));
+                const contentWords = lessonContent.querySelectorAll('.word-reveal');
+                for (let i = 0; i < contentWords.length; i++) {
+                    const isShort = contentWords[i].textContent.length <= 3;
+                    const delay = isShort ? 100 : 200;
+                    contentWords[i].classList.add('visible');
+                    await new Promise(r => setTimeout(r, delay));
+                }
             } else {
-                descEl.innerHTML = step.desc;
+                const titleHtml = `<span class="text-violet-500 text-lg block mb-1 uppercase tracking-widest">Practice</span>${step.title}`;
+                await animateSequence(titleHtml, step.desc);
+                
                 questionView.classList.remove('hidden');
                 
                 expressionEl.textContent = step.expression;
                 answerInput.value = '';
                 
-                // Show working steps if available
+                // Store working steps but don't show them yet (hidden until user attempts answer)
                 if (step.working && step.working.length > 0) {
-                    workingDisplay.classList.remove('hidden');
                     workingDisplay.innerHTML = step.working.map((s, i) => 
                         `<div class="step">${i + 1}. ${s.replace('=', '→')}</div>`
                     ).join('');
+                    workingDisplay.classList.add('hidden'); // Keep hidden initially
                 }
                 
                 // Highlight BIDMAS letters
@@ -995,25 +1346,19 @@
                         if (letter) letter.classList.add('active');
                     });
                 }
+                
+                answerInput.focus();
             }
-
-            board.className = "board-hidden flex-1 flex flex-col pt-[100px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full gap-3";
 
             if (window.LessonCoach) {
                 LessonCoach.set(step.coach, { accent: COACH_ACCENT, badge: COACH_BADGE });
             }
-
-            setTimeout(() => {
-                container.className = "instruction-container instr-header";
-                board.className = "board-visible flex-1 flex flex-col pt-[100px] pb-2 px-4 w-full items-center justify-start overflow-y-auto h-full gap-3";
-                if (step.type !== 'learn') answerInput.focus();
-            }, 2000);
         }
 
-        function jumpToStep(i) {
+        async function jumpToStep(i) {
             if (i > STATE.maxStep) return;
             STATE.step = i;
-            renderStep();
+            await renderStep();
         }
 
         checkBtn.onclick = () => {
@@ -1029,12 +1374,20 @@
                 playSound('success');
                 expressionEl.classList.add('pulse');
                 setTimeout(() => expressionEl.classList.remove('pulse'), 500);
+                // Show working steps as confirmation
+                if (step.working && step.working.length > 0) {
+                    workingDisplay.classList.remove('hidden');
+                }
                 showReflection();
             } else {
                 playSound('error');
                 answerInput.classList.add('shake');
                 setTimeout(() => answerInput.classList.remove('shake'), 300);
                 showToast("Check the order of operations!");
+                // Show working steps as a hint after wrong answer
+                if (step.working && step.working.length > 0) {
+                    workingDisplay.classList.remove('hidden');
+                }
             }
         };
 
@@ -1081,13 +1434,13 @@
             });
         }
 
-        function nextStep() {
+        async function nextStep() {
             STATE.step++;
             if (STATE.step >= STEPS.length) {
                 document.getElementById('final-screen').classList.remove('hidden');
                 playSound('success');
             } else {
-                renderStep();
+                await renderStep();
             }
         }
 
