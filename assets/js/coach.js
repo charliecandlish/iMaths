@@ -88,6 +88,28 @@
             fab.classList.remove('visible');
         });
 
+        // Mobile Toolbar Integration
+        const controls = document.getElementById('controls');
+        if (controls) {
+            // Create a wrapper if not already there to hold buttons side-by-side
+            // Or just prepend/append. The controls usually has one button.
+            // Let's create a small icon button for the hint.
+
+            const hintBtn = document.createElement('button');
+            hintBtn.className = 'bg-white text-indigo-600 w-12 h-12 rounded-xl font-bold shadow-md hover:bg-indigo-50 transition flex items-center justify-center text-xl shrink-0 mr-2';
+            hintBtn.innerHTML = '<i class="fa-solid fa-lightbulb"></i>';
+            hintBtn.onclick = () => {
+                card.classList.remove('hidden');
+                fab.classList.remove('visible');
+            };
+
+            // Insert before the first child (usually the main action button)
+            controls.insertBefore(hintBtn, controls.firstChild);
+
+            // Ensure controls is a row
+            controls.classList.add('flex-row');
+        }
+
         elements = { shell, card, fab, avatar, badge, text, status };
         isReady = true;
 

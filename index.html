@@ -400,6 +400,17 @@
                 document.body.classList.remove('intro-active');
             }, baseDuration + 900);
         });
+
+        // iOS Audio Unlock
+        document.addEventListener('touchstart', function () {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) {
+                const ctx = new AudioContext();
+                ctx.resume().then(() => {
+                    ctx.close();
+                });
+            }
+        }, { once: true });
     </script>
 
     <script src="assets/js/calculator.js"></script>

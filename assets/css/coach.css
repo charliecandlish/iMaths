@@ -17,6 +17,32 @@
     flex-direction: column;
     gap: 10px;
     font-family: 'Inter', sans-serif;
+    pointer-events: none;
+    /* Let clicks pass through container */
+}
+
+.lesson-coach-card,
+.lesson-coach-fab {
+    pointer-events: auto;
+    /* Re-enable clicks on children */
+}
+
+/* ... existing styles ... */
+
+@media (max-width: 640px) {
+    .lesson-coach-fab {
+        display: none !important;
+        /* Hide floating button on mobile */
+    }
+
+    .lesson-coach-shell {
+        bottom: 80px;
+        /* Move card up slightly to avoid toolbar */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        align-items: center;
+    }
 }
 
 .lesson-coach-card {
@@ -130,9 +156,8 @@
 
 @media (max-width: 640px) {
     .lesson-coach-shell {
-        left: 14px;
-        bottom: 14px;
-        max-width: calc(100vw - 28px);
+        display: none !important;
+        /* Hidden on mobile, moved to toolbar */
     }
 }
 
