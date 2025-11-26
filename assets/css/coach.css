@@ -171,6 +171,44 @@ body.bg-pink {
     background: linear-gradient(135deg, #fbcfe8 0%, #f9a8d4 50%, #f472b6 100%) !important;
 }
 
+/* Lesson Page Layout Fixes - Ensure everything fits on screen */
+body {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden !important;
+}
+
+#game-board {
+    max-height: 100vh;
+    overflow-y: auto;
+    padding-bottom: 20px !important;
+    /* Reduced from larger values */
+}
+
+#controls {
+    padding-bottom: 20px !important;
+    /* Ensure buttons are visible */
+    margin-bottom: 0 !important;
+}
+
+/* Ensure modals and overlays fit properly */
+#reflection-modal {
+    max-height: 70vh !important;
+    overflow-y: auto;
+}
+
+/* Safe area for mobile devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    #game-board {
+        padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+    }
+
+    #controls {
+        padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+    }
+}
+
 /* Math Calculator Toolbar - Sitewide */
 .math-toolbar {
     position: fixed;

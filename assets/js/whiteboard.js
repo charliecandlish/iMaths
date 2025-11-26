@@ -38,9 +38,9 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            height: ${window.innerHeight}px;
             cursor: crosshair;
+            touch-action: none;
         `;
 
         // Create controls
@@ -109,7 +109,7 @@
 
         ctx.strokeStyle = color;
         ctx.fillStyle = color;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 5; // Increased for better quality
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
     }
@@ -204,6 +204,8 @@
         // Resize canvas
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
 
         // Restore settings and drawing
         setupDrawingSettings();
