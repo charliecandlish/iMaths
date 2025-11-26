@@ -90,36 +90,18 @@
             if (window.SoundManager) SoundManager.playClick();
         });
 
-        // Mobile Toolbar Integration
-        const controls = document.getElementById('controls');
-        if (controls) {
-            // Create a wrapper if not already there to hold buttons side-by-side
-            // Or just prepend/append. The controls usually has one button.
-            // Let's create a small icon button for the hint.
-
-            const hintBtn = document.createElement('button');
-            hintBtn.className = 'bg-white text-indigo-600 w-12 h-12 rounded-xl font-bold shadow-md hover:bg-indigo-50 transition flex items-center justify-center text-xl shrink-0 mr-3';
-            hintBtn.innerHTML = '<i class="fa-solid fa-lightbulb"></i>';
-            hintBtn.onclick = () => {
-                card.classList.remove('hidden');
-                fab.classList.remove('visible');
-                if (window.SoundManager) SoundManager.playClick();
-            };
-
-            // Insert before the first child (usually the main action button)
-            controls.insertBefore(hintBtn, controls.firstChild);
-
-            // Ensure controls is a row and centered
-            controls.classList.remove('flex-col', 'items-center', 'justify-end');
-            controls.classList.add('flex-row', 'items-end', 'justify-center');
-
-            // Adjust the existing button (usually the second child now) to play nice
-            const mainBtn = controls.children[1];
-            if (mainBtn) {
-                mainBtn.classList.remove('w-full');
-                mainBtn.classList.add('flex-1');
-            }
-        }
+        // Mobile Fixed Hint Button (below calculator)
+        const mobileFab = document.createElement('button');
+        mobileFab.className = 'lesson-coach-mobile-fab';
+        mobileFab.type = 'button';
+        mobileFab.title = 'Hint';
+        mobileFab.innerHTML = '<i class="fa-solid fa-lightbulb"></i>';
+        mobileFab.onclick = () => {
+            card.classList.remove('hidden');
+            fab.classList.remove('visible');
+            if (window.SoundManager) SoundManager.playClick();
+        };
+        document.body.appendChild(mobileFab);
 
         elements = { shell, card, fab, avatar, badge, text, status };
         isReady = true;
@@ -199,4 +181,38 @@
         loadCalculator();
         loadWhiteboard();
     }
+})();
+
+// === Progress Bar System ===
+(() => {
+    let progressBar, progressFill;
+
+    function initProgressBar() {
+        // Create progress bar elements
+        progressBar = document.createElement('div');
+        progressBar.className = 'lesson-progress-bar';
+
+        progressFill = document.createElement('div');
+        progressFill.className = 'lesson-progress-fill';
+
+        progressBar.appendChild(progressFill);
+        document.body.appendChild(progressBar);
+    }
+
+    function updateProgress(current, total) {
+        if (!progressFill) initProgressBar();
+
+        const percentage = Math.min(100, Math.max(0, (current / total) * 100));
+        progressFill.style.height = `${percentage}%`;
+    }
+
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initProgressBar);
+    } else {
+        initProgressBar();
+    }
+
+    // Expose globally
+    window.updateLessonProgress = updateProgress;
 })();

@@ -103,17 +103,17 @@
             color: #475569;
             max-width: 800px;
             text-align: center;
-            line-height: 1.2;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            line-height: 1.4;
+            /* Removed line-clamp to show full question */
         }
 
         @media (max-width: 640px) {
             .instr-header {
-                height: 110px;
+                height: auto;
+                /* Allow dynamic height */
+                min-height: 110px;
                 padding-top: 5px;
+                padding-bottom: 8px;
             }
 
             .instr-header h1 {
@@ -122,8 +122,9 @@
             }
 
             .instr-header p {
-                font-size: 0.9rem;
-                -webkit-line-clamp: 2;
+                font-size: 0.85rem;
+                line-height: 1.3;
+                /* Removed line-clamp to show full question */
             }
         }
 
@@ -560,6 +561,11 @@
             descEl.innerHTML = step.desc;
 
             board.className = "board-hidden flex-1 flex flex-col pt-[140px] pb-safe px-4 w-full items-center justify-between overflow-y-auto h-full";
+
+            // Update progress bar
+            if (window.updateLessonProgress) {
+                window.updateLessonProgress(STATE.step, STEPS.length);
+            }
 
             // Setup Grid
             gridArea.innerHTML = '';

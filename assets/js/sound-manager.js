@@ -116,15 +116,36 @@ const SoundManager = {
     }
 };
 
-// Global unlock handler
+// Global unlock handler - more aggressive for iOS
 const unlockAudio = async () => {
-    await SoundManager.init();
-    document.removeEventListener('touchstart', unlockAudio);
-    document.removeEventListener('click', unlockAudio);
+    try {
+        console.log('Attempting to unlock audio...');
+        await Tone.start();
+        await SoundManager.init();
+        console.log('Audio unlocked successfully!');
+
+        // Remove listeners after successful init
+        document.removeEventListener('touchstart', unlockAudio);
+        document.removeEventListener('click', unlockAudio);
+        document.removeEventListener('touchend', unlockAudio);
+    } catch (e) {
+        console.error('Audio unlock failed:', e);
+    }
 };
 
-document.addEventListener('touchstart', unlockAudio);
+// Multiple event listeners for better iOS coverage
+document.addEventListener('touchstart', unlockAudio, { passive: true });
+document.addEventListener('touchend', unlockAudio, { passive: true });
 document.addEventListener('click', unlockAudio);
+
+// Also try to start immediately (will work on desktop)
+if (document.readyState === 'complete') {
+    Tone.start().catch(() => { });
+} else {
+    window.addEventListener('load', () => {
+        Tone.start().catch(() => { });
+    });
+}
 
 // Expose globally
 window.SoundManager = SoundManager;
