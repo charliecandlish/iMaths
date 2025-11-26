@@ -151,6 +151,23 @@
 
         const isCollapsed = content.classList.contains('collapsed');
 
+        // Close all other sections first (accordion behavior)
+        const allSections = ['number-content', 'ratio-prop-content', 'alg-content', 'geo-content', 'stats-content'];
+        const allChevrons = ['number-chevron', 'ratio-prop-chevron', 'alg-chevron', 'geo-chevron', 'stats-chevron'];
+
+        allSections.forEach((sectionId, index) => {
+            if (sectionId !== contentId) {
+                const otherContent = document.getElementById(sectionId);
+                const otherChevron = document.getElementById(allChevrons[index]);
+                if (otherContent && otherChevron) {
+                    otherContent.classList.add('collapsed');
+                    otherChevron.classList.remove('fa-minus');
+                    otherChevron.classList.add('fa-plus');
+                }
+            }
+        });
+
+        // Toggle the clicked section
         if (isCollapsed) {
             content.classList.remove('collapsed');
             chevron.classList.remove('fa-plus');
