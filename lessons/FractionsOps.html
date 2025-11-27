@@ -290,6 +290,7 @@
         }
 
         function loadStep(idx) {
+            if (window.updateLessonProgress) window.updateLessonProgress(idx, STEPS.length);
             STATE.step = idx;
             updateDots();
             animateSequence(STEPS[idx].title, STEPS[idx].desc);

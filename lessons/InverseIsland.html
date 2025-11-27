@@ -199,7 +199,9 @@
 
         async function animateSequence(titleHtml, descHtml) { els.instrContainer.className = 'instruction-container instr-focus'; els.gameBoard.className = 'board-hidden flex-1 flex flex-col pt-[125px] md:pt-[155px] pb-4 px-4 h-full relative justify-center items-center'; els.title.innerHTML = titleHtml; els.desc.innerHTML = descHtml; const wrapWords = (node) => { if (node.nodeType === 3) { const text = node.nodeValue; if (!text.trim()) return; const words = text.split(/(\s+)/); const fragment = document.createDocumentFragment(); words.forEach(word => { if (word.trim().length > 0) { const span = document.createElement('span'); span.className = 'word-reveal'; span.textContent = word; fragment.appendChild(span); } else fragment.appendChild(document.createTextNode(word)); }); node.parentNode.replaceChild(fragment, node); } else if (node.nodeType === 1) Array.from(node.childNodes).forEach(wrapWords); }; wrapWords(els.desc); await new Promise(r => setTimeout(r, 800)); const words = els.desc.querySelectorAll('.word-reveal'); initAudio(); for(let i=0; i<words.length; i++) { const isShort = words[i].textContent.length <= 3; const delay = isShort ? 200 : 300; words[i].classList.add('visible'); await new Promise(r => setTimeout(r, delay)); } await new Promise(r => setTimeout(r, 1000)); els.instrContainer.classList.remove('instr-focus'); els.instrContainer.classList.add('instr-header'); els.gameBoard.classList.remove('board-hidden'); els.gameBoard.classList.add('board-visible'); }
 
-        function loadLevel(idx) { 
+        function loadLevel(idx) {
+            if (window.updateLessonProgress) window.updateLessonProgress(idx, STEPS.length);
+            if (window.updateLessonProgress) window.updateLessonProgress(idx, STEPS.length); 
             STATE.step = idx; STATE.isComplete = false; const level = LEVELS[idx]; 
             els.btnNext.classList.add('hidden');
             els.builderControls.classList.add('hidden');

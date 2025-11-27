@@ -232,6 +232,9 @@
         }
 
         function renderStep() {
+            if (window.updateLessonProgress) window.updateLessonProgress(STATE.step, STEPS.length);
+            if (window.updateLessonProgress) window.updateLessonProgress(STATE.step, STEPS.length);
+            if (window.updateLessonProgress) window.updateLessonProgress(STATE.step, STEPS.length);
             const step = STEPS[STATE.step];
             
             // Reset View to Instruction Mode

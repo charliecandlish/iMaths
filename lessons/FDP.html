@@ -271,6 +271,7 @@
         }
 
         function loadStep(idx) {
+            if (window.updateLessonProgress) window.updateLessonProgress(idx, STEPS.length);
             STATE.step = idx;
             STATE.maxStep = Math.max(STATE.maxStep || 0, idx);
             STATE.filled = 0;

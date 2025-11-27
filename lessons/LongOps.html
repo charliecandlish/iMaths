@@ -510,6 +510,9 @@
         }
 
         function renderStep() {
+            if (window.updateLessonProgress) window.updateLessonProgress(STATE.step, STEPS.length);
+            if (window.updateLessonProgress) window.updateLessonProgress(STATE.step, STEPS.length);
+            if (window.updateLessonProgress) window.updateLessonProgress(STATE.step, STEPS.length);
             const step = STEPS[STATE.step];
             STATE.maxStep = Math.max(STATE.maxStep || 0, STATE.step);
             STATE.gridPhase = 0;

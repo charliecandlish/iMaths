@@ -304,6 +304,8 @@
         }
 
         function loadLevel(idx) {
+            if (window.updateLessonProgress) window.updateLessonProgress(idx, STEPS.length);
+            if (window.updateLessonProgress) window.updateLessonProgress(idx, STEPS.length);
             STATE.step = idx; STATE.isComplete = false;
             const step = STEPS[idx];
             STATE.currentStep = step;

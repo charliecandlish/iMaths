@@ -137,6 +137,12 @@
             els.next.disabled = true;
 
             const question = config.questions[state.index];
+
+            // Update vertical progress bar
+            if (window.updateLessonProgress) {
+                window.updateLessonProgress(state.index, config.questions.length);
+            }
+
             els.progressPill.textContent = `Question ${state.index + 1} / ${config.questions.length}`;
             els.progressText.textContent = question.skill ? `Skill: ${question.skill}` : '';
             els.label.textContent = question.tag || 'Understand';
@@ -198,13 +204,13 @@
 })();
 
 // Load calculator toolbar on all quiz pages
-(function() {
+(function () {
     if (document.getElementById('math-toolbar')) return; // Already loaded
-    
+
     // Detect correct path based on current page location
     const isLessonPage = window.location.pathname.includes('/lessons/');
     const scriptPath = isLessonPage ? '../assets/js/calculator.js' : 'assets/js/calculator.js';
-    
+
     const script = document.createElement('script');
     script.src = scriptPath;
     script.async = true;
@@ -212,17 +218,34 @@
 })();
 
 // Load whiteboard on all quiz pages
-(function() {
+(function () {
     if (document.getElementById('whiteboard-overlay')) return;
-    
+
     const isLessonPage = window.location.pathname.includes('/lessons/');
     const scriptPath = isLessonPage ? '../assets/js/whiteboard.js' : 'assets/js/whiteboard.js';
-    
+
     if (document.querySelector(`script[src="${scriptPath}"]`)) return;
-    
+
     const script = document.createElement('script');
     script.src = scriptPath;
     script.async = true;
     document.head.appendChild(script);
 })();
+
+// Vertical Progress Bar Logic (Shared with Coach)
+window.updateLessonProgress = function (currentStep, totalSteps) {
+    let bar = document.querySelector('.lesson-progress-bar');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.className = 'lesson-progress-bar';
+        bar.innerHTML = '<div class="lesson-progress-fill"></div>';
+        document.body.appendChild(bar);
+    }
+
+    const fill = bar.querySelector('.lesson-progress-fill');
+    if (fill && totalSteps > 0) {
+        const pct = Math.min(100, Math.max(0, ((currentStep + 1) / totalSteps) * 100));
+        fill.style.height = `${pct}%`;
+    }
+};
 

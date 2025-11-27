@@ -203,6 +203,9 @@
         }
 
         function renderStep() {
+            if (window.updateLessonProgress) window.updateLessonProgress(STATE.step, STEPS.length);
+            if (window.updateLessonProgress) window.updateLessonProgress(STATE.step, STEPS.length);
+            if (window.updateLessonProgress) window.updateLessonProgress(STATE.step, STEPS.length);
             const step = STEPS[STATE.step];
             
             container.className = "instruction-container instr-focus";

@@ -248,6 +248,7 @@
         }
 
         function loadStep(idx) {
+            if (window.updateLessonProgress) window.updateLessonProgress(idx, STEPS.length);
             STATE.step = idx;
             const step = STEPS[idx];
             STATE.num = step.num;
