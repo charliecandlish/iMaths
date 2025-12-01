@@ -179,74 +179,8 @@
         }
     }
 
-    // --- Theme & Cursor Logic ---
-    const themeClasses = ['bg-ocean', 'bg-sunrise', 'bg-football', 'bg-boxing', 'bg-car', 'bg-forest', 'bg-pink'];
-    const cursorClasses = ['cursor-classic', 'cursor-astro', 'cursor-robot', 'cursor-star', 'cursor-heart'];
-
-    function toggleThemeModal() {
-        const modal = document.getElementById('theme-modal');
-        const isOpening = modal.classList.contains('hidden');
-        modal.classList.toggle('hidden');
-
-        if (isOpening) {
-            const currentTheme = localStorage.getItem('mathMaster_theme') || '';
-            document.querySelectorAll('.theme-btn').forEach(btn => {
-                const value = btn.dataset.theme ?? '';
-                btn.classList.toggle('selected', value === currentTheme);
-            });
-
-            const currentCursor = localStorage.getItem('mathMaster_cursor') || 'cursor-classic';
-            document.querySelectorAll('.cursor-btn').forEach(btn => {
-                const value = btn.dataset.cursor ?? 'cursor-classic';
-                btn.classList.toggle('selected', value === currentCursor);
-            });
-        }
-    }
-
-    function setTheme(themeClass) {
-        const normalizedTheme = themeClass || '';
-        document.body.classList.remove(...themeClasses);
-
-        if (normalizedTheme) {
-            document.body.classList.add(normalizedTheme);
-        }
-
-        localStorage.setItem('mathMaster_theme', normalizedTheme);
-
-        document.querySelectorAll('.theme-btn').forEach(btn => {
-            const value = btn.dataset.theme ?? '';
-            btn.classList.toggle('selected', value === normalizedTheme);
-        });
-    }
-
-    function loadTheme() {
-        const savedTheme = localStorage.getItem('mathMaster_theme') || '';
-        setTheme(savedTheme);
-    }
-
-    function setCursorType(cursorClass) {
-        const targetClass = cursorClasses.includes(cursorClass) ? cursorClass : 'cursor-classic';
-        document.body.classList.remove(...cursorClasses);
-        document.body.classList.add(targetClass);
-
-        localStorage.setItem('mathMaster_cursor', targetClass);
-
-        document.querySelectorAll('.cursor-btn').forEach(btn => {
-            const value = btn.dataset.cursor ?? 'cursor-classic';
-            btn.classList.toggle('selected', value === targetClass);
-        });
-    }
-
-    function loadCursor() {
-        const savedCursor = localStorage.getItem('mathMaster_cursor') || 'cursor-classic';
-        setCursorType(savedCursor);
-    }
-
-    // --- Global Exports ---
+    // --- Global Exports (functions shared with course.js) ---
     window.toggleSection = toggleSection;
-    window.toggleThemeModal = toggleThemeModal;
-    window.setTheme = setTheme;
-    window.setCursorType = setCursorType;
 
     // --- Lifecycle ---
     function init() {
@@ -255,8 +189,6 @@
             return;
         }
         loadCourseData();
-        loadTheme();
-        loadCursor();
         setInterval(saveProgress, 5000);
         window.addEventListener('beforeunload', saveProgress);
     }

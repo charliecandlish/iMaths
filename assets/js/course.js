@@ -151,6 +151,89 @@ const Course = {
 };
 window.Course = Course;
 
+// --- Global Theme & Cursor Helpers (site-wide) ---
+(function () {
+    const themeClasses = ['bg-ocean', 'bg-sunrise', 'bg-football', 'bg-boxing', 'bg-car', 'bg-forest', 'bg-pink'];
+    const cursorClasses = ['cursor-classic', 'cursor-astro', 'cursor-robot', 'cursor-star', 'cursor-heart'];
+
+    function applyThemeFromStorage() {
+        const body = document.body;
+        if (!body) return;
+        const saved = localStorage.getItem('mathMaster_theme') || '';
+        body.classList.remove(...themeClasses);
+        if (saved) {
+            body.classList.add(saved);
+        }
+    }
+
+    function applyCursorFromStorage() {
+        const body = document.body;
+        if (!body) return;
+        const saved = localStorage.getItem('mathMaster_cursor') || 'cursor-classic';
+        const targetClass = cursorClasses.includes(saved) ? saved : 'cursor-classic';
+        body.classList.remove(...cursorClasses);
+        body.classList.add(targetClass);
+    }
+
+    // Expose helpers for the home page theme modal
+    window.setTheme = function setTheme(themeClass) {
+        const normalizedTheme = themeClass || '';
+        localStorage.setItem('mathMaster_theme', normalizedTheme);
+        applyThemeFromStorage();
+
+        // Sync selection state if buttons exist on this page
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            const value = btn.dataset.theme ?? '';
+            btn.classList.toggle('selected', value === normalizedTheme);
+        });
+    };
+
+    window.setCursorType = function setCursorType(cursorClass) {
+        const targetClass = cursorClasses.includes(cursorClass) ? cursorClass : 'cursor-classic';
+        localStorage.setItem('mathMaster_cursor', targetClass);
+        applyCursorFromStorage();
+
+        // Sync selection state if buttons exist on this page
+        document.querySelectorAll('.cursor-btn').forEach(btn => {
+            const value = btn.dataset.cursor ?? 'cursor-classic';
+            btn.classList.toggle('selected', value === targetClass);
+        });
+    };
+
+    window.toggleThemeModal = function toggleThemeModal() {
+        const modal = document.getElementById('theme-modal');
+        if (!modal) return;
+        const isOpening = modal.classList.contains('hidden');
+        modal.classList.toggle('hidden');
+
+        if (isOpening) {
+            const currentTheme = localStorage.getItem('mathMaster_theme') || '';
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                const value = btn.dataset.theme ?? '';
+                btn.classList.toggle('selected', value === currentTheme);
+            });
+
+            const currentCursor = localStorage.getItem('mathMaster_cursor') || 'cursor-classic';
+            document.querySelectorAll('.cursor-btn').forEach(btn => {
+                const value = btn.dataset.cursor ?? 'cursor-classic';
+                btn.classList.toggle('selected', value === currentCursor);
+            });
+        }
+    };
+
+    // Apply stored theme & cursor on every page that includes course.js
+    function initThemeAndCursor() {
+        applyThemeFromStorage();
+        applyCursorFromStorage();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initThemeAndCursor);
+    } else {
+        initThemeAndCursor();
+    }
+})();
+
 // Auto-load calculator on ALL pages that include course.js
 (function () {
     // Check if calculator script is already loaded or being loaded
