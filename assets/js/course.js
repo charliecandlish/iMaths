@@ -85,7 +85,7 @@ const Course = {
     completeLesson: (key) => {
         const progress = JSON.parse(localStorage.getItem('ratioCourseData')) || {};
         progress[key] = true;
-        
+
         // Sync with user data if logged in
         const currentUser = localStorage.getItem('mathMaster_currentUser');
         if (currentUser) {
@@ -97,7 +97,7 @@ const Course = {
         }
 
         localStorage.setItem('ratioCourseData', JSON.stringify(progress));
-        
+
         // Auto-advance logic
         const nextLesson = Course.getNextLesson(key);
         if (nextLesson) {
@@ -106,10 +106,10 @@ const Course = {
             // Lesson files are in public/lessons/, so relative path is just the filename if we are in a lesson
             // But if we are in index.html it's lessons/filename
             // Course.js is included in lessons, so window.location.href is relative to current page
-            
+
             window.location.href = nextLesson.href;
         } else {
-        window.location.href = '../index.html';
+            window.location.href = '../index.html';
         }
     },
 
@@ -118,8 +118,8 @@ const Course = {
         if (!progress[key + '_score'] || score > progress[key + '_score']) {
             progress[key + '_score'] = score;
         }
-        progress[key] = true; 
-        
+        progress[key] = true;
+
         const currentUser = localStorage.getItem('mathMaster_currentUser');
         if (currentUser) {
             const db = JSON.parse(localStorage.getItem('mathMaster_users')) || {};
@@ -141,7 +141,7 @@ const Course = {
             ...Course.modules.geometry,
             ...Course.modules.stats
         ];
-        
+
         const idx = allModules.findIndex(m => m.key === currentKey);
         if (idx !== -1 && idx < allModules.length - 1) {
             return allModules[idx + 1];
@@ -152,21 +152,21 @@ const Course = {
 window.Course = Course;
 
 // Auto-load calculator on ALL pages that include course.js
-(function() {
+(function () {
     // Check if calculator script is already loaded or being loaded
-    if (document.getElementById('math-toolbar') || 
+    if (document.getElementById('math-toolbar') ||
         document.querySelector('script[src*="calculator.js"]')) {
         return;
     }
-    
+
     // Detect correct path based on current page location
     const isLessonPage = window.location.pathname.includes('/lessons/');
     const scriptPath = isLessonPage ? '../assets/js/calculator.js' : 'assets/js/calculator.js';
-    
+
     const script = document.createElement('script');
     script.src = scriptPath;
     script.async = false; // Load synchronously to ensure initialization
-    
+
     // Load immediately if DOM is ready, otherwise wait
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
@@ -180,20 +180,20 @@ window.Course = Course;
 })();
 
 // Auto-load whiteboard on ALL pages that include course.js
-(function() {
+(function () {
     // Check if whiteboard script is already loaded or being loaded
-    if (document.getElementById('whiteboard-overlay') || 
+    if (document.getElementById('whiteboard-overlay') ||
         document.querySelector('script[src*="whiteboard.js"]')) {
         return;
     }
-    
+
     const isLessonPage = window.location.pathname.includes('/lessons/');
     const scriptPath = isLessonPage ? '../assets/js/whiteboard.js' : 'assets/js/whiteboard.js';
-    
+
     const script = document.createElement('script');
     script.src = scriptPath;
     script.async = false; // Load synchronously to ensure initialization
-    
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             if (!document.querySelector(`script[src="${scriptPath}"]`)) {

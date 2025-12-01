@@ -47,12 +47,26 @@
 
         /* Data Types Specifics */
         .data-card { 
-            background: white; border: 2px solid #e2e8f0; border-radius: 20px; 
-            padding: 30px; text-align: center; max-width: 400px; width: 100%;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            background: radial-gradient(circle at top left, #ccfbf1, #ecfeff 45%, #ffffff 80%);
+            border: 2px solid #99f6e4; 
+            border-radius: 24px; 
+            padding: 28px 24px; 
+            text-align: center; 
+            max-width: 460px; 
+            width: 100%;
+            box-shadow: 0 18px 45px rgba(15, 118, 110, 0.16);
         }
-        .data-icon { font-size: 4rem; margin-bottom: 10px; display: block; }
-        .data-text { font-size: 1.5rem; font-weight: 800; color: #0f766e; }
+        .data-icon { 
+            font-size: 3.5rem; 
+            margin-bottom: 12px; 
+            display: block; 
+        }
+        .data-text { 
+            font-size: 1.8rem; 
+            font-weight: 900; 
+            color: #115e59; 
+            letter-spacing: 0.03em;
+        }
 
         #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 1rem; opacity: 0; pointer-events: none; z-index: 100; transition: all 0.3s; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-align: center; width: max-content; }
         #toast.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }

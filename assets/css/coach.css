@@ -11,7 +11,7 @@
     position: fixed;
     bottom: 24px;
     left: 24px;
-    z-index: 80;
+    z-index: 85;
     max-width: min(320px, calc(100vw - 48px));
     display: flex;
     flex-direction: column;
@@ -19,6 +19,11 @@
     font-family: 'Inter', sans-serif;
     pointer-events: none;
     /* Let clicks pass through container */
+    /* Ensure it doesn't overlap with instruction header (130px) or other elements */
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+    /* Prevent it from going above instruction header area */
+    top: auto !important;
 }
 
 .lesson-coach-card,
@@ -40,8 +45,10 @@
         /* Move card up slightly to avoid toolbar */
         left: 50%;
         transform: translateX(-50%);
-        width: 100%;
+        width: calc(100% - 40px);
+        max-width: calc(100vw - 40px);
         align-items: center;
+        max-height: calc(100vh - 200px);
     }
 
     .lesson-coach-mobile-fab {
@@ -203,7 +210,7 @@
     bottom: 0;
     width: 6px;
     background: rgba(99, 102, 241, 0.1);
-    z-index: 70;
+    z-index: 15;
     /* Below question tab but above content */
     overflow: hidden;
 }
@@ -300,7 +307,7 @@ body {
     background: linear-gradient(to top, rgba(248, 250, 252, 1) 80%, rgba(248, 250, 252, 0) 0%) !important;
     padding: 16px 0 24px !important;
     margin-top: auto !important;
-    z-index: 50 !important;
+    z-index: 20 !important;
 }
 
 /* Ensure modals fit properly */
